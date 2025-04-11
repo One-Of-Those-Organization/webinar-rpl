@@ -1,22 +1,17 @@
-// tailwind.config.js
+import {heroui} from "@heroui/theme"
+
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-      "./src/**/*.{js,jsx,ts,tsx}",
-      "./public/index.html",
-    ],
-    theme: {
-      extend: {
-        fontFamily: {
-          poppins: ['Poppins', 'sans-serif'], // Menambahkan font Poppins ke default sans
-        },
-        width: {
-          200: '100px',
-        },
-        height: {
-          200: '100px',
-        },
-      },
-    },
-    plugins:[]
-  }
+  content: [
+    "./index.html",
+    './src/layouts/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  darkMode: "class",
+  plugins: [heroui()],
+}
