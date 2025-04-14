@@ -1,6 +1,7 @@
 import { Link } from "@heroui/link";
-
 import { Navbar } from "@/components/navbar";
+
+// Children Configuration
 
 export default function DefaultLayout({
   children,
@@ -17,11 +18,11 @@ export default function DefaultLayout({
         <Link
           isExternal
           className="flex items-center gap-1 text-current"
-          href="https://heroui.com"
-          title="heroui.com homepage"
+          href="https://informatika.ukdc.ac.id/"
+          title="Informatika UKDC"
         >
           <span className="text-default-600">Powered by</span>
-          <p className="text-primary">HeroUI</p>
+          <p className="text-primary">Ilmu Informatika UKDC</p>
         </Link>
       </footer>
     </div>

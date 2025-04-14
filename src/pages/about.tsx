@@ -1,6 +1,8 @@
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 
+// About Page
+
 export default function DocsPage() {
   return (
     <DefaultLayout>

@@ -1,3 +1,4 @@
+/* Import CSS from Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
