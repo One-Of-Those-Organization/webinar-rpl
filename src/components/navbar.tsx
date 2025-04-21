@@ -25,11 +25,6 @@ import {
 } from "@/components/icons";
 import { Logo } from "@/components/icons";
 
-import { siteConfig } from "@/config/site";
-import { ThemeSwitch } from "@/components/theme-switch";
-import { SearchIcon } from "@/components/icons";
-import { Logo } from "@/components/icons";
-
 // Navbar
 
 export const Navbar = () => {
@@ -89,7 +84,6 @@ export const Navbar = () => {
             </NavbarItem>
           ))}
         </div> */}
-        </div>
       </NavbarContent>
 
       <NavbarContent
@@ -108,8 +102,6 @@ export const Navbar = () => {
         </Link>
         <ThemeSwitch />
         <NavbarMenuToggle />
-      <NavbarContent className="flex sm:hidden basis-1 pl-4" justify="end">
-        <ThemeSwitch />
       </NavbarContent>
 
       <NavbarMenu>

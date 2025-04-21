@@ -6,8 +6,6 @@ import { useTheme } from "@heroui/use-theme";
 
 import { SunFilledIcon, MoonFilledIcon } from "@/components/icons";
 
-import { SunFilledIcon, MoonFilledIcon } from "@/components/icons";
-
 // Switch Light or Dark Theme
 
 export interface ThemeSwitchProps {
