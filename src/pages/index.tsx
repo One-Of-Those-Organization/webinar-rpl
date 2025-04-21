@@ -1,20 +1,30 @@
-import { title, subtitle } from "@/components/primitives";
+import { Link } from "@heroui/link";
+import { button as buttonStyles } from "@heroui/theme";
+import { siteConfig } from "@/config/site";
+import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
-
-// Main Page
 
 export default function IndexPage() {
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-        <div className="inline-block max-w-xl text-center justify-center">
-          <span className={title()}>Welcome to&nbsp;</span>
-          <br />
-          <span className={title({ color: "violet" })}>Webinar UKDC&nbsp;</span>
-          <br />
-          <div className={subtitle({ class: "mt-4" })}>
-            The best learning happens when the experience feels natural.
-          </div>
+      <section className="flex flex-col items-center justify-center min-h-[65vh] text-center">
+        <div className="flex flex-col items-center mb-8">
+          <span className={title({ size: "lg" })}>Dapatkan Informasi</span>
+          <span className={title({ color: "violet", size: "lg" })}>WEBINAR</span>
+        </div>
+
+        <div className="flex gap-4">
+          <Link
+            className={buttonStyles({
+              color: "primary",
+              radius: "full",
+              variant: "solid",
+              size: "lg",
+            })}
+            href="/login"
+          >
+            Get Started
+          </Link>
         </div>
       </section>
     </DefaultLayout>

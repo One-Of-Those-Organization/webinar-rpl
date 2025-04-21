@@ -1,3 +1,5 @@
+import { Button } from "@heroui/button";
+import { Kbd } from "@heroui/kbd";
 import { Link } from "@heroui/link";
 import { Input } from "@heroui/input";
 import {
@@ -11,6 +13,18 @@ import {
 } from "@heroui/navbar";
 import { link as linkStyles } from "@heroui/theme";
 import clsx from "clsx";
+
+import { siteConfig } from "@/config/site";
+import { ThemeSwitch } from "@/components/theme-switch";
+import {
+  TwitterIcon,
+  GithubIcon,
+  DiscordIcon,
+  HeartFilledIcon,
+  SearchIcon,
+} from "@/components/icons";
+import { Logo } from "@/components/icons";
+
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { SearchIcon } from "@/components/icons";
@@ -26,6 +40,11 @@ export const Navbar = () => {
         inputWrapper: "bg-default-100",
         input: "text-sm",
       }}
+      endContent={
+        <Kbd className="hidden lg:inline-block" keys={["command"]}>
+          K
+        </Kbd>
+      }
       labelPlacement="outside"
       placeholder="Search..."
       startContent={
@@ -51,7 +70,10 @@ export const Navbar = () => {
             <p className="font-bold text-inherit">Webinar UKDC</p>
           </Link>
         </NavbarBrand>
+        {/* <div className="hidden lg:flex gap-4 justify-start ml-2">
+
         <div className="hidden sm:flex gap-4 justify-start ml-2">
+
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <Link
@@ -66,6 +88,7 @@ export const Navbar = () => {
               </Link>
             </NavbarItem>
           ))}
+        </div> */}
         </div>
       </NavbarContent>
 
@@ -79,6 +102,12 @@ export const Navbar = () => {
         <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
       </NavbarContent>
 
+      <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
+        <Link isExternal href={siteConfig.links.github}>
+          <GithubIcon className="text-default-500" />
+        </Link>
+        <ThemeSwitch />
+        <NavbarMenuToggle />
       <NavbarContent className="flex sm:hidden basis-1 pl-4" justify="end">
         <ThemeSwitch />
       </NavbarContent>

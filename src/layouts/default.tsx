@@ -1,7 +1,6 @@
 import { Link } from "@heroui/link";
-import { Navbar } from "@/components/navbar";
 
-// Children Configuration
+import { Navbar } from "@/components/navbar";
 
 export default function DefaultLayout({
   children,
@@ -15,15 +14,15 @@ export default function DefaultLayout({
         {children}
       </main>
       <footer className="w-full flex items-center justify-center py-3">
-        <Link
+        {/* <Link
           isExternal
           className="flex items-center gap-1 text-current"
-          href="https://informatika.ukdc.ac.id/"
-          title="Informatika UKDC"
+          href="https://heroui.com"
+          title="heroui.com homepage"
         >
           <span className="text-default-600">Powered by</span>
-          <p className="text-primary">Ilmu Informatika UKDC</p>
-        </Link>
+          <p className="text-primary">HeroUI</p>
+        </Link> */}
       </footer>
     </div>
   );
