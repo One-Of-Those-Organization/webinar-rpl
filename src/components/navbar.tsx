@@ -3,6 +3,7 @@ import { Input } from "@heroui/input";
 import { siteConfig } from "@/config/site";
 import { SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/icons";
+import { ThemeSwitch } from "@/components/theme-switch";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -14,25 +15,24 @@ import {
 } from "@heroui/navbar";
 
 export const Navbar = () => {
-  // Create Search
   const searchInput = (
     <Input
       aria-label="Search"
       classNames={{
-        inputWrapper: "bg-default-100",
+        inputWrapper: "bg-default-200",
         input: "text-sm",
       }}
       labelPlacement="outside"
       placeholder="Search..."
       startContent={
-        <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
+        <SearchIcon className="text-base text-default-500 pointer-events-none flex-shrink-0" />
       }
       type="search"
     />
   );
 
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky" className="bg-purple-400">
+    <HeroUINavbar maxWidth="xl" position="sticky">
       <NavbarContent className="flex lg:hidden basis-1 pl-4" justify="start">
         <NavbarMenuToggle />
       </NavbarContent>
@@ -63,6 +63,7 @@ export const Navbar = () => {
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
+        <ThemeSwitch />
         <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
       </NavbarContent>
 
