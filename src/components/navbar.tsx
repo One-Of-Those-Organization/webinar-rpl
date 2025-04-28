@@ -1,7 +1,6 @@
 import { Link } from "@heroui/link";
 import { Input } from "@heroui/input";
 import { siteConfig } from "@/config/site";
-import { ThemeSwitch } from "@/components/theme-switch";
 import { SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/icons";
 import {
@@ -33,7 +32,7 @@ export const Navbar = () => {
   );
 
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky">
+    <HeroUINavbar maxWidth="xl" position="sticky" className="bg-purple-400">
       <NavbarContent className="flex lg:hidden basis-1 pl-4" justify="start">
         <NavbarMenuToggle />
       </NavbarContent>
@@ -64,14 +63,7 @@ export const Navbar = () => {
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
-        <NavbarItem className="hidden md:flex gap-2">
-          <ThemeSwitch />
-        </NavbarItem>
         <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
-      </NavbarContent>
-
-      <NavbarContent className="md:hidden basis-1 pl-4" justify="end">
-        <ThemeSwitch />
       </NavbarContent>
 
       <NavbarMenu>
