@@ -1,6 +1,5 @@
 import { Link } from "@heroui/link";
 import { button as buttonStyles } from "@heroui/theme";
-import { siteConfig } from "@/config/site";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 
