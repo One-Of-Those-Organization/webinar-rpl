@@ -1,9 +1,9 @@
 import { Link } from "@heroui/link";
 import { Input } from "@heroui/input";
 import { siteConfig } from "@/config/site";
+import { ThemeSwitch } from "@/components/theme-switch";
 import { SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/icons";
-import { ThemeSwitch } from "@/components/theme-switch";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -14,29 +14,14 @@ import {
   NavbarMenuItem,
 } from "@heroui/navbar";
 
-export const Navbar = () => {
-  const searchInput = (
-    <Input
-      aria-label="Search"
-      classNames={{
-        inputWrapper: "bg-default-200",
-        input: "text-sm",
-      }}
-      labelPlacement="outside"
-      placeholder="Search..."
-      startContent={
-        <SearchIcon className="text-base text-default-500 pointer-events-none flex-shrink-0" />
-      }
-      type="search"
-    />
-  );
+export const NavbarMain = () => {
 
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
-      <NavbarContent className="flex lg:hidden basis-1 pl-4" justify="start">
+      <NavbarContent className="flex basis-1 pl-4" justify="start">
         <NavbarMenuToggle />
       </NavbarContent>
-      <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
+      <NavbarContent className="basis-1/5 sm:basis-full" justify="center">
         <NavbarBrand className="gap-3 max-w-fit">
           <Link
             className="flex justify-start items-center gap-1"
@@ -47,29 +32,23 @@ export const Navbar = () => {
             <p className="font-bold text-inherit">Webinar UKDC</p>
           </Link>
         </NavbarBrand>
-        <NavbarItem className="hidden lg:flex ml-3">
-          <Link href="/" color="foreground">
-            Home
-          </Link>
-        </NavbarItem>
-        <NavbarItem className="hidden lg:flex">
-          <Link href="/about" color="foreground">
-            About
-          </Link>
-        </NavbarItem>
       </NavbarContent>
 
       <NavbarContent
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
+        <NavbarItem className="hidden md:flex gap-2">
+          <ThemeSwitch />
+        </NavbarItem>
+      </NavbarContent>
+
+      <NavbarContent className="md:hidden basis-1 pl-4" justify="end">
         <ThemeSwitch />
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
       </NavbarContent>
 
       <NavbarMenu>
-        {searchInput}
-        <div className="mx-4 mt-2 flex flex-col gap-2">
+        {/* <div className="mx-4 mt-2 flex flex-col gap-2">
           {siteConfig.navMenuItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
@@ -87,7 +66,7 @@ export const Navbar = () => {
               </Link>
             </NavbarMenuItem>
           ))}
-        </div>
+        </div> */}
       </NavbarMenu>
     </HeroUINavbar>
   );
