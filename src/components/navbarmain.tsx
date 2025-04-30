@@ -15,7 +15,6 @@ import {
 } from "@heroui/navbar";
 
 export const NavbarMain = () => {
-
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
       <NavbarContent className="flex basis-1 pl-4" justify="start">

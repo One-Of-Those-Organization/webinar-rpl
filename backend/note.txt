@@ -1,0 +1,2 @@
+qr absence system
+export to csv all the webinar data

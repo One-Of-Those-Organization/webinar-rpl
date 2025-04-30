@@ -6,7 +6,9 @@ import { SVGProps } from "react";
 import { JSX } from "react/jsx-runtime";
 import React from "react";
 
-export const EyeSlashFilledIcon = (props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => {
+export const EyeSlashFilledIcon = (
+  props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>
+) => {
   return (
     <svg
       aria-hidden="true"
@@ -42,7 +44,9 @@ export const EyeSlashFilledIcon = (props: JSX.IntrinsicAttributes & React.SVGPro
   );
 };
 
-export const EyeFilledIcon = (props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => {
+export const EyeFilledIcon = (
+  props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>
+) => {
   return (
     <svg
       aria-hidden="true"
@@ -94,4 +98,3 @@ export default function Inputpassword() {
     />
   );
 }
-
