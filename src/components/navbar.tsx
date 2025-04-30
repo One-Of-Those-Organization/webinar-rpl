@@ -33,10 +33,13 @@ export const Navbar = () => {
 
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
-      <NavbarContent className="flex lg:hidden basis-1 pl-4" justify="start">
+      <NavbarContent
+        className="flex lg:hidden basis-1 pl-4 -mr-10"
+        justify="start"
+      >
         <NavbarMenuToggle />
       </NavbarContent>
-      <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
+      <NavbarContent className="mx-auto gap-3 max-w-fit" justify="start">
         <NavbarBrand className="gap-3 max-w-fit">
           <Link
             className="flex justify-start items-center gap-1"
@@ -59,10 +62,7 @@ export const Navbar = () => {
         </NavbarItem>
       </NavbarContent>
 
-      <NavbarContent
-        className="hidden sm:flex basis-1/5 sm:basis-full"
-        justify="end"
-      >
+      <NavbarContent className="flex basis-1/5 sm:basis-full" justify="end">
         <ThemeSwitch />
         <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
       </NavbarContent>
