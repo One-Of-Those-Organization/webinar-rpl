@@ -3,7 +3,7 @@ package main
 import (
 	l "log"
 
-	"github.com/gofiber/fiber/v2/middleware/cors" // Tambahkan ini
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
