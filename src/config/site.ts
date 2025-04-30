@@ -11,10 +11,6 @@ export const siteConfig = {
       href: "/about",
     },
     {
-      label: "Dashboard",
-      href: "/Dashboard",
-    },
-    {
       label: "Profile",
       href: "/profile",
     },
@@ -31,10 +27,6 @@ export const siteConfig = {
     {
       label: "About",
       href: "/about",
-    },
-    {
-      label: "Dashboard",
-      href: "/Dashboard",
     },
     {
       label: "Profile",

@@ -167,8 +167,9 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
                 log.Printf("Session save error: %v", err)
             }
         }
-
+        
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "userId": existingUser.ID,
             "success": true,
             "message": fmt.Sprintf("%s", existingUser.UserFullName),
         })

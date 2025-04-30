@@ -4,6 +4,7 @@ import { siteConfig } from "@/config/site";
 import { SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/icons";
 import { ThemeSwitch } from "@/components/theme-switch";
+import { auth } from "@/api/auth";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -13,8 +14,10 @@ import {
   NavbarMenu,
   NavbarMenuItem,
 } from "@heroui/navbar";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
+  const navigate = useNavigate();
   const searchInput = (
     <Input
       aria-label="Search"
@@ -34,7 +37,7 @@ export const Navbar = () => {
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
       <NavbarContent
-        className="flex lg:hidden basis-1 pl-4 -mr-10"
+        className="flex sm:hidden basis-1 pl-4 -mr-10"
         justify="start"
       >
         <NavbarMenuToggle />
@@ -60,6 +63,11 @@ export const Navbar = () => {
             About
           </Link>
         </NavbarItem>
+        <NavbarItem className="hidden lg:flex">
+          <Link href="/dashboard" color="foreground">
+            Dashboard
+          </Link>
+        </NavbarItem>
       </NavbarContent>
 
       <NavbarContent className="flex basis-1/5 sm:basis-full" justify="end">
@@ -75,13 +83,19 @@ export const Navbar = () => {
               <Link
                 color={
                   index === 2
-                    ? "primary"
+                    ? "foreground"
                     : index === siteConfig.navMenuItems.length - 1
                       ? "danger"
                       : "foreground"
                 }
                 href="#"
                 size="lg"
+                onClickCapture={
+                  index === siteConfig.navMenuItems.length - 1
+                    ? async () =>
+                        (await auth.logout()) ? navigate("/login") : null
+                    : () => {}
+                }
               >
                 {item.label}
               </Link>

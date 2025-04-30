@@ -1,6 +1,9 @@
+import Cookies from "js-cookie";
+
 interface LoginResponse {
   message: string;
   success: boolean;
+  userId: number;
 }
 
 interface RegisterData {
@@ -51,7 +54,6 @@ export const auth = {
         },
         body: JSON.stringify(data),
       });
-
       return await response.json();
     } catch (error) {
       console.error("Login error:", error);
@@ -62,5 +64,21 @@ export const auth = {
     }
   },
 
+  // API Logout
+  logout: async () => {
+    try {
+      await fetch(`${API_URL}/api/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      Cookies.remove("session_id");
+      return true;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
+    }
+  },
   // Continue Function here
 };
