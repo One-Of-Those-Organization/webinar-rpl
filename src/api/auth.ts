@@ -1,9 +1,9 @@
-import Cookies from "js-cookie";
+// Kontrak yang harus dipenuhi oleh response dari API
 
 interface LoginResponse {
   message: string;
   success: boolean;
-  userId: number;
+  token: string;
 }
 
 interface RegisterData {
@@ -20,8 +20,11 @@ interface LoginData {
   pass: string;
 }
 
+// Deklarasi URL API
+
 const API_URL = "http://localhost:3000";
 
+// Fungsi untuk menghubungkan ke API
 export const auth = {
   // API Register
   register: async (data: RegisterData): Promise<LoginResponse> => {
@@ -40,6 +43,7 @@ export const auth = {
       return {
         success: false,
         message: "Failed to connect to server",
+        token: "",
       };
     }
   },
@@ -60,6 +64,7 @@ export const auth = {
       return {
         success: false,
         message: "Failed to connect to server",
+        token: "",
       };
     }
   },
@@ -73,12 +78,11 @@ export const auth = {
           "Content-Type": "application/json",
         },
       });
-      Cookies.remove("session_id");
+      localStorage.removeItem("token");
       return true;
     } catch (error) {
       console.error("Login error:", error);
       return false;
     }
   },
-  // Continue Function here
 };

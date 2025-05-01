@@ -5,17 +5,16 @@ import LoginPage from "@/pages/auth/login";
 import RegisterPage from "@/pages/auth/register";
 import DashboardPage from "@/pages/dashboard";
 import DetailPage from "@/pages/detail";
-import ProtectedRoute from "@/components/protectedroute";
-import GuestOnlyRoute from "@/components/guestonlyroute";
+import ProtectedRoute from "@/components/firewall/protectedroute";
+import GuestOnlyRoute from "@/components/firewall/guestonlyroute";
 
 export default function App() {
   return (
     <Routes>
-      {/* Public */}
+      {/* Halaman utama yang dapat diakses walaupun belum login*/}
       <Route path="/" element={<IndexPage />} />
       <Route path="/about" element={<AboutPage />} />
 
-      {/* Hanya untuk tamu (belum login) */}
       <Route
         path="/login"
         element={
@@ -33,6 +32,8 @@ export default function App() {
         }
       />
 
+      {/* BATAS Akses untuk Tamu / Pengguna */}
+
       {/* Hanya untuk user login */}
       <Route
         path="/dashboard"
@@ -44,6 +45,15 @@ export default function App() {
       />
       <Route
         path="/detail"
+        element={
+          <ProtectedRoute>
+            <DetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/about"
         element={
           <ProtectedRoute>
             <DetailPage />

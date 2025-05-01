@@ -37,7 +37,7 @@ export const Navbar = () => {
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
       <NavbarContent
-        className="flex sm:hidden basis-1 pl-4 -mr-10"
+        className="flex lg:hidden basis-1 pl-4 -mr-10"
         justify="start"
       >
         <NavbarMenuToggle />

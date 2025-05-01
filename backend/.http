@@ -1,4 +1,4 @@
-### Register User
+### Test 1 - Register User
 POST http://localhost:3000/api/register
 Content-Type: application/json
 
@@ -11,7 +11,7 @@ Content-Type: application/json
     "picture": "https://example.com/avatar.jpg"
 }
 
-### Login User (commrade)
+### Test 2 - Login User
 POST http://localhost:3000/api/login
 Content-Type: application/json
 
@@ -19,16 +19,3 @@ Content-Type: application/json
     "pass": "secure-password123",
     "email": "commrade@example.com"
 }
-
-### Login User (matt)
-POST http://localhost:3000/api/login
-Content-Type: application/json
-
-{
-    "pass": "cobamatt",
-    "email": "matt@example.com"
-}
-
-### Logout
-POST http://localhost:3000/api/logout
-Content-Type: application/json

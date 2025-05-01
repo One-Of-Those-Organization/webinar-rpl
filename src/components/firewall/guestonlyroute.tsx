@@ -6,7 +6,7 @@ const GuestOnlyRoute = ({ children }: React.PropsWithChildren) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = Cookies.get("session_id");
+    const token = Cookies.get("token");
     console.log(token);
     if (token) {
       navigate("/dashboard");

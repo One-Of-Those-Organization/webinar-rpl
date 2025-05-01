@@ -3,29 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { Link } from "@heroui/link";
 import { button as buttonStyles } from "@heroui/theme";
-import Cookies from "js-cookie";
 import { auth } from "@/api/auth";
+import { EyeFilledIcon, EyeSlashFilledIcon } from "@/components/icons";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const response = await auth.login({ email, pass });
 
-    console.log(response);
     if (response.success) {
-      Cookies.set("session_id", response.userId.toString() || "dummy_token", {
-        expires: 1,
-      }); // expires in 1 day
+      localStorage.setItem("token", response.token);
       navigate("/dashboard");
     } else {
       setError(response.message);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
   };
 
   return (
@@ -71,10 +73,24 @@ export default function LoginPage() {
               <Input
                 color="secondary"
                 label="Password"
-                type="password"
+                type={isPasswordVisible ? "text" : "password"}
                 variant="flat"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
+                endContent={
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    aria-label="Toggle password visibility"
+                    className="focus:outline-none"
+                  >
+                    {isPasswordVisible ? (
+                      <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                    ) : (
+                      <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                    )}
+                  </button>
+                }
               />
             </div>
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}

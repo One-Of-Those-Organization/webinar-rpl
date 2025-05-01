@@ -10,9 +10,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Provider>
         <main>
-        <App />
+          <App />
         </main>
       </Provider>
     </BrowserRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
