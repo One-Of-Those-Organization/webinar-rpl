@@ -198,13 +198,3 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
         })
     })
 }
-
-func appHandleLogout(route fiber.Router) {
-    route.Get("logout", func (c *fiber.Ctx) error {
-        return c.Status(fiber.StatusOK).JSON(fiber.Map{
-            "success": true,
-            "message": "successfully logged out.",
-            "data": nil,
-        })
-    })
-}

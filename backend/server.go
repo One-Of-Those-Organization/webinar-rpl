@@ -38,8 +38,6 @@ func appMakeRouteHandler(backend *Backend) {
 
     appHandleUserInfo(backend, protected)
 
-    appHandleLogout(protected)
-
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")
     })
