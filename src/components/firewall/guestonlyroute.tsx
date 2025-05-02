@@ -1,13 +1,13 @@
 import { useEffect } from "react";
-import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
+
+// Component to restrict access to certain routes for authenticated users
 
 const GuestOnlyRoute = ({ children }: React.PropsWithChildren) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = Cookies.get("token");
-    console.log(token);
+    const token = localStorage.getItem("token");
     if (token) {
       navigate("/dashboard");
     }

@@ -1,40 +1,26 @@
 export type SiteConfig = typeof siteConfig;
 
+// Navigation items for the site
+
 export const siteConfig = {
   navItems: [
     {
-      label: "Home",
-      href: "/",
+      label: "Dashboard",
+      href: "/dashboard",
     },
     {
       label: "About",
       href: "/about",
-    },
-    {
-      label: "Profile",
-      href: "/profile",
-    },
-    {
-      label: "Logout",
-      href: "/logout",
     },
   ],
   navMenuItems: [
     {
-      label: "Home",
-      href: "/",
+      label: "Dashboard",
+      href: "/dashboard",
     },
     {
       label: "About",
       href: "/about",
-    },
-    {
-      label: "Profile",
-      href: "/profile",
-    },
-    {
-      label: "Logout",
-      href: "/logout",
     },
   ],
   links: {},

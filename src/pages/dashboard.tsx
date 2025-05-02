@@ -1,6 +1,8 @@
 import DefaultLayout from "@/layouts/default";
 import { CardView } from "@/components/card";
 
+// Dashboard Page for user
+
 export default function DashboardPage() {
   return (
     <DefaultLayout>

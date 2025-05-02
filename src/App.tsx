@@ -1,10 +1,16 @@
 import { Route, Routes, Navigate } from "react-router-dom";
-import IndexPage from "@/pages/index";
-import AboutPage from "@/pages/about";
+// Guest Page
 import LoginPage from "@/pages/auth/login";
 import RegisterPage from "@/pages/auth/register";
+import IndexPage from "@/pages/index";
+
+// Authorize Page
+import AboutPage from "@/pages/about";
 import DashboardPage from "@/pages/dashboard";
 import DetailPage from "@/pages/detail";
+import ProfilePage from "./pages/profile";
+
+// Firewall / Route
 import ProtectedRoute from "@/components/firewall/protectedroute";
 import GuestOnlyRoute from "@/components/firewall/guestonlyroute";
 
@@ -57,6 +63,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <DetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />

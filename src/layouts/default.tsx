@@ -1,5 +1,7 @@
 import { Navbar } from "@/components/navbar";
 
+// Default layout component
+
 export default function DefaultLayout({
   children,
 }: {

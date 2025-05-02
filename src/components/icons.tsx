@@ -1,15 +1,15 @@
 import * as React from "react";
 import { IconSvgProps } from "@/types";
 
-export const Logo: React.FC<IconSvgProps> = ({
-  size = 36,
-  height,
-  ...props
-}) => (
+// Common icons used in the application
+
+export const Logo = ({ size = 36, width, height, ...props }: IconSvgProps) => (
   <img
+    aria-hidden="true"
+    role="presentation"
     src="/logo_if.png"
     alt="Logo"
-    width={size || height}
+    width={size || width}
     height={size || height}
     {...props}
   />
@@ -64,9 +64,9 @@ export const SearchIcon = (props: IconSvgProps) => (
     aria-hidden="true"
     fill="none"
     focusable="false"
-    height="1em"
     role="presentation"
     viewBox="0 0 24 24"
+    height="1em"
     width="1em"
     {...props}
   >

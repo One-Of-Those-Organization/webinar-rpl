@@ -1,10 +1,9 @@
 import { Link } from "@heroui/link";
 import { button as buttonStyles } from "@heroui/theme";
-import { title } from "@/components/primitives";
-import DefaultLayout from "@/layouts/defaultmain";
-import { Search } from "@/components/search";
-import { CardView } from "@/components/card";
+import DefaultLayout from "@/layouts/default";
 import { Image } from "@heroui/react";
+
+// Detail Webinar Page
 
 export default function DetailPage() {
   return (

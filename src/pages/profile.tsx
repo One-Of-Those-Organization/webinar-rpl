@@ -3,12 +3,12 @@ import DefaultLayout from "@/layouts/default";
 
 // WIP Dummy Page
 
-export default function DocsPage() {
+export default function ProfilePage() {
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="inline-block max-w-lg text-center justify-center">
-          <h1 className={title()}>About</h1>
+          <h1 className={title()}>Profile</h1>
         </div>
       </section>
     </DefaultLayout>
