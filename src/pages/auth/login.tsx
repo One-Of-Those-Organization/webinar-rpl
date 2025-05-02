@@ -30,6 +30,8 @@ export default function LoginPage() {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
+  // NOTE : Add Validator for email and password
+
   return (
     <section className="flex flex-col md:flex-row h-screen">
       <div className="w-full md:w-1/2 bg-purple-300 flex flex-col items-center justify-center py-12 md:py-0">

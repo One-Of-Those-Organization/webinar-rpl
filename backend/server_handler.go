@@ -1,14 +1,15 @@
 package main
 
 import (
-    "fmt"
-    "time"
-    "github.com/golang-jwt/jwt/v5"
-    "github.com/gofiber/fiber/v2"
-    "webrpl/table"
+	"fmt"
+	"time"
+	"webrpl/table"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-
+// POST : api/login
 func appHandleLogin(backend *Backend, route fiber.Router) {
     route.Post("login", func (c *fiber.Ctx) error {
         var body struct {
@@ -28,7 +29,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
         if len(body.UserEmail) <= 0 || len(body.UserPassword) <= 0 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Invalid email and password, %v", err),
+                "message": "Invalid email and password",
                 "data": nil,
             })
         }
@@ -80,9 +81,10 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
 
 }
 
+// GET : api/user-info
 func appHandleUserInfo(backend *Backend, route fiber.Router) {
     route.Get("user-info", func (c *fiber.Ctx) error {
-
+        
         user := c.Locals("user").(*jwt.Token)
         if user != nil {
             claims := user.Claims.(jwt.MapClaims)
@@ -111,5 +113,98 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
+    })
+}
+
+// POST : api/register
+func appHandleRegister(backend *Backend, route fiber.Router) {
+    route.Post("register", func (c *fiber.Ctx) error {
+        var body struct {
+            Email string
+            FullName string
+            Password string
+            IsAdmin int
+            Instance string
+            Picture string
+        }
+
+        err:= c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid request body, %v", err),
+                "data": nil,
+            })
+        }
+
+        if len(body.Email) <= 0 || len(body.Password) <= 0 || len (body.FullName) <= 0 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid data.",
+                "data": nil,
+            })
+        }
+
+        var userData table.User
+        res := backend.db.Where("user_email = ?", body.Email).First(&userData)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch user data from db.",
+                "data": nil,
+            })
+        }
+
+        if res.RowsAffected > 0 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "User with that email already registered.",
+                "data": nil,
+            })
+        }
+
+        hashedPassword, err := HashPassword(body.Password)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to hash the password.",
+                "data": nil,
+            })
+        }
+
+        newUser := table.User {
+            UserFullName: body.FullName,
+            UserEmail: body.Email,
+            UserPassword: hashedPassword,
+            UserPicture: body.Picture,
+            UserInstance: body.Instance,
+            UserRole: body.IsAdmin,
+            UserCreatedAt: time.Now(),
+        }
+
+        result := backend.db.Create(newUser)
+        if result.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to write to db, %v", result.Error),
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "successfully created new user",
+            "data": nil,
+        })
+    })
+}
+
+func appHandleLogout(route fiber.Router) {
+    route.Get("logout", func (c *fiber.Ctx) error {
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "successfully logged out.",
+            "data": nil,
+        })
     })
 }

@@ -11,8 +11,6 @@ interface RegisterData {
   pass: string;
   email: string;
   instance: string;
-  role: number;
-  picture: string;
 }
 
 interface LoginData {
@@ -28,6 +26,7 @@ const API_URL = "http://localhost:3000";
 export const auth = {
   // API Register
   register: async (data: RegisterData): Promise<LoginResponse> => {
+    console.log(data);
     try {
       const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",

@@ -3,12 +3,12 @@ POST http://localhost:3000/api/register
 Content-Type: application/json
 
 {
-    "name": "Commrade Goad",
-    "pass": "secure-password123",
-    "email": "commrade@example.com",
-    "instance": "University XYZ",
+    "name": "Bombardino",
+    "pass": "crocodila",
+    "email": "bombardino@example.com",
+    "instance": "Italian Brainrot",
     "role": 0,
-    "picture": "https://example.com/avatar.jpg"
+    "picture": "https://www.google.com/imgres?q=bombardino%20crocodilo&imgurl=https%3A%2F%2Fstatic.wikia.nocookie.net%2Fbrainrotnew%2Fimages%2F1%2F10%2FBombardiro_Crocodilo.jpg%2Frevision%2Flatest%3Fcb%3D20250417102447&imgrefurl=https%3A%2F%2Fbrainrot.fandom.com%2Fwiki%2FBombadiro_Crocodilo&docid=JqwDTG1L2pGTOM&tbnid=7YHdSgMCT4R9TM&vet=12ahUKEwiAz7TV74SNAxVmS3ADHUoHLNQQM3oECFMQAA..i&w=225&h=225&hcb=2&itg=1&ved=2ahUKEwiAz7TV74SNAxVmS3ADHUoHLNQQM3oECFMQAA"
 }
 
 ### Test 2 - Login User
