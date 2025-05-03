@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
-import { Link } from "@heroui/link";
 import { auth } from "@/api/auth";
 import { Logo } from "@/components/icons";
 import { EyeSlashFilledIcon, EyeFilledIcon } from "@/components/icons";
+import { toast, ToastContainer } from "react-toastify"; // Used to send error (Pop Out)
+import "react-toastify/dist/ReactToastify.css";
 
-// Declare data here
+// Declare data and conditional here
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -21,7 +22,7 @@ export default function RegisterPage() {
     setIsPasswordVisible(!isPasswordVisible);
   };
   const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=<>?{}[\]~]).{8,}$/;
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=<>?{}[\]~.]).{8,}$/;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,12 +30,14 @@ export default function RegisterPage() {
     // Validator All Label must be filled
     if (!name || !email || !instance || !pass || !confirmPass) {
       setError("Semua field harus diisi.");
+      toast.error("Semua field harus diisi.");
       return;
     }
 
     // Validator for Email
     if (!/\S+@\S+\.\S+/.test(email)) {
       setError("Email tidak valid.");
+      toast.error("Email tidak valid.");
       return;
     }
 
@@ -43,12 +46,14 @@ export default function RegisterPage() {
       setError(
         "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol."
       );
+      toast.error("Password harus kuat.");
       return;
     }
 
     // Validator for Password that must same
     if (pass !== confirmPass) {
       setError("Password dan konfirmasi password tidak sama.");
+      toast.error("Password dan konfirmasi password tidak sama.");
       return;
     }
 
@@ -61,14 +66,15 @@ export default function RegisterPage() {
       email,
       instance,
       pass,
-      confirmPass,
     });
 
     // If Register was success, then send to Login
     if (response.success) {
+      toast.success("Registrasi berhasil!");
       navigate("/login");
     } else {
       setError(response.message || "Registrasi gagal.");
+      toast.error(response.message || "Registrasi gagal.");
     }
   };
 
@@ -84,7 +90,7 @@ export default function RegisterPage() {
             {/* Show Error */}
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-            {/* Label Nama */}
+            {/* Input Fields */}
             <div className="mb-4 md:mb-6">
               <Input
                 color="secondary"
@@ -192,6 +198,7 @@ export default function RegisterPage() {
       <div className="w-full md:w-1/2 bg-purple-300 flex flex-col items-center justify-center py-12 md:py-0 order-1 md:order-2">
         <div className="flex flex-col items-center gap-8">
           <Logo className="h-48 md:h-64 w-48 md:w-64" />
+          {/* Button Switch to Login */}
           <button
             type="submit"
             className={`${buttonStyles({
@@ -205,6 +212,9 @@ export default function RegisterPage() {
           </button>
         </div>
       </div>
+
+      {/* Toast Container */}
+      <ToastContainer />
     </section>
   );
 }

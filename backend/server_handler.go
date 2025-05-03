@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 // POST : api/login
@@ -120,12 +121,11 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
 func appHandleRegister(backend *Backend, route fiber.Router) {
     route.Post("register", func (c *fiber.Ctx) error {
         var body struct {
-            Email string
-            FullName string
-            Password string
-            IsAdmin int
-            Instance string
-            Picture string
+            Email    string `json:"email"`
+            FullName string `json:"name"`
+            Password string `json:"pass"`
+            Instance string `json:"instance"`
+            Picture  string `json:"picture"`
         }
 
         err:= c.BodyParser(&body)
@@ -147,18 +147,10 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
 
         var userData table.User
         res := backend.db.Where("user_email = ?", body.Email).First(&userData)
-        if res.Error != nil {
+        if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch user data from db.",
-                "data": nil,
-            })
-        }
-
-        if res.RowsAffected > 0 {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "User with that email already registered.",
                 "data": nil,
             })
         }
@@ -178,11 +170,11 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             UserPassword: hashedPassword,
             UserPicture: body.Picture,
             UserInstance: body.Instance,
-            UserRole: body.IsAdmin,
+            UserRole: 0,
             UserCreatedAt: time.Now(),
         }
 
-        result := backend.db.Create(newUser)
+        result := backend.db.Create(&newUser)
         if result.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,

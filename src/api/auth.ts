@@ -11,7 +11,6 @@ interface RegisterData {
   email: string;
   instance: string;
   pass: string;
-  confirmPass: string;
 }
 
 interface LoginData {
