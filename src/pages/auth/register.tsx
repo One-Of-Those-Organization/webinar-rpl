@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
 import { auth } from "@/api/auth";
-import { Logo } from "@/components/icons";
-import { EyeSlashFilledIcon, EyeFilledIcon } from "@/components/icons";
-import { toast, ToastContainer } from "react-toastify"; // Used to send error (Pop Out)
+import { EyeSlashFilledIcon, EyeFilledIcon, Logo } from "@/components/icons";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Declare data and conditional here
 export default function RegisterPage() {
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,8 +18,13 @@ export default function RegisterPage() {
   const [confirmPass, setConfirmPass] = useState("");
   const [error, setError] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
+  };
+  const toggleConfirmPasswordVisibility = () => {
+    setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
   };
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=<>?{}[\]~.]).{8,}$/;
@@ -27,38 +32,8 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validator All Label must be filled
-    if (!name || !email || !instance || !pass || !confirmPass) {
-      setError("Semua field harus diisi.");
-      toast.error("Semua field harus diisi.");
-      return;
-    }
-
-    // Validator for Email
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Email tidak valid.");
-      toast.error("Email tidak valid.");
-      return;
-    }
-
-    // Validator for Password
-    if (!passwordRegex.test(pass)) {
-      setError(
-        "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol."
-      );
-      toast.error("Password harus kuat.");
-      return;
-    }
-
-    // Validator for Password that must same
-    if (pass !== confirmPass) {
-      setError("Password dan konfirmasi password tidak sama.");
-      toast.error("Password dan konfirmasi password tidak sama.");
-      return;
-    }
-
-    // Clear error before submit
-    setError("");
+    // Avoid spam click
+    setLoading(true);
 
     // Data that sended
     const response = await auth.register({
@@ -68,13 +43,47 @@ export default function RegisterPage() {
       pass,
     });
 
+    // After get response, then turn off the loading...
+    setLoading(false);
+
+    // Validator All Label must be filled
+    if (!name || !email || !instance || !pass || !confirmPass) {
+      setError("All field must be filled.");
+      toast.error("All field must be filled.");
+      return;
+    }
+
+    // Validator for Email
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError("Invalid Email.");
+      toast.error("Invalid Email.");
+      return;
+    }
+
+    // Validator for Password
+    if (!passwordRegex.test(pass)) {
+      setError(
+        "Password must be at least 8 characters long and contain an uppercase letter, a lowercase letter, a number, and a symbol."
+      );
+      toast.error("The password must be strong.");
+      return;
+    }
+
+    // Validator for Password that must same
+    if (pass !== confirmPass) {
+      setError("Password and confirmation password do not match.");
+      toast.error("Password and confirmation password do not match.");
+      return;
+    }
+
     // If Register was success, then send to Login
     if (response.success) {
-      toast.success("Registrasi berhasil!");
+      setError(""); // Clear the error message
+      toast.success("Registration successful!");
       navigate("/login");
     } else {
-      setError(response.message || "Registrasi gagal.");
-      toast.error(response.message || "Registrasi gagal.");
+      setError(response.message || "Registration failed.");
+      toast.error(response.message || "Registration failed.");
     }
   };
 
@@ -90,11 +99,11 @@ export default function RegisterPage() {
             {/* Show Error */}
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-            {/* Input Fields */}
+            {/* Label Name */}
             <div className="mb-4 md:mb-6">
               <Input
                 color="secondary"
-                label="Nama"
+                label="Name"
                 type="text"
                 variant="flat"
                 value={name}
@@ -155,14 +164,14 @@ export default function RegisterPage() {
               <Input
                 color="secondary"
                 label="Confirm Password"
-                type={isPasswordVisible ? "text" : "password"}
+                type={isConfirmPasswordVisible ? "text" : "password"}
                 variant="flat"
                 value={confirmPass}
                 onChange={(e) => setConfirmPass(e.target.value)}
                 endContent={
                   <button
                     type="button"
-                    onClick={togglePasswordVisibility}
+                    onClick={toggleConfirmPasswordVisibility}
                     aria-label="Toggle password visibility"
                     className="focus:outline-none"
                   >
@@ -180,14 +189,15 @@ export default function RegisterPage() {
             <div className="flex flex-col items-center gap-4">
               <button
                 type="submit"
-                className={`${buttonStyles({
+                disabled={loading}
+                className={buttonStyles({
                   color: "secondary",
                   radius: "full",
                   variant: "solid",
                   size: "lg",
-                })} hover:bg-secondary-600 hover:text-white`}
+                })}
               >
-                Daftar
+                {loading ? "Loading..." : "Masuk"}
               </button>
             </div>
           </form>
@@ -201,6 +211,7 @@ export default function RegisterPage() {
           {/* Button Switch to Login */}
           <button
             type="submit"
+            onClick={() => navigate("/login")}
             className={`${buttonStyles({
               color: "secondary",
               radius: "full",

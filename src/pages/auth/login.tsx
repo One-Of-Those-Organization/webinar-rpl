@@ -1,57 +1,86 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
-import { Link } from "@heroui/link";
 import { button as buttonStyles } from "@heroui/theme";
 import { auth } from "@/api/auth";
-import { EyeFilledIcon, EyeSlashFilledIcon } from "@/components/icons";
+import { EyeFilledIcon, EyeSlashFilledIcon, Logo } from "@/components/icons";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginPage() {
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const response = await auth.login({ email, pass });
-
-    if (response.success) {
-      localStorage.setItem("token", response.token);
-      navigate("/dashboard");
-    } else {
-      setError(response.message);
-    }
-  };
-
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
-  // NOTE : Add Validator for email and password
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Avoid spam click
+    setLoading(true);
+
+    const response = await auth.login({ email, pass });
+
+    // After get response, then turn off the loading...
+    setLoading(false);
+
+    // Validator All Label must be filled
+    if (!email || !pass) {
+      setError("All field must be filled.");
+      toast.error("All field must be filled.");
+      return;
+    }
+
+    // Validator format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Invalid email format.");
+      // Clear error before submit
+      toast.error("Invalid email format.");
+      return;
+    }
+
+    // Handle error dari backend
+    if (response.message === "Wrong Password") {
+      setError("Password is Incorrect");
+      toast.error("Password is Incorrect");
+      return;
+    }
+
+    // If Login was success, then send to Dashboard
+    if (response.success) {
+      setError(""); // Clear the error message
+      localStorage.setItem("token", response.token);
+      navigate("/dashboard");
+    } else {
+      setError(response.message);
+      toast.error(response.message);
+    }
+  };
 
   return (
     <section className="flex flex-col md:flex-row h-screen">
+      {/* Left Sidebar */}
       <div className="w-full md:w-1/2 bg-purple-300 flex flex-col items-center justify-center py-12 md:py-0">
         <div className="flex flex-col items-center gap-4">
-          <img
-            src="../../../public/logo_if.png"
-            alt="Colorful logo with IF letters"
-            className="h-48 md:h-64 w-48 md:w-64"
-          />
-          <Link
-            className={buttonStyles({
+          <Logo className="h-48 md:h-64 w-48 md:w-64" />
+          <button
+            type="submit"
+            onClick={() => navigate("/register")}
+            className={`${buttonStyles({
               color: "secondary",
               radius: "full",
               variant: "bordered",
               size: "lg",
-            })}
-            href="/register"
+            })} hover:bg-secondary-600 hover:text-white`}
           >
             Register
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -61,16 +90,20 @@ export default function LoginPage() {
             LOGIN
           </h1>
           <form onSubmit={handleLogin}>
+            {/* Show Error */}
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
             <div className="mb-4 md:mb-6">
+              {/* Label Email */}
               <Input
                 color="secondary"
                 label="Email"
-                type="text"
+                type="email"
                 variant="flat"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+            {/* Label Password */}
             <div className="mb-4 md:mb-6 relative">
               <Input
                 color="secondary"
@@ -95,8 +128,8 @@ export default function LoginPage() {
                 }
               />
             </div>
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
             <div className="mb-6 text-right">
+              {/* Redirect Lupa Password (WIP) */}
               <a
                 className="text-sm font-poppins font-bold text-blue-500 hover:text-blue-700"
                 href="#"
@@ -105,8 +138,10 @@ export default function LoginPage() {
               </a>
             </div>
             <div className="flex flex-col items-center gap-4">
+              {/* Button Login to Dashboard */}
               <button
                 type="submit"
+                disabled={loading}
                 className={buttonStyles({
                   color: "secondary",
                   radius: "full",
@@ -114,12 +149,13 @@ export default function LoginPage() {
                   size: "lg",
                 })}
               >
-                Masuk
+                {loading ? "Loading..." : "Masuk"}
               </button>
             </div>
           </form>
         </div>
       </div>
+      <ToastContainer />
     </section>
   );
 }

@@ -50,7 +50,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
         if !validPass {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Wrong password",
+                "message": "Wrong Password",
                 "data": nil,
             })
         }
@@ -119,7 +119,7 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
 
 // POST : api/register
 func appHandleRegister(backend *Backend, route fiber.Router) {
-    route.Post("register", func (c *fiber.Ctx) error {
+    route.Post("register", func(c *fiber.Ctx) error {
         var body struct {
             Email    string `json:"email"`
             FullName string `json:"name"`
@@ -128,7 +128,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             Picture  string `json:"picture"`
         }
 
-        err:= c.BodyParser(&body)
+        err := c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -137,7 +137,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        if len(body.Email) <= 0 || len(body.Password) <= 0 || len (body.FullName) <= 0 {
+        if len(body.Email) <= 0 || len(body.Password) <= 0 || len(body.FullName) <= 0 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid data.",
@@ -145,6 +145,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             })
         }
 
+        // Check if user with the same email already exists
         var userData table.User
         res := backend.db.Where("user_email = ?", body.Email).First(&userData)
         if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
@@ -155,6 +156,16 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             })
         }
 
+        // Check if email already exists
+        if res.RowsAffected > 0 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "User with that email already registered.",
+                "data": nil,
+            })
+        }
+
+        // Hash password
         hashedPassword, err := HashPassword(body.Password)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -164,13 +175,14 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        newUser := table.User {
-            UserFullName: body.FullName,
-            UserEmail: body.Email,
-            UserPassword: hashedPassword,
-            UserPicture: body.Picture,
-            UserInstance: body.Instance,
-            UserRole: 0,
+        // Create new user
+        newUser := table.User{
+            UserFullName:  body.FullName,
+            UserEmail:     body.Email,
+            UserPassword:  hashedPassword,
+            UserPicture:   body.Picture,
+            UserInstance:  body.Instance,
+            UserRole:      0,
             UserCreatedAt: time.Now(),
         }
 
@@ -185,7 +197,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
 
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
-            "message": "successfully created new user",
+            "message": "Successfully created new user.",
             "data": nil,
         })
     })
