@@ -32,7 +32,7 @@ const API_URL = "http://localhost:3000";
 // Fungsi untuk menghubungkan ke API
 export const auth = {
   // API Register
-  register: async (data: RegisterData): Promise<LoginResponse> => {
+  register: async (data: RegisterData): Promise<RegisterResponse> => {
     try {
       const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
@@ -48,7 +48,6 @@ export const auth = {
       return {
         success: false,
         message: "Failed to connect to server",
-        token: "",
         error_code: 0,
       };
     }
