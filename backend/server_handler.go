@@ -23,6 +23,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Invalid request body, %v", err),
+                "error_code": 1,
                 "data": nil,
             })
         }
@@ -31,6 +32,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid email and password",
+                "error_code": 2,
                 "data": nil,
             })
         }
@@ -42,6 +44,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("There is a problem in the db, %v", res.Error),
+                "error_code": 3,
                 "data": nil,
             })
         }
@@ -51,6 +54,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Wrong Password",
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -68,6 +72,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to generate JWT, %v", err),
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -76,16 +81,57 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             "success": true,
             "message": "successfully logged in.",
             "data": nil,
+            "error_code": 0,
             "token": t,
         })
     })
-
 }
 
-// GET : api/user-info
+// GET : api/protected/user-info-all
+func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
+    route.Get("user-info-all", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user != nil {
+            claims := user.Claims.(jwt.MapClaims)
+            admin := claims["admin"].(int)
+
+            if admin != 1 {
+                return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Invalid credentials to acces this api.",
+                    "data": nil,
+                })
+            }
+
+            var userData []table.User
+
+            res := backend.db.Find(&userData)
+            if res.Error != nil {
+                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Failed to fetch user data from db.",
+                    "data": nil,
+                })
+            }
+
+            return c.Status(fiber.StatusOK).JSON(fiber.Map{
+                "success": true,
+                "message": "Accept the data.",
+                "data": userData,
+            })
+        }
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "success": false,
+            "message": "Failed to claim the JWT Token.",
+            "data": nil,
+        })
+    })
+}
+
+// GET : api/protected/user-info
 func appHandleUserInfo(backend *Backend, route fiber.Router) {
     route.Get("user-info", func (c *fiber.Ctx) error {
-        
+
         user := c.Locals("user").(*jwt.Token)
         if user != nil {
             claims := user.Claims.(jwt.MapClaims)
@@ -119,7 +165,7 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
 
 // POST : api/register
 func appHandleRegister(backend *Backend, route fiber.Router) {
-    route.Post("register", func(c *fiber.Ctx) error {
+    route.Post("register", func (c *fiber.Ctx) error {
         var body struct {
             Email    string `json:"email"`
             FullName string `json:"name"`
@@ -128,11 +174,12 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             Picture  string `json:"picture"`
         }
 
-        err := c.BodyParser(&body)
+        err:= c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Invalid request body, %v", err),
+                "error_code": 1,
                 "data": nil,
             })
         }
@@ -141,48 +188,48 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid data.",
+                "error_code": 2,
                 "data": nil,
             })
         }
 
-        // Check if user with the same email already exists
         var userData table.User
         res := backend.db.Where("user_email = ?", body.Email).First(&userData)
         if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch user data from db.",
+                "error_code": 3,
                 "data": nil,
             })
         }
 
-        // Check if email already exists
         if res.RowsAffected > 0 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "User with that email already registered.",
+                "error_code": 4,
                 "data": nil,
             })
         }
 
-        // Hash password
         hashedPassword, err := HashPassword(body.Password)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to hash the password.",
+                "error_code": 5,
                 "data": nil,
             })
         }
 
-        // Create new user
-        newUser := table.User{
-            UserFullName:  body.FullName,
-            UserEmail:     body.Email,
-            UserPassword:  hashedPassword,
-            UserPicture:   body.Picture,
-            UserInstance:  body.Instance,
-            UserRole:      0,
+        newUser := table.User {
+            UserFullName: body.FullName,
+            UserEmail: body.Email,
+            UserPassword: hashedPassword,
+            UserPicture: body.Picture,
+            UserInstance: body.Instance,
+            UserRole: 0,
             UserCreatedAt: time.Now(),
         }
 
@@ -191,13 +238,118 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to write to db, %v", result.Error),
+                "error_code": 6,
                 "data": nil,
             })
         }
 
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
-            "message": "Successfully created new user.",
+            "message": "successfully created new user",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// POST : api/event-register
+func appHandleNewEvent(backend *Backend, route fiber.Router) {
+    route.Post("event-register", func (c *fiber.Ctx) error {
+
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        isAdmin := claims["admin"].(int)
+
+        if isAdmin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            Desc          string    `json:"desc"`
+            Name          string    `json:"name"`
+            DStart        time.Time `json:"dstart"`
+            DEnd          time.Time `json:"dend"`
+            Link          string    `json:"link"`
+            Speaker       string    `json:"speaker"`
+            Att           string    `json:"att"`
+            FMaterial     []int       `json:"material_id"`
+            FCertTemplate int       `json:"cert_temp_id"`
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "data": nil,
+            })
+        }
+
+        var _NewCertTemplate table.CertTemplate
+        res := backend.db.Where("cer_id = ?", body.FCertTemplate).First(&_NewCertTemplate)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to get the cert id , %v", res.Error),
+                "data": nil,
+            })
+        }
+        // TODO: Check if that id didnt exist.
+        var NewCertTemplate []table.CertTemplate
+        NewCertTemplate = append(NewCertTemplate, _NewCertTemplate)
+
+        var _NewEventMat table.EventMaterial
+        res = backend.db.Where("eventm_id = ?", body.FMaterial).First(&_NewEventMat)
+
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to get the event material id , %v", res.Error),
+                "data": nil,
+            })
+        }
+        // TODO: Check if that id didnt exist.
+        var NewEventMat []table.EventMaterial
+        NewEventMat = append(NewEventMat, _NewEventMat)
+
+        // TOOD: will not add the event if there is event on that time?
+        // TOOD: will not create the event with the same name?
+        // TOOD: finish binding this.
+        newEvent := table.Event {
+            EventDesc: body.Desc,
+            EventName: body.Name,
+            EventDStart: body.DStart,
+            EventDEnd: body.DEnd,
+            EventSpeaker: body.Speaker,
+            EventAtt: table.AttTypeEnum(body.Att),
+            EventMaterials: NewEventMat,
+            CertTemplates: NewCertTemplate,
+        }
+
+        res = backend.db.Create(newEvent)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to create new event, %v", res.Error),
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "success": false,
+            "message": "WIP",
             "data": nil,
         })
     })

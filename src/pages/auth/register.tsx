@@ -6,12 +6,14 @@ import { auth } from "@/api/auth";
 import { EyeSlashFilledIcon, EyeFilledIcon, Logo } from "@/components/icons";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { RegisterResponse } from "@/api/auth";
 
 // Declare data and conditional here
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [email, setEmail] = useState("");
   const [instance, setInstance] = useState("");
   const [pass, setPass] = useState("");
@@ -35,55 +37,98 @@ export default function RegisterPage() {
     // Avoid spam click
     setLoading(true);
 
-    // Data that sended
-    const response = await auth.register({
-      name,
-      email,
-      instance,
-      pass,
-    });
+    let response: RegisterResponse = {
+      message: "",
+      success: false,
+      error_code: 0,
+    };
 
-    // After get response, then turn off the loading...
-    setLoading(false);
-
-    // Validator All Label must be filled
-    if (!name || !email || !instance || !pass || !confirmPass) {
-      setError("All field must be filled.");
-      toast.error("All field must be filled.");
+    // Validator All Label must be filled or instance is empty
+    if (
+      (email.length <= 0 && name.length <= 0 && pass.length <= 0) ||
+      instance.length <= 0
+    ) {
+      setError("Please fill in all fields.");
+      toast.error("All fields are required.");
+      setLoading(false);
       return;
     }
 
     // Validator for Email
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Invalid Email.");
-      toast.error("Invalid Email.");
+    if (!emailRegex.test(email)) {
+      setError("Invalid email format.");
+      toast.error("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
+    // Validator if pass is empty
+    if (pass.length <= 0) {
+      setError("Please input your Password.");
+      toast.error("Please input your Password.");
+      setLoading(false);
+      return;
+    }
+
+    // Validator if confirmPass is empty
+    if (confirmPass.length <= 0) {
+      setError("Please input your Confirm Password.");
+      toast.error("Please input your Confirm Password.");
+      setLoading(false);
+      return;
+    }
+
+    // Validator for Password that must same
+    if (pass !== confirmPass) {
+      setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
+      setLoading(false);
       return;
     }
 
     // Validator for Password
     if (!passwordRegex.test(pass)) {
       setError(
-        "Password must be at least 8 characters long and contain an uppercase letter, a lowercase letter, a number, and a symbol."
+        "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character."
       );
-      toast.error("The password must be strong.");
+      toast.error("Please enter a stronger password.");
+      setLoading(false);
       return;
     }
 
-    // Validator for Password that must same
-    if (pass !== confirmPass) {
-      setError("Password and confirmation password do not match.");
-      toast.error("Password and confirmation password do not match.");
+    // Validator All Label must be filled
+    if (response.error_code == 2) {
+      setError("All field must be filled.");
+      toast.error("All field must be filled.");
+      setLoading(false);
       return;
     }
+
+    // Validator if the email not registered or already registered
+    if (response.error_code == 4) {
+      setError("Email is already registered.");
+      toast.error("Email is already registered.");
+      setLoading(false);
+      return;
+    }
+
+    // Data Send to Backend
+    response = await auth.register({
+      name,
+      email,
+      instance,
+      pass,
+    });
 
     // If Register was success, then send to Login
     if (response.success) {
-      setError(""); // Clear the error message
+      setLoading(false);
+      setError("");
       toast.success("Registration successful!");
       navigate("/login");
     } else {
-      setError(response.message || "Registration failed.");
-      toast.error(response.message || "Registration failed.");
+      setError("Registration failed.");
+      toast.error("Registration failed.");
     }
   };
 
@@ -175,7 +220,7 @@ export default function RegisterPage() {
                     aria-label="Toggle password visibility"
                     className="focus:outline-none"
                   >
-                    {isPasswordVisible ? (
+                    {isConfirmPasswordVisible ? (
                       <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
                     ) : (
                       <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
@@ -223,7 +268,6 @@ export default function RegisterPage() {
           </button>
         </div>
       </div>
-
       {/* Toast Container */}
       <ToastContainer />
     </section>

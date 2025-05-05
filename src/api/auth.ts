@@ -1,9 +1,9 @@
 // Kontrak yang harus dipenuhi oleh response dari API
 
-interface LoginResponse {
+export interface RegisterResponse {
   message: string;
   success: boolean;
-  token: string;
+  error_code: number;
 }
 
 interface RegisterData {
@@ -11,6 +11,13 @@ interface RegisterData {
   email: string;
   instance: string;
   pass: string;
+}
+
+interface LoginResponse {
+  message: string;
+  success: boolean;
+  token: string;
+  error_code: number;
 }
 
 interface LoginData {
@@ -42,6 +49,7 @@ export const auth = {
         success: false,
         message: "Failed to connect to server",
         token: "",
+        error_code: 0,
       };
     }
   },
@@ -63,6 +71,7 @@ export const auth = {
         success: false,
         message: "Failed to connect to server",
         token: "",
+        error_code: -1,
       };
     }
   },

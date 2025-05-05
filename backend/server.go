@@ -1,9 +1,9 @@
 package main
 
 import (
-	jwtware "github.com/gofiber/contrib/jwt"
-	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
+    jwtware "github.com/gofiber/contrib/jwt"
+    "github.com/gofiber/fiber/v2"
+    "gorm.io/gorm"
 )
 
 type Backend struct {
@@ -33,10 +33,10 @@ func appMakeRouteHandler(backend *Backend) {
     }))
 
     appHandleLogin(backend, api)
-
     appHandleRegister(backend, api)
 
     appHandleUserInfo(backend, protected)
+    appHandleNewEvent(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")

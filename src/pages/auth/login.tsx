@@ -8,8 +8,9 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginPage() {
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
@@ -24,42 +25,50 @@ export default function LoginPage() {
     // Avoid spam click
     setLoading(true);
 
+    // Data that sended
     const response = await auth.login({ email, pass });
 
-    // After get response, then turn off the loading...
-    setLoading(false);
-
-    // Validator All Label must be filled
-    if (!email || !pass) {
-      setError("All field must be filled.");
-      toast.error("All field must be filled.");
+    if (!emailRegex.test(email)) {
+      setError("Please input your Email.");
+      toast.error("Please input your Email.");
+      // Example of stop loading after error
+      setLoading(false);
       return;
     }
 
-    // Validator format email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Invalid email format.");
-      // Clear error before submit
-      toast.error("Invalid email format.");
+    // Validator All Label must be filled
+    if (response.error_code == 2) {
+      setError("All field must be filled.");
+      toast.error("All field must be filled");
+      setLoading(false);
+      return;
+    }
+
+    // Validator if the email not registered
+    if (response.error_code == 3) {
+      setError("Email or Password is invalid.");
+      toast.error("Email or Password is invalid.");
+      setLoading(false);
       return;
     }
 
     // Handle error dari backend
-    if (response.message === "Wrong Password") {
+    if (response.error_code == 4) {
       setError("Password is Incorrect");
       toast.error("Password is Incorrect");
+      setLoading(false);
       return;
     }
 
     // If Login was success, then send to Dashboard
-    if (response.success) {
-      setError(""); // Clear the error message
+    if (response.success && response.error_code == 0) {
+      setLoading(false);
+      setError("");
       localStorage.setItem("token", response.token);
       navigate("/dashboard");
     } else {
-      setError(response.message);
-      toast.error(response.message);
+      setError("Login failed");
+      toast.error("Login failed");
     }
   };
 
@@ -155,6 +164,7 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
+      {/* Toast Container */}
       <ToastContainer />
     </section>
   );
