@@ -121,7 +121,7 @@ export default function RegisterPage() {
     });
 
     // If Register was success, then send to Login
-    if (response.success) {
+    if (response.success && response.error_code == 0) {
       setLoading(false);
       setError("");
       toast.success("Registration successful!");

@@ -65,6 +65,7 @@ export default function LoginPage() {
       setLoading(false);
       setError("");
       localStorage.setItem("token", response.token);
+      toast.success("Login Successful!");
       navigate("/dashboard");
     } else {
       setError("Login failed");
