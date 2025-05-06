@@ -16,6 +16,7 @@ import SertifikatUserPage from "@/pages/sertifikat";
 // Firewall / Route
 import ProtectedRoute from "@/components/firewall/protectedroute";
 import GuestOnlyRoute from "@/components/firewall/guestonlyroute";
+import AdminOnlyRoute from "@/components/firewall/adminonlyroute";
 
 // Admin
 import DasboardAdminPage from "@/pages/admin/index";
@@ -40,6 +41,7 @@ export default function App() {
           </GuestOnlyRoute>
         }
       />
+
       <Route
         path="/register"
         element={
@@ -114,16 +116,68 @@ export default function App() {
         }
       />
 
-      {/* Admin */}
-      <Route element={<DasboardAdminPage />} path="/admin" />
-      <Route element={<ManageUserPage />} path="/admin/user" />
-      <Route element={<WebinarPage />} path="/admin/webinar" />
-      <Route element={<DetailAdminPage />} path="/admin/detail" />
-      <Route element={<WebinarPage />} path="/admin/webinar/create" />
-      <Route element={<SertifikatAdminPage />} path="/admin/sertifikat" />
+      {/* Hanya untuk admin */}
       <Route
-        element={<CreateSertifikatAdminPage />}
+        path="/admin"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <DasboardAdminPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/admin/user"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <ManageUserPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/admin/webinar"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <WebinarPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/admin/detail"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <DetailAdminPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/admin/sertifikat"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <SertifikatAdminPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/admin/webinar/create"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <WebinarPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
         path="/admin/sertifikat/create"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <CreateSertifikatAdminPage />
+          </AdminOnlyRoute>
+        }
       />
 
       {/* Redirect jika route tidak ditemukan */}

@@ -65,6 +65,7 @@ export default function LoginPage() {
       setLoading(false);
       setError("");
       localStorage.setItem("token", response.token);
+      localStorage.setItem("admin", (response.admin as string) || "0");
       toast.success("Login Successful!");
       navigate("/dashboard");
     } else {

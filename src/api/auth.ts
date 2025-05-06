@@ -1,11 +1,14 @@
 // Kontrak yang harus dipenuhi oleh response dari API
 
-export interface RegisterResponse {
+export interface APIResponse {
   message: string;
   success: boolean;
+  token: string;
   error_code: number;
+  admin?: string;
 }
 
+// Register Data
 interface RegisterData {
   name: string;
   email: string;
@@ -13,36 +16,18 @@ interface RegisterData {
   pass: string;
 }
 
-interface LoginResponse {
-  message: string;
-  success: boolean;
-  token: string;
-  error_code: number;
-}
-
+// Login Data
 interface LoginData {
   email: string;
   pass: string;
 }
 
-// NOTE : Commented section are WIP
-
-// export interface LupaPasswordResponse {
-//   message: string;
-//   success: boolean;
-//   error_code: number;
-// }
-
+// Lupa Password Data
 // interface LupaPasswordData {
 //   pass: string;
 // }
 
-// export interface OTPLupaPasswordResponse {
-//   message: string;
-//   success: boolean;
-//   error_code: number;
-// }
-
+// OTP Lupa Password Data
 // interface OTPLupaPasswordData {
 //   otp: number;
 // }
@@ -54,7 +39,7 @@ const API_URL = "http://localhost:3000";
 // Fungsi untuk menghubungkan ke API
 export const auth = {
   // API Register
-  register: async (data: RegisterData): Promise<RegisterResponse> => {
+  register: async (data: RegisterData): Promise<APIResponse> => {
     try {
       const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
@@ -69,13 +54,14 @@ export const auth = {
       return {
         success: false,
         message: "Failed to connect to server",
-        error_code: 0,
+        token: "",
+        error_code: -1,
       };
     }
   },
 
   // API Login
-  login: async (data: LoginData): Promise<LoginResponse> => {
+  login: async (data: LoginData): Promise<APIResponse> => {
     try {
       const response = await fetch(`${API_URL}/api/login`, {
         method: "POST",
@@ -114,7 +100,7 @@ export const auth = {
   // API Lupa Password (Later)
   // lupa_password: async (
   //   data: LupaPasswordData
-  // ): Promise<LupaPasswordResponse> => {
+  // ): Promise<APIResponse> => {
   //   try {
   //     const response = await fetch(`${API_URL}/api/lupa_password`, {
   //       method: "POST",
@@ -137,7 +123,7 @@ export const auth = {
   // API OTP Lupa Password (Later)
   // otp_lupa_password: async (
   //   data: OTPLupaPasswordData
-  // ): Promise<OTPLupaPasswordResponse> => {
+  // ): Promise<APIResponse> => {
   //   try {
   //     const response = await fetch(`${API_URL}/api/otp_lupa_password`, {
   //       method: "POST",
@@ -152,7 +138,7 @@ export const auth = {
   //     return {
   //       success: false,
   //       message: "Failed to connect to server",
-  //       error_code: 0,
+  //       error_code: -1,
   //     };
   //   }
   // },
