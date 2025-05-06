@@ -142,9 +142,9 @@ export default function LoginPage() {
               {/* Redirect Lupa Password (WIP) */}
               <a
                 className="text-sm font-poppins font-bold text-blue-500 hover:text-blue-700"
-                href="#"
+                href="/otp_lupa_password"
               >
-                Lupa Password ?
+                Forgot Password ?
               </a>
             </div>
             <div className="flex flex-col items-center gap-4">
