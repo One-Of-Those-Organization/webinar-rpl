@@ -87,11 +87,24 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             "admin": strconv.Itoa(user.UserRole),
         })
     })
+
 }
+
+// GET : api/protected/user-info-of
+func appHandleUserInfoOf(backend *Backend, route fiber.Router) {}
 
 // GET : api/protected/user-info-all
 func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
     route.Get("user-info-all", func (c *fiber.Ctx) error {
+        offsetQuery := c.Query("offset")
+        if offsetQuery == "" {
+            offsetQuery = "0";
+        }
+
+        offset, err := strconv.Atoi(offsetQuery)
+        if err != nil {
+            offset = 0
+        }
         user := c.Locals("user").(*jwt.Token)
         if user != nil {
             claims := user.Claims.(jwt.MapClaims)
@@ -101,17 +114,19 @@ func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
                 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                     "success": false,
                     "message": "Invalid credentials to acces this api.",
+                    "error_code": 1,
                     "data": nil,
                 })
             }
 
             var userData []table.User
 
-            res := backend.db.Find(&userData)
+            res := backend.db.Offset(offset).Limit(1000).Find(&userData)
             if res.Error != nil {
                 return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                     "success": false,
                     "message": "Failed to fetch user data from db.",
+                    "error_code": 2,
                     "data": nil,
                 })
             }
@@ -119,12 +134,14 @@ func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusOK).JSON(fiber.Map{
                 "success": true,
                 "message": "Accept the data.",
+                "error_code": 0,
                 "data": userData,
             })
         }
         return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "success": false,
             "message": "Failed to claim the JWT Token.",
+            "error_code": 3,
             "data": nil,
         })
     })
@@ -146,6 +163,7 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
                 return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                     "success": false,
                     "message": "Failed to fetch user data from db.",
+                    "error_code": 1,
                     "data": nil,
                 })
             }
@@ -153,12 +171,14 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusOK).JSON(fiber.Map{
                 "success": true,
                 "message": "Success",
+                "error_code": 0,
                 "data": userData,
             })
         } else {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to claims JWT token.",
+                "error_code": 2,
                 "data": nil,
             })
         }
@@ -263,6 +283,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to claims JWT token.",
+                "error_code": 1,
                 "data": nil,
             })
         }
@@ -274,6 +295,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid credentials for this function",
+                "error_code": 2,
                 "data": nil,
             })
         }
@@ -295,6 +317,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
                 "data": nil,
             })
         }
@@ -305,6 +328,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to get the cert id , %v", res.Error),
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -319,6 +343,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to get the event material id , %v", res.Error),
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -345,13 +370,15 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to create new event, %v", res.Error),
+                "error_code": 6,
                 "data": nil,
             })
         }
 
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "success": false,
-            "message": "WIP",
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Successfully added the event",
+            "error_code": 0,
             "data": nil,
         })
     })
