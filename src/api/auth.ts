@@ -1,8 +1,9 @@
 // Kontrak yang harus dipenuhi oleh response dari API
 
-export interface RegisterResponse {
+export interface APIResponse {
   message: string;
   success: boolean;
+  token: string;
   error_code: number;
 }
 
@@ -11,13 +12,6 @@ interface RegisterData {
   email: string;
   instance: string;
   pass: string;
-}
-
-interface LoginResponse {
-  message: string;
-  success: boolean;
-  token: string;
-  error_code: number;
 }
 
 interface LoginData {
@@ -54,7 +48,7 @@ const API_URL = "http://localhost:3000";
 // Fungsi untuk menghubungkan ke API
 export const auth = {
   // API Register
-  register: async (data: RegisterData): Promise<RegisterResponse> => {
+  register: async (data: RegisterData): Promise<APIResponse> => {
     try {
       const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
@@ -69,13 +63,14 @@ export const auth = {
       return {
         success: false,
         message: "Failed to connect to server",
+        token: "",
         error_code: 0,
       };
     }
   },
 
   // API Login
-  login: async (data: LoginData): Promise<LoginResponse> => {
+  login: async (data: LoginData): Promise<APIResponse> => {
     try {
       const response = await fetch(`${API_URL}/api/login`, {
         method: "POST",
