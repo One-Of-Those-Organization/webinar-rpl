@@ -5,6 +5,7 @@ export interface APIResponse {
   success: boolean;
   token: string;
   error_code: number;
+  admin?: string;
 }
 
 // Register Data

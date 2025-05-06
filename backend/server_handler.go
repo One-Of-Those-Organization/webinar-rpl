@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 	"webrpl/table"
 
@@ -83,6 +84,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             "data": nil,
             "error_code": 0,
             "token": t,
+            "admin": strconv.Itoa(user.UserRole),
         })
     })
 }
