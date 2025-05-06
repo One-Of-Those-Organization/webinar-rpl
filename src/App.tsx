@@ -3,6 +3,8 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import LoginPage from "@/pages/auth/login";
 import RegisterPage from "@/pages/auth/register";
 import IndexPage from "@/pages/index";
+import LupaPassword from "@/pages/auth/lupa_password";
+import LupaPasswordOTP from "@/pages/auth/otp_lupa_password";
 
 // Authorize Page
 import AboutPage from "@/pages/about";
@@ -15,12 +17,12 @@ import SertifikatUserPage from "@/pages/sertifikat";
 import ProtectedRoute from "@/components/firewall/protectedroute";
 import GuestOnlyRoute from "@/components/firewall/guestonlyroute";
 
-// Admin 
+// Admin
 import DasboardAdminPage from "@/pages/admin/index";
 import ManageUserPage from "@/pages/admin/manageuser";
 import WebinarPage from "@/pages/admin/webinar";
 import DetailAdminPage from "@/pages/admin/detail";
-import SertifikatAdminPage from "@/pages/admin/serfitikat"; 
+import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
 
 export default function App() {
@@ -43,6 +45,24 @@ export default function App() {
         element={
           <GuestOnlyRoute>
             <RegisterPage />
+          </GuestOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/lupa_password"
+        element={
+          <GuestOnlyRoute>
+            <LupaPassword />
+          </GuestOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/otp_lupa_password"
+        element={
+          <GuestOnlyRoute>
+            <LupaPasswordOTP />
           </GuestOnlyRoute>
         }
       />
@@ -101,7 +121,10 @@ export default function App() {
       <Route element={<DetailAdminPage />} path="/admin/detail" />
       <Route element={<WebinarPage />} path="/admin/webinar/create" />
       <Route element={<SertifikatAdminPage />} path="/admin/sertifikat" />
-      <Route element={<CreateSertifikatAdminPage />} path="/admin/sertifikat/create" />
+      <Route
+        element={<CreateSertifikatAdminPage />}
+        path="/admin/sertifikat/create"
+      />
 
       {/* Redirect jika route tidak ditemukan */}
       <Route path="*" element={<Navigate to="/" />} />

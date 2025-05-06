@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
-import { auth } from "@/api/auth";
+import { auth, RegisterResponse } from "@/api/auth";
 import { EyeSlashFilledIcon, EyeFilledIcon, Logo } from "@/components/icons";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { RegisterResponse } from "@/api/auth";
 
 // Declare data and conditional here
 export default function RegisterPage() {
@@ -138,7 +137,7 @@ export default function RegisterPage() {
       <div className="w-full md:w-1/2 flex items-center justify-center py-12 md:py-0 px-4 order-2 md:order-1">
         <div className="w-full max-w-xl">
           <h1 className="text-3xl font-poppins md:text-4xl font-bold mb-6 md:mb-8">
-            FORM DATA
+            REGISTER
           </h1>
           <form onSubmit={handleRegister}>
             {/* Show Error */}
