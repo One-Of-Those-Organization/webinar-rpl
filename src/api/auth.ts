@@ -7,6 +7,7 @@ export interface APIResponse {
   error_code: number;
 }
 
+// Register Data
 interface RegisterData {
   name: string;
   email: string;
@@ -14,29 +15,18 @@ interface RegisterData {
   pass: string;
 }
 
+// Login Data
 interface LoginData {
   email: string;
   pass: string;
 }
 
-// NOTE : Commented section are WIP
-
-// export interface LupaPasswordResponse {
-//   message: string;
-//   success: boolean;
-//   error_code: number;
-// }
-
+// Lupa Password Data
 // interface LupaPasswordData {
 //   pass: string;
 // }
 
-// export interface OTPLupaPasswordResponse {
-//   message: string;
-//   success: boolean;
-//   error_code: number;
-// }
-
+// OTP Lupa Password Data
 // interface OTPLupaPasswordData {
 //   otp: number;
 // }
@@ -64,7 +54,7 @@ export const auth = {
         success: false,
         message: "Failed to connect to server",
         token: "",
-        error_code: 0,
+        error_code: -1,
       };
     }
   },
@@ -109,7 +99,7 @@ export const auth = {
   // API Lupa Password (Later)
   // lupa_password: async (
   //   data: LupaPasswordData
-  // ): Promise<LupaPasswordResponse> => {
+  // ): Promise<APIResponse> => {
   //   try {
   //     const response = await fetch(`${API_URL}/api/lupa_password`, {
   //       method: "POST",
@@ -132,7 +122,7 @@ export const auth = {
   // API OTP Lupa Password (Later)
   // otp_lupa_password: async (
   //   data: OTPLupaPasswordData
-  // ): Promise<OTPLupaPasswordResponse> => {
+  // ): Promise<APIResponse> => {
   //   try {
   //     const response = await fetch(`${API_URL}/api/otp_lupa_password`, {
   //       method: "POST",
@@ -147,7 +137,7 @@ export const auth = {
   //     return {
   //       success: false,
   //       message: "Failed to connect to server",
-  //       error_code: 0,
+  //       error_code: -1,
   //     };
   //   }
   // },
