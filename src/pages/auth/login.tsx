@@ -64,6 +64,13 @@ export default function LoginPage() {
     if (response.success && response.error_code == 0) {
       setLoading(false);
       setError("");
+
+      if (!response.token) {
+        setError("Token is empty");
+        toast.error("Token is empty");
+        return;
+      }
+
       localStorage.setItem("token", response.token);
       localStorage.setItem("admin", (response.admin as string) || "0");
       toast.success("Login Successful!");

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
-// import { auth, LupaPasswordResponse } from "@/api/auth";
 import { EyeSlashFilledIcon, EyeFilledIcon, Logo } from "@/components/icons";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -31,13 +30,6 @@ export default function LupaPassword() {
 
     // Avoid spam click
     setLoading(true);
-
-    // Data Send to Backend
-    // let response: LupaPasswordResponse = {
-    //   message: "",
-    //   success: false,
-    //   error_code: -1,
-    // };
 
     // Validator All Label must be filled
     if (newPass.length <= 0 && confirmNewPass.length <= 0) {
@@ -80,22 +72,6 @@ export default function LupaPassword() {
       setLoading(false);
       return;
     }
-
-    // Data Send to Backend
-    // response = await auth.lupa_password({
-    //   pass: newPass,
-    // });
-
-    // If Lupa Password was success, then send to Login
-    // if (response.success && response.error_code == 0) {
-    //   setLoading(false);
-    //   setError("");
-    //   toast.success("Password Successfully changed!");
-    //   navigate("/login");
-    // } else {
-    //   setError("Password failed to changed.");
-    //   toast.error("Password failed to changed.");
-    // }
   };
 
   return (

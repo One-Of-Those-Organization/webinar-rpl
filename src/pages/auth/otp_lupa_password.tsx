@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
-// import { auth , OTPLupaPasswordResponse} from "@/api/auth";
 import { Logo } from "@/components/icons";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,13 +20,6 @@ export default function OTPLupaPassword() {
     // Avoid spam click
     setLoading(true);
 
-    // Data Send to Backend
-    // let response: OTPLupaPasswordResponse = {
-    //   message: "",
-    //   success: false,
-    //   error_code: -1,
-    // };
-
     // Validator for Password that must same
     if (email === "") {
       setError("Please fill the OTP Code.");
@@ -43,22 +35,6 @@ export default function OTPLupaPassword() {
       setLoading(false);
       return;
     }
-
-    // Data Send to Backend
-    // response = await auth.otp_lupa_password({
-    //   pass: newPass,
-    // });
-
-    // If Register was success, then send to Login
-    // if (response.success && response.error_code == 0) {
-    //   setLoading(false);
-    //   setError("");
-    //   toast.success("Password Successfully changed!");
-    //   navigate("/login");
-    // } else {
-    //   setError("Password failed to changed.");
-    //   toast.error("Password failed to changed.");
-    // }
   };
 
   return (
