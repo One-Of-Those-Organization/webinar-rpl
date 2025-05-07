@@ -95,6 +95,7 @@ export const auth = {
       });
       localStorage.removeItem("token");
       localStorage.removeItem("admin");
+      localStorage.removeItem("email");
       return true;
     } catch (error) {
       return false;
