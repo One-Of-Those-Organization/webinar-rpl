@@ -1,16 +1,118 @@
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
+import { Card, CardBody, Image, Divider } from "@heroui/react";
 
-// WIP Dummy Page
+export default function AboutPage() {
+  const teamMembers = [
+    {
+      name: "Federico Matthew Pratama",
+      role: "Frontend Developer",
+      image: "https://avatars.githubusercontent.com/u/145318409?v=4",
+      github: "https://github.com/MashuNakamura",
+    },
+    {
+      name: "Fernando Perry",
+      role: "Backend Developer",
+      image: "https://avatars.githubusercontent.com/u/83385358?v=4",
+      github: "https://github.com/commrade-goad",
+    },
+    {
+      name: "Vincentius Johanes Lwie Jaya",
+      role: "Frontend Developer",
+      image: "https://avatars.githubusercontent.com/u/166426938?v=4",
+      github: "https://github.com/Mikaelazzz",
+    },
+  ];
 
-export default function DocsPage() {
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-        <div className="inline-block max-w-lg text-center justify-center">
-          <h1 className={title()}>About</h1>
+      <section className="flex flex-col items-center justify-center gap-8 py-12 md:py-16 px-4">
+        {/* Header Section */}
+        <div className="text-center space-y-4 max-w-2xl">
+          <h1 className={title({ className: "mb-4" })}>About Our Project</h1>
+          <p className="text-lg text-default-600">
+            Welcome to our Rekayasa Perangkat Lunak project. We're a team of
+            passionate developers working together to create something amazing.
+          </p>
+          <Divider className="my-8" />
+        </div>
+
+        {/* Team Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
+          {teamMembers.map((member, index) => (
+            <Card
+              key={index}
+              className="p-4 hover:shadow-lg transition-shadow duration-200"
+              isPressable
+            >
+              <CardBody className="overflow-visible p-0">
+                <div className="flex flex-col items-center gap-4">
+                  {/* Profile Image */}
+                  <div className="relative w-32 h-32">
+                    <Image
+                      alt={member.name}
+                      className="object-cover rounded-full"
+                      height={128}
+                      src={member.image}
+                      width={128}
+                    />
+                    <div className="absolute inset-0 rounded-full ring-2 ring-secondary/40"></div>
+                  </div>
+
+                  {/* Member Info */}
+                  <div className="text-center space-y-2">
+                    <h3 className="font-bold text-xl text-default-900">
+                      {member.name}
+                    </h3>
+                    <p className="text-default-600">{member.role}</p>
+                  </div>
+
+                  {/* Social Links */}
+                  <div className="flex gap-4 mt-2">
+                    <a
+                      href={member.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-default-400 hover:text-default-600 transition-colors"
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          ))}
+        </div>
+
+        {/* Project Info Section */}
+        <div className="mt-12 text-center max-w-2xl">
+          <Divider className="my-8" />
+          <h2 className="text-2xl font-bold mb-4">Tech Stack</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <TechBadge name="React" />
+            <TechBadge name="TypeScript" />
+            <TechBadge name="Go" />
+            <TechBadge name="SQLite3" />
+          </div>
         </div>
       </section>
     </DefaultLayout>
   );
 }
+
+// Tech Badge Component
+const TechBadge = ({ name }: { name: string }) => (
+  <div className="px-4 py-2 bg-secondary/10 rounded-full">
+    <span className="text-secondary-600 font-medium">{name}</span>
+  </div>
+);
