@@ -6,11 +6,10 @@ import { Input } from "@heroui/input";
 import { FaCamera } from "react-icons/fa";
 import { useState } from "react";
 
-
 export default function ProfilPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [instance, setInstance] = useState("");
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [instance, setInstance] = useState("");
   return (
     <DefaultLayout>
       <section className="flex flex-col lg:flex-row gap-10 p-4 md:p-8">
@@ -63,28 +62,22 @@ export default function ProfilPage() {
             label="Name"
             type="text"
             variant="flat"
-            readOnly
-            className="w-full"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <Input
+        <Input
             color="secondary"
             label="Email"
-            type="email"
+            type="text"
             variant="flat"
-            readOnly
-            className="w-full"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            readOnly
           />
-          <Input
+        <Input
             color="secondary"
             label="Instance"
             type="text"
             variant="flat"
-            readOnly
-            className="w-full"
             value={instance}
             onChange={(e) => setInstance(e.target.value)}
           />
