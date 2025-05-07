@@ -25,7 +25,6 @@ export const auth = {
       return {
         success: false,
         message: "Failed to connect to server",
-        error_code: -1,
       };
     }
   },
@@ -52,7 +51,6 @@ export const auth = {
       return {
         message: "Failed to connect to server",
         success: false,
-        error_code: -1,
       };
     }
   },
@@ -92,7 +90,6 @@ export const auth = {
       return {
         success: false,
         message: "Failed to connect to server",
-        error_code: -1,
       };
     }
   },

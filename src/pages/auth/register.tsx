@@ -123,7 +123,6 @@ export default function RegisterPage() {
     } catch (error) {
       setError("An unexpected error occurred");
       toast.error("An unexpected error occurred");
-      console.error(error);
     } finally {
       setLoading(false);
     }

@@ -79,7 +79,6 @@ export default function LoginPage() {
     } catch (error) {
       setError("An unexpected error occurred");
       toast.error("An unexpected error occurred");
-      console.error(error); // Tambahkan ini untuk debugging
     } finally {
       setLoading(false);
     }
