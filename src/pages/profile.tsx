@@ -4,13 +4,37 @@ import DefaultLayout from "@/layouts/default";
 import { Image, Button } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { FaCamera } from "react-icons/fa";
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
+import { auth } from "@/api/auth";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function ProfilPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [instance, setInstance] = useState("");
+  const [createdAt, setCreatedAt] = useState("");
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await auth.userinfo();
+        if (response.success && response.data) {
+          setName(response.data.UserFullName);
+          setEmail(response.data.UserEmail);
+          setInstance(response.data.UserInstance);
+          const rawDate = response.data.UserCreatedAt.split("T")[0]; // Ambil "2025-05-07"
+          const [year, month, day] = rawDate.split("-"); // Split jadi ["2025", "05", "07"]
+          const formattedDate = `${day}-${month}-${year}`; // Susun jadi "07-05-2025"
+          setCreatedAt(formattedDate);
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred");
+      }
+    };
+    fetchUserInfo();
+  }, []);
+
   return (
     <DefaultLayout>
       <section className="flex flex-col lg:flex-row gap-10 p-4 md:p-8">
@@ -48,17 +72,18 @@ export default function ProfilPage() {
           <div className="w-full">
             <Input
               color="secondary"
-              label="Bergabung Pada"
-              type="number"
+              label="Created At"
+              type="text"
               variant="flat"
               readOnly
+              value={createdAt}
             />
           </div>
         </div>
 
         {/* Form Section - Will appear second on mobile */}
         <div className="order-2 lg:order-1 flex flex-wrap gap-4 w-full lg:w-[700px]">
-        <Input
+          <Input
             color="secondary"
             label="Name"
             type="text"
@@ -114,6 +139,8 @@ export default function ProfilPage() {
             </Link>
           </div>
         </div>
+        {/* Toast Container */}
+        <ToastContainer />
       </section>
     </DefaultLayout>
   );

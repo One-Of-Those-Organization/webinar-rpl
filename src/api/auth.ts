@@ -1,9 +1,4 @@
-import {
-  BaseResponse,
-  RegisterData,
-  LoginData,
-  UserInfoData,
-} from "./interface.ts";
+import { BaseResponse, RegisterData, LoginData } from "./interface.ts";
 
 const API_URL = "http://localhost:3000";
 
@@ -43,7 +38,6 @@ export const auth = {
 
       if (result.success && result.token) {
         localStorage.setItem("token", result.token);
-        localStorage.setItem("admin", (result.admin as string) || "0");
       }
 
       return result;
@@ -55,24 +49,17 @@ export const auth = {
     }
   },
 
-  // API User Info
-  userinfo: async (data: UserInfoData): Promise<BaseResponse> => {
+  userinfo: async (): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
-      const email = localStorage.getItem("email");
-      const response = await fetch(`${API_URL}/api/user-info`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/api/protected/user-info`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
       });
       const result = await response.json();
-
-      if (result.success && result.data) {
-        localStorage.setItem("email", email as string);
-      }
       return result;
     } catch (error) {
       return {
@@ -93,9 +80,7 @@ export const auth = {
           Authorization: `Bearer ${token}`,
         },
       });
-      localStorage.removeItem("token");
-      localStorage.removeItem("admin");
-      localStorage.removeItem("email");
+      localStorage.clear();
       return true;
     } catch (error) {
       return false;
