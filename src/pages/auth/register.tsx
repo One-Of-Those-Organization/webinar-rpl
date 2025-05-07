@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
-import { auth, APIResponse } from "@/api/auth";
+import { auth } from "@/api/auth";
+import { BaseResponse } from "@/api/interface";
 import { EyeSlashFilledIcon, EyeFilledIcon, Logo } from "@/components/icons";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -36,10 +37,9 @@ export default function RegisterPage() {
     // Avoid spam click
     setLoading(true);
 
-    let response: APIResponse = {
+    let response: BaseResponse = {
       message: "",
       success: false,
-      token: "",
       error_code: 0,
     };
 
