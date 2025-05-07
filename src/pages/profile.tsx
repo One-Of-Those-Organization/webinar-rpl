@@ -4,8 +4,13 @@ import DefaultLayout from "@/layouts/default";
 import { Image, Button } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { FaCamera } from "react-icons/fa";
+import { useState } from "react";
+
 
 export default function ProfilPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [instance, setInstance] = useState("");
   return (
     <DefaultLayout>
       <section className="flex flex-col lg:flex-row gap-10 p-4 md:p-8">
@@ -53,37 +58,35 @@ export default function ProfilPage() {
 
         {/* Form Section - Will appear second on mobile */}
         <div className="order-2 lg:order-1 flex flex-wrap gap-4 w-full lg:w-[700px]">
-          <Input
+        <Input
             color="secondary"
-            label="NAMA"
+            label="Name"
             type="text"
             variant="flat"
             readOnly
             className="w-full"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
           <Input
             color="secondary"
-            label="NIM"
-            type="number"
-            variant="flat"
-            readOnly
-            className="w-full"
-          />
-          <Input
-            color="secondary"
-            label="EMAIL"
+            label="Email"
             type="email"
             variant="flat"
             readOnly
             className="w-full"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <Input
             color="secondary"
-            label="INSTANSI"
+            label="Instance"
             type="text"
             variant="flat"
             readOnly
             className="w-full"
+            value={instance}
+            onChange={(e) => setInstance(e.target.value)}
           />
 
           <div className="flex flex-row gap-2 pt-4 w-full">
