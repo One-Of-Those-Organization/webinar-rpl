@@ -25,7 +25,6 @@ export const auth = {
       return {
         success: false,
         message: "Failed to connect to server",
-        error_code: -1,
       };
     }
   },
@@ -40,12 +39,45 @@ export const auth = {
         },
         body: JSON.stringify(data),
       });
-      return await response.json();
+      const result = await response.json();
+
+      if (result.success && result.token) {
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("admin", (result.admin as string) || "0");
+      }
+
+      return result;
     } catch (error) {
       return {
         message: "Failed to connect to server",
         success: false,
-        error_code: -1,
+      };
+    }
+  },
+
+  // API User Info
+  userinfo: async (data: UserInfoData): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const email = localStorage.getItem("email");
+      const response = await fetch(`${API_URL}/api/user-info`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        localStorage.setItem("email", email as string);
+      }
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
       };
     }
   },
@@ -53,36 +85,20 @@ export const auth = {
   // API Logout
   logout: async () => {
     try {
+      const token = localStorage.getItem("token");
       await fetch(`${API_URL}/api/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       });
       localStorage.removeItem("token");
+      localStorage.removeItem("admin");
+      localStorage.removeItem("email");
       return true;
     } catch (error) {
       return false;
-    }
-  },
-
-  // API User Info
-  userinfo: async (data: UserInfoData): Promise<BaseResponse> => {
-    try {
-      const response = await fetch(`${API_URL}/api/user-info`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
-    } catch (error) {
-      return {
-        success: false,
-        message: "Failed to connect to server",
-        error_code: -1,
-      };
     }
   },
 };

@@ -2,7 +2,7 @@
 export interface BaseResponse {
   message: string;
   success: boolean;
-  error_code: number;
+  error_code?: number;
   token?: string;
   admin?: string;
 }

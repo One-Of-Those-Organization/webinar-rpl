@@ -20,9 +20,16 @@ import {
   Avatar,
 } from "@heroui/react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export const Navbar = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("email");
+    setEmail(storedEmail || "");
+  }, []);
 
   const searchInput = (
     <Input
@@ -90,7 +97,7 @@ export const Navbar = () => {
           <DropdownMenu aria-label="Profile Actions" variant="flat">
             <DropdownItem key="profile" className="h-14 gap-2">
               <p className="font-semibold">Signed in as</p>
-              <p className="font-semibold">zoey@example.com</p>
+              <p className="font-semibold">{email}</p>
             </DropdownItem>
             <DropdownItem key="my-profile" onClick={() => navigate("/profile")}>
               Profile

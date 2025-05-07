@@ -21,63 +21,66 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Avoid spam click
     setLoading(true);
 
-    // Data that sended
-    const response = await auth.login({ email, pass });
-
-    if (!emailRegex.test(email)) {
-      setError("Please input your Email.");
-      toast.error("Please input your Email.");
-      // Example of stop loading after error
-      setLoading(false);
-      return;
-    }
-
-    // Validator All Label must be filled
-    if (response.error_code == 2) {
-      setError("All field must be filled.");
-      toast.error("All field must be filled");
-      setLoading(false);
-      return;
-    }
-
-    // Validator if the email not registered
-    if (response.error_code == 3) {
-      setError("Email or Password is invalid.");
-      toast.error("Email or Password is invalid.");
-      setLoading(false);
-      return;
-    }
-
-    // Handle error dari backend
-    if (response.error_code == 4) {
-      setError("Password is Incorrect");
-      toast.error("Password is Incorrect");
-      setLoading(false);
-      return;
-    }
-
-    // If Login was success, then send to Dashboard
-    if (response.success && response.error_code == 0) {
-      setLoading(false);
-      setError("");
-
-      if (!response.token) {
-        setError("Token is empty");
-        toast.error("Token is empty");
+    try {
+      // Validator for must input email
+      if (email.length <= 0) {
+        setError("Please input your Email.");
+        toast.error("Please input your Email.");
         return;
       }
 
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("admin", (response.admin as string) || "0");
-      toast.success("Login Successful!");
-      navigate("/dashboard");
-    } else {
-      setError("Login failed");
-      toast.error("Login failed");
+      // Validator for must input password
+      if (pass.length <= 0) {
+        setError("Please input your Password.");
+        toast.error("Please input your Password.");
+        return;
+      }
+
+      // Validator for email format
+      if (!emailRegex.test(email)) {
+        setError("Please input valid Email.");
+        toast.error("Please input valid Email.");
+        return;
+      }
+
+      // API call
+      const response = await auth.login({ email, pass });
+
+      // Server-side validations
+      if (response.error_code === 2) {
+        setError("All field must be filled.");
+        toast.error("All field must be filled");
+        return;
+      }
+
+      if (response.error_code === 3) {
+        setError("Email or Password is invalid.");
+        toast.error("Email or Password is invalid.");
+        return;
+      }
+
+      if (response.error_code === 4) {
+        setError("Password is Incorrect");
+        toast.error("Password is Incorrect");
+        return;
+      }
+
+      // Success case
+      if (response.success) {
+        setError("");
+        toast.success("Login Successful!");
+        navigate("/dashboard");
+      } else {
+        setError("Login Failed");
+        toast.error("Login Failed");
+      }
+    } catch (error) {
+      setError("An unexpected error occurred");
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 

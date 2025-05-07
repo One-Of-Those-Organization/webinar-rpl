@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
 import { auth } from "@/api/auth";
-import { BaseResponse } from "@/api/interface";
 import { EyeSlashFilledIcon, EyeFilledIcon, Logo } from "@/components/icons";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -33,102 +32,99 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Avoid spam click
     setLoading(true);
 
-    let response: BaseResponse = {
-      message: "",
-      success: false,
-      error_code: 0,
-    };
+    try {
+      if (name.length <= 0) {
+        setError("Please input your Name.");
+        toast.error("Please input your Name.");
+        return;
+      }
 
-    // Validator All Label must be filled or instance is empty
-    if (
-      (email.length <= 0 && name.length <= 0 && pass.length <= 0) ||
-      instance.length <= 0
-    ) {
-      setError("Please fill in all fields.");
-      toast.error("All fields are required.");
+      if (
+        (email.length <= 0 && name.length <= 0 && pass.length <= 0) ||
+        instance.length <= 0
+      ) {
+        setError("Please fill in all fields.");
+        toast.error("All fields are required.");
+        return;
+      }
+
+      if (email.length <= 0) {
+        setError("Please input your Email.");
+        toast.error("Please input your Email.");
+        return;
+      }
+
+      if (instance.length <= 0) {
+        setError("Please input your Instance.");
+        toast.error("Please input your Instance.");
+        return;
+      }
+
+      if (!emailRegex.test(email)) {
+        setError("Invalid email format.");
+        toast.error("Please enter a valid email address.");
+        return;
+      }
+
+      if (pass.length <= 0) {
+        setError("Please input your Password.");
+        toast.error("Please input your Password.");
+        return;
+      }
+
+      if (confirmPass.length <= 0) {
+        setError("Please input your Confirm Password.");
+        toast.error("Please input your Confirm Password.");
+        return;
+      }
+
+      if (pass !== confirmPass) {
+        setError("Passwords do not match.");
+        toast.error("Passwords do not match.");
+        return;
+      }
+
+      if (!passwordRegex.test(pass)) {
+        setError("Password must be at least 8 characters...");
+        toast.error("Please enter a stronger password.");
+        return;
+      }
+
+      const response = await auth.register({
+        name,
+        email,
+        instance,
+        pass,
+      });
+
+      if (response.error_code === 2) {
+        setError("All field must be filled.");
+        toast.error("All field must be filled.");
+        return;
+      }
+
+      if (response.error_code === 4) {
+        setError("Email is already registered.");
+        toast.error("Email is already registered.");
+        return;
+      }
+
+      // 4. Success/failure handling
+      if (response.success && response.error_code === 0) {
+        setError("");
+        toast.success("Registration successful!");
+        navigate("/login");
+      } else {
+        setError("Registration failed.");
+        toast.error("Registration failed.");
+      }
+    } catch (error) {
+      setError("An unexpected error occurred");
+      toast.error("An unexpected error occurred");
+    } finally {
       setLoading(false);
-      return;
-    }
-
-    // Validator for Email
-    if (!emailRegex.test(email)) {
-      setError("Invalid email format.");
-      toast.error("Please enter a valid email address.");
-      setLoading(false);
-      return;
-    }
-
-    // Validator if pass is empty
-    if (pass.length <= 0) {
-      setError("Please input your Password.");
-      toast.error("Please input your Password.");
-      setLoading(false);
-      return;
-    }
-
-    // Validator if confirmPass is empty
-    if (confirmPass.length <= 0) {
-      setError("Please input your Confirm Password.");
-      toast.error("Please input your Confirm Password.");
-      setLoading(false);
-      return;
-    }
-
-    // Validator for Password that must same
-    if (pass !== confirmPass) {
-      setError("Passwords do not match.");
-      toast.error("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
-
-    // Validator for Password
-    if (!passwordRegex.test(pass)) {
-      setError(
-        "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character."
-      );
-      toast.error("Please enter a stronger password.");
-      setLoading(false);
-      return;
-    }
-
-    // Validator All Label must be filled
-    if (response.error_code == 2) {
-      setError("All field must be filled.");
-      toast.error("All field must be filled.");
-      setLoading(false);
-      return;
-    }
-
-    // Validator if the email not registered or already registered
-    if (response.error_code == 4) {
-      setError("Email is already registered.");
-      toast.error("Email is already registered.");
-      setLoading(false);
-      return;
-    }
-
-    // Data Send to Backend
-    response = await auth.register({
-      name,
-      email,
-      instance,
-      pass,
-    });
-
-    // If Register was success, then send to Login
-    if (response.success && response.error_code == 0) {
-      setLoading(false);
-      setError("");
-      toast.success("Registration successful!");
-      navigate("/login");
-    } else {
-      setError("Registration failed.");
-      toast.error("Registration failed.");
     }
   };
 
