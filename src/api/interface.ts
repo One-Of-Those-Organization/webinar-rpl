@@ -13,7 +13,6 @@ export interface RegisterData {
   email: string;
   instance: string;
   pass: string;
-  error_code?: number;
 }
 
 // Login Data

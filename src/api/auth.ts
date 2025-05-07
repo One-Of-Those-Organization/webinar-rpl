@@ -55,6 +55,33 @@ export const auth = {
     }
   },
 
+  // API User Info
+  userinfo: async (data: UserInfoData): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const email = localStorage.getItem("email");
+      const response = await fetch(`${API_URL}/api/user-info`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        localStorage.setItem("email", email as string);
+      }
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
+      };
+    }
+  },
+
   // API Logout
   logout: async () => {
     try {
@@ -67,30 +94,10 @@ export const auth = {
         },
       });
       localStorage.removeItem("token");
+      localStorage.removeItem("admin");
       return true;
     } catch (error) {
       return false;
-    }
-  },
-
-  // API User Info
-  userinfo: async (data: UserInfoData): Promise<BaseResponse> => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/user-info`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-      return await response.json();
-    } catch (error) {
-      return {
-        success: false,
-        message: "Failed to connect to server",
-      };
     }
   },
 };
