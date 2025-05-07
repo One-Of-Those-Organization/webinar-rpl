@@ -40,7 +40,14 @@ export const auth = {
         },
         body: JSON.stringify(data),
       });
-      return await response.json();
+      const result = await response.json();
+
+      if (result.success && result.token) {
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("admin", (result.admin as string) || "0");
+      }
+
+      return result;
     } catch (error) {
       return {
         message: "Failed to connect to server",
@@ -53,10 +60,12 @@ export const auth = {
   // API Logout
   logout: async () => {
     try {
+      const token = localStorage.getItem("token");
       await fetch(`${API_URL}/api/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       });
       localStorage.removeItem("token");
@@ -69,10 +78,12 @@ export const auth = {
   // API User Info
   userinfo: async (data: UserInfoData): Promise<BaseResponse> => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/api/user-info`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });

@@ -2,7 +2,7 @@
 export interface BaseResponse {
   message: string;
   success: boolean;
-  error_code: number;
+  error_code?: number;
   token?: string;
   admin?: string;
 }
@@ -13,6 +13,7 @@ export interface RegisterData {
   email: string;
   instance: string;
   pass: string;
+  error_code?: number;
 }
 
 // Login Data
