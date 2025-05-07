@@ -81,17 +81,73 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "successfully logged in.",
-            "data": nil,
+            "data": user,
             "error_code": 0,
             "token": t,
-            "admin": strconv.Itoa(user.UserRole),
         })
     })
 
 }
 
 // GET : api/protected/user-info-of
-func appHandleUserInfoOf(backend *Backend, route fiber.Router) {}
+func appHandleUserInfoOf(backend *Backend, route fiber.Router) {
+    route.Get("user-info-of", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user != nil {
+            claims := user.Claims.(jwt.MapClaims)
+            admin := claims["admin"].(int)
+
+            if admin != 1 {
+                return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Invalid credentials to acces this api.",
+                    "error_code": 1,
+                    "data": nil,
+                })
+            }
+        }
+
+        queriedEmail := c.Query("email")
+        if queriedEmail == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "No email specified.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var specifiedUser table.User
+        res := backend.db.Where("user_email = ?", queriedEmail).First(&specifiedUser)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "The email specified is not registered.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check the data.",
+            "error_code": 0,
+            "data": specifiedUser,
+        })
+    })
+}
+
+// POST: api/protected/user-edit
+func appHandleUserEdit(_ *Backend, route fiber.Router) {
+    route.Post("/user-edit", func (c *fiber.Ctx) error {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "success": false,
+            "message": "WIP.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
 
 // GET : api/protected/user-info-all
 func appHandleUserInfoAll(backend *Backend, route fiber.Router) {

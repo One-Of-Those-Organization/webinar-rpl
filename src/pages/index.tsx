@@ -14,6 +14,7 @@ export default function IndexPage() {
           <span className={title({ color: "violet", size: "lg" })}>
             WEBINAR
           </span>
+          <span className={title({ size: "sm" })}>Learn. Connect. Grow.</span>
         </div>
 
         <div className="flex gap-4">

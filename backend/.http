@@ -19,8 +19,3 @@ Content-Type: application/json
     "pass": "secure-password123",
     "email": "commrade@example.com"
 }
-
-### Test 3 - Get User Info
-GET http://localhost:3000/api/protected/user-info
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MCwiZW1haWwiOiJib21iYXJkaW5vQGV4YW1wbGUuY29tIiwiZXhwIjoxNzQ2ODg2NDUxfQ.0jStpMlfR8InOcil-9TRJtyh9mOBWtZfKimAfGbJcLQ

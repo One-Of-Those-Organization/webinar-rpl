@@ -9,7 +9,7 @@ const ProtectedRoute = ({ children }: React.PropsWithChildren) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/login");
+      navigate("/");
     }
   }, [navigate]);
 
