@@ -25,6 +25,7 @@ import WebinarPage from "@/pages/admin/webinar";
 import DetailAdminPage from "@/pages/admin/detail";
 import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
+import EditAdminPage from "@/pages/admin/edit_user";
 
 export default function App() {
   return (
@@ -178,6 +179,15 @@ export default function App() {
             <CreateSertifikatAdminPage />
           </AdminOnlyRoute>
         }
+      />
+
+      <Route 
+      path="/admin/user/edit" 
+      element={
+        <AdminOnlyRoute requireAdmin={true}>
+          <EditAdminPage />
+        </AdminOnlyRoute>
+      } 
       />
 
       {/* Redirect jika route tidak ditemukan */}
