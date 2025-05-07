@@ -21,14 +21,24 @@ import {
 } from "@heroui/react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    const storedEmail = localStorage.getItem("email");
-    setEmail(storedEmail || "");
+    const fetchUserInfo = async () => {
+      try {
+        const response = await auth.userinfo();
+        if (response.success && response.data) {
+          setEmail(response.data.UserEmail);
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred");
+      }
+    };
+    fetchUserInfo();
   }, []);
 
   const searchInput = (
@@ -133,6 +143,8 @@ export const Navbar = () => {
             </NavbarMenuItem>
           ))}
         </div>
+        {/* Toast Container */}
+        <ToastContainer />
       </NavbarMenu>
     </HeroUINavbar>
   );
