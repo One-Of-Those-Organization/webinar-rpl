@@ -6,6 +6,9 @@ export interface APIResponse {
   token: string;
   error_code: number;
   admin?: string;
+  data: {
+    user_email: string;
+  };
 }
 
 // Register Data
@@ -20,6 +23,10 @@ interface RegisterData {
 interface LoginData {
   email: string;
   pass: string;
+}
+
+interface UserInfoData {
+  email: string;
 }
 
 // Lupa Password Data
@@ -56,6 +63,9 @@ export const auth = {
         message: "Failed to connect to server",
         token: "",
         error_code: -1,
+        data: {
+          user_email: "",
+        },
       };
     }
   },
@@ -77,6 +87,9 @@ export const auth = {
         message: "Failed to connect to server",
         token: "",
         error_code: -1,
+        data: {
+          user_email: "",
+        },
       };
     }
   },
@@ -142,4 +155,28 @@ export const auth = {
   //     };
   //   }
   // },
+
+  // API User Info
+  userinfo: async (data: UserInfoData): Promise<APIResponse> => {
+    try {
+      const response = await fetch(`${API_URL}/api/user-info`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
+        token: "",
+        error_code: -1,
+        data: {
+          user_email: "",
+        },
+      };
+    }
+  },
 };
