@@ -1,14 +1,14 @@
 package main
 
 import (
-    "fmt"
-    "time"
-    "webrpl/table"
-    "strconv"
+	"fmt"
+	"strconv"
+	"time"
+	"webrpl/table"
 
-    "github.com/gofiber/fiber/v2"
-    "github.com/golang-jwt/jwt/v5"
-    "gorm.io/gorm"
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 // POST : api/login
@@ -81,12 +81,9 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "successfully logged in.",
-            // NOTE: if really need it lets just say login return the whole user data.
             "data": user,
             "error_code": 0,
             "token": t,
-            // NOTE: If the user data is in need use `/api/protected/user-info`
-            // "admin": strconv.Itoa(user.UserRole),
         })
     })
 

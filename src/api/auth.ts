@@ -38,6 +38,7 @@ export const auth = {
 
       if (result.success && result.token) {
         localStorage.setItem("token", result.token);
+        localStorage.setItem("admin", result.admin);
       }
 
       return result;
