@@ -5,9 +5,9 @@ import RegisterPage from "@/pages/auth/register";
 import IndexPage from "@/pages/index";
 import LupaPassword from "@/pages/auth/lupa_password";
 import LupaPasswordOTP from "@/pages/auth/otp_lupa_password";
+import AboutPage from "@/pages/about";
 
 // Authorize Page
-import AboutPage from "@/pages/about";
 import DashboardPage from "@/pages/dashboard";
 import DetailPage from "@/pages/detail";
 import ProfilePage from "@/pages/profile";
@@ -70,6 +70,15 @@ export default function App() {
         }
       />
 
+      <Route
+        path="/about"
+        element={
+          <GuestOnlyRoute>
+            <DetailPage />
+          </GuestOnlyRoute>
+        }
+      />
+
       {/* BATAS Akses untuk Tamu / Pengguna */}
 
       {/* Hanya untuk user login */}
@@ -83,15 +92,6 @@ export default function App() {
       />
       <Route
         path="/detail"
-        element={
-          <ProtectedRoute>
-            <DetailPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/about"
         element={
           <ProtectedRoute>
             <DetailPage />
@@ -181,13 +181,13 @@ export default function App() {
         }
       />
 
-      <Route 
-      path="/admin/user/edit" 
-      element={
-        <AdminOnlyRoute requireAdmin={true}>
-          <EditAdminPage />
-        </AdminOnlyRoute>
-      } 
+      <Route
+        path="/admin/user/edit"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <EditAdminPage />
+          </AdminOnlyRoute>
+        }
       />
 
       {/* Redirect jika route tidak ditemukan */}

@@ -120,6 +120,11 @@ export const Navbar = () => {
             <p className="font-bold text-inherit">Webinar UKDC</p>
           </Link>
         </NavbarBrand>
+        <NavbarItem className="hidden lg:flex">
+          <Link href="/about" color="foreground">
+            About
+          </Link>
+        </NavbarItem>
         {isLoggedIn && (
           <>
             <NavbarItem className="hidden lg:flex">
@@ -173,8 +178,8 @@ export const Navbar = () => {
             ))
           ) : (
             <NavbarMenuItem>
-              <Link color="foreground" href="/login" size="lg">
-                You are not logged in
+              <Link color="foreground" href="/about" size="lg">
+                About
               </Link>
             </NavbarMenuItem>
           )}
