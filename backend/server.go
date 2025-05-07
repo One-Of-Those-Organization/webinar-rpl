@@ -36,6 +36,10 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleRegister(backend, api)
 
     appHandleUserInfo(backend, protected)
+    appHandleUserInfoAll(backend, protected)
+    appHandleUserInfoOf(backend, protected)
+    appHandleUserEdit(backend, protected)
+
     appHandleNewEvent(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
