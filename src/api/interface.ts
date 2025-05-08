@@ -5,12 +5,17 @@ export interface BaseResponse {
   error_code?: number;
   token?: string;
   admin?: string;
-  data?: {
-    UserFullName: string;
-    UserEmail: string;
-    UserInstance: string;
-    UserCreatedAt: string;
-  };
+  data?: any;
+}
+
+export interface UserData {
+  UserId: number;
+  UserFullName: string;
+  UserEmail: string;
+  UserInstance: string;
+  UserRole: number;
+  UserPicture: string;
+  UserCreatedAt: Date;
 }
 
 // Register Data

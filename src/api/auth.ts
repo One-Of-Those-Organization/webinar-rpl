@@ -38,7 +38,7 @@ export const auth = {
 
       if (result.success && result.token) {
         localStorage.setItem("token", result.token);
-        localStorage.setItem("admin", result.admin);
+        localStorage.setItem("user_data", JSON.stringify(result.data));
       }
 
       return result;

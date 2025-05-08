@@ -13,16 +13,20 @@ const AdminOnlyRoute = ({
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const admin = localStorage.getItem("admin");
-    console.log("token", token);
-    console.log("admin", admin);
+    const user_data = localStorage.getItem("user_data");
+    let admin: number = 0;
+    if (!user_data) {
+      navigate("/");
+    } else {
+      admin = JSON.parse(user_data).UserRole;
+    }
 
     if (!token) {
       navigate("/login");
       return;
     }
 
-    if (requireAdmin && admin !== "1") {
+    if (requireAdmin && admin !== 1) {
       navigate("/");
     }
   }, [navigate, requireAdmin]);
