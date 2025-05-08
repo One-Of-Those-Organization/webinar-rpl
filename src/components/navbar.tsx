@@ -4,7 +4,10 @@ import { siteConfig } from "@/config/site";
 import { SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/icons";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { auth } from "@/api/auth";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { UserData } from "@/api/interface";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -19,25 +22,26 @@ import {
   DropdownItem,
   Avatar,
 } from "@heroui/react";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { UserData } from "@/api/interface";
-import "react-toastify/dist/ReactToastify.css";
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const user_data = localStorage.getItem("user_data");
-  let user_data_object: UserData | undefined = undefined;
-  if (user_data) {
-    user_data_object = JSON.parse(user_data);
-  }
 
   useEffect(() => {
-    if (user_data_object) {
-      setEmail(user_data_object.UserEmail);
-      setIsLoggedIn(true);
+    try {
+      // Check kalau dapet data (biar ga null)
+      if (user_data) {
+        // Fetch (parse) data from json
+        const user_data_object: UserData = JSON.parse(user_data);
+
+        // Set value to useState
+        setEmail(user_data_object.UserEmail);
+        setIsLoggedIn(true);
+      }
+    } catch (error) {
+      console.log("Unexpected Error");
     }
   }, []);
 
@@ -72,11 +76,8 @@ export const Navbar = () => {
             key="logout"
             color="danger"
             onClick={async () => {
-              if (await auth.logout()) {
-                setIsLoggedIn(false);
-                setEmail("");
-                navigate("/login");
-              }
+              localStorage.clear();
+              navigate("/login");
             }}
           >
             Log Out

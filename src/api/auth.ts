@@ -40,51 +40,12 @@ export const auth = {
         localStorage.setItem("token", result.token);
         localStorage.setItem("user_data", JSON.stringify(result.data));
       }
-
       return result;
     } catch (error) {
       return {
         message: "Failed to connect to server",
         success: false,
       };
-    }
-  },
-
-  userinfo: async (): Promise<BaseResponse> => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/protected/user-info`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      return {
-        success: false,
-        message: "Failed to connect to server",
-      };
-    }
-  },
-
-  // API Logout
-  logout: async () => {
-    try {
-      const token = localStorage.getItem("token");
-      await fetch(`${API_URL}/api/logout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      localStorage.clear();
-      return true;
-    } catch (error) {
-      return false;
     }
   },
 };

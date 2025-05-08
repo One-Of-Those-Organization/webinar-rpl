@@ -5,34 +5,39 @@ import { Image, Button } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { FaCamera } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { auth } from "@/api/auth";
+import { UserData } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function ProfilPage() {
+  const user_data = localStorage.getItem("user_data");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [instance, setInstance] = useState("");
   const [createdAt, setCreatedAt] = useState("");
 
+  // Use useEffect so it doesnt aggresively refresh
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await auth.userinfo();
-        if (response.success && response.data) {
-          setName(response.data.UserFullName);
-          setEmail(response.data.UserEmail);
-          setInstance(response.data.UserInstance);
-          const rawDate = response.data.UserCreatedAt.split("T")[0]; // Ambil "2025-05-07"
-          const [year, month, day] = rawDate.split("-"); // Split jadi ["2025", "05", "07"]
-          const formattedDate = `${day}-${month}-${year}`; // Susun jadi "07-05-2025"
-          setCreatedAt(formattedDate);
-        }
-      } catch (error) {
-        toast.error("An unexpected error occurred");
+    try {
+      // Check kalau dapet data (biar ga null)
+      if (user_data) {
+        // Fetch (parse) data from json
+        const user_data_object: UserData = JSON.parse(user_data);
+
+        // Set value to useState
+        setName(user_data_object.UserFullName);
+        setEmail(user_data_object.UserEmail);
+        setInstance(user_data_object.UserInstance);
+
+        // Better Format Date
+        const rawDate = user_data_object.UserCreatedAt.split("T")[0]; // Ambil "2025-05-07"
+        const [year, month, day] = rawDate.split("-"); // Split jadi ["2025", "05", "07"]
+        const formattedDate = `${day}-${month}-${year}`; // Susun jadi "07-05-2025"
+        setCreatedAt(formattedDate);
       }
-    };
-    fetchUserInfo();
+    } catch (error) {
+      toast.error("Unexpected Error!");
+    }
   }, []);
 
   return (

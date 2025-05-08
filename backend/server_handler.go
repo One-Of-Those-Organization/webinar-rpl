@@ -1,14 +1,14 @@
 package main
 
 import (
-    "fmt"
-    "time"
-    "webrpl/table"
-    "strconv"
+	"fmt"
+	"strconv"
+	"time"
+	"webrpl/table"
 
-    "github.com/gofiber/fiber/v2"
-    "github.com/golang-jwt/jwt/v5"
-    "gorm.io/gorm"
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 // POST : api/login

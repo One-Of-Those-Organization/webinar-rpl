@@ -8,6 +8,7 @@ export interface BaseResponse {
   data?: any;
 }
 
+// Export UserData {JSON}
 export interface UserData {
   UserId: number;
   UserFullName: string;
@@ -15,7 +16,7 @@ export interface UserData {
   UserInstance: string;
   UserRole: number;
   UserPicture: string;
-  UserCreatedAt: Date;
+  UserCreatedAt: string;
 }
 
 // Register Data
