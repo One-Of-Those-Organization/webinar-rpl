@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
-	"time"
-	"webrpl/table"
+    "fmt"
+    "time"
+    "webrpl/table"
+    "strconv"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/gorm"
+    "github.com/gofiber/fiber/v2"
+    "github.com/golang-jwt/jwt/v5"
+    "gorm.io/gorm"
 )
 
 // POST : api/login
@@ -159,7 +159,6 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                     "data": nil,
                 })
             }
-            
             updates := make(map[string]interface{})
 
             if body.FullName != "" {
@@ -183,7 +182,6 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                     "data": nil,
                 })
             }
-            
             return c.Status(fiber.StatusOK).JSON(fiber.Map{
                 "success": true,
                 "message": "Data Saved.",
