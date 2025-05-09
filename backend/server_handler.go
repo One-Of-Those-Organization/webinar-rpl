@@ -458,7 +458,29 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
         NewEventMat = append(NewEventMat, _NewEventMat)
 
         // TOOD: will not add the event if there is event on that time?
+        var Event table.Event
+
+        res = backend.db.Where("event_dstart = ? ",body.DStart).First(&Event)
+        if res.Error != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Event with that date is already exist",
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
         // TOOD: will not create the event with the same name?
+        res = backend.db.Where("event_name = ? ", body.Name).First(&Event)
+        if res.Error != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Event with that name is already exist",
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+        
         // TOOD: finish binding this.
         newEvent := table.Event {
             EventDesc: body.Desc,
