@@ -414,7 +414,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             Link          string    `json:"link"`
             Speaker       string    `json:"speaker"`
             Att           string    `json:"att"`
-            FMaterial     []int       `json:"material_id"`
+            FMaterial     []int     `json:"material_id"`
             FCertTemplate int       `json:"cert_temp_id"`
         }
 
@@ -438,7 +438,21 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
+
+        // Double Check :)
         // TODO: Check if that id didnt exist.
+        // nangkepku kalau dia gaada id (ga dapat) -> brarti query nya 0
+        // Kalau lebih berarti dapet
+
+        if res.RowsAffected == 0 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Certificate template with that id does not exist",
+                "error_code": 5,
+                "data": nil,
+            })
+        } 
+
         var NewCertTemplate []table.CertTemplate
         NewCertTemplate = append(NewCertTemplate, _NewCertTemplate)
 
@@ -449,39 +463,71 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to get the event material id , %v", res.Error),
-                "error_code": 5,
+                "error_code": 6,
                 "data": nil,
             })
         }
+
+        // Double Check :)
         // TODO: Check if that id didnt exist.
-        var NewEventMat []table.EventMaterial
-        NewEventMat = append(NewEventMat, _NewEventMat)
+        // nangkepku kalau dia gaada id (ga dapat) -> brarti query nya 0
+        // Kalau lebih berarti dapet
 
-        // TOOD: will not add the event if there is event on that time?
-        var Event table.Event
-
-        res = backend.db.Where("event_dstart = ? ",body.DStart).First(&Event)
-        if res.Error != nil {
+        if res.RowsAffected == 0 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Event with that date is already exist",
-                "error_code": 6,
-                "data": nil,
-            })
-        }
-
-        // TOOD: will not create the event with the same name?
-        res = backend.db.Where("event_name = ? ", body.Name).First(&Event)
-        if res.Error != nil {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Event with that name is already exist",
-                "error_code": 6,
+                "message": "Event Material with that id does not exist",
+                "error_code": 7,
                 "data": nil,
             })
         }
         
-        // TOOD: finish binding this.
+        // Double Check :)
+        var NewEventMat []table.EventMaterial
+        NewEventMat = append(NewEventMat, _NewEventMat)
+
+        var Event table.Event
+        res = backend.db.Where("event_dstart = ? ",body.DStart).First(&Event)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch new event from db.",
+                "error_code": 8,
+                "data": nil,
+            })
+        }
+
+        if res.RowsAffected > 0 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Event with that Date is already exist",
+                "error_code": 9,
+                "data": nil,
+            })
+        }
+
+        // Double Check :)
+        res = backend.db.Where("event_name = ? ", body.Name).First(&Event)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch new event from db.",
+                "error_code": 10,
+                "data": nil,
+            })
+        }
+
+        if res.RowsAffected > 0 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Event with that name is already exist",
+                "error_code": 11,
+                "data": nil,
+            })
+        }
+        
+        // TODO: finish binding this.
+        // Bukannya ini udah yo?
         newEvent := table.Event {
             EventDesc: body.Desc,
             EventName: body.Name,
@@ -498,7 +544,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to create new event, %v", res.Error),
-                "error_code": 6,
+                "error_code": 12,
                 "data": nil,
             })
         }
