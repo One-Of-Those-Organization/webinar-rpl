@@ -9,7 +9,7 @@ const GuestOnlyRoute = ({ children }: React.PropsWithChildren) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      navigate("/dashboard");
+      navigate("/");
     }
   }, [navigate]);
 

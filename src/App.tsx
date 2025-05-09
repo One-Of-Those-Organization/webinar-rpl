@@ -164,15 +164,6 @@ export default function App() {
       />
 
       <Route
-        path="/admin/webinar/create"
-        element={
-          <AdminOnlyRoute requireAdmin={true}>
-            <WebinarPage />
-          </AdminOnlyRoute>
-        }
-      />
-
-      <Route
         path="/admin/sertifikat/create"
         element={
           <AdminOnlyRoute requireAdmin={true}>
