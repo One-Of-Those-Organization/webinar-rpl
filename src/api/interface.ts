@@ -32,3 +32,10 @@ export interface LoginData {
   email: string;
   pass: string;
 }
+
+// User Edit Data
+export interface UserEditData {
+  name: string;
+  instance: string;
+  picture: string;
+}

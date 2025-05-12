@@ -19,3 +19,14 @@ Content-Type: application/json
     "pass": "secure-password123",
     "email": "commrade@example.com"
 }
+
+### Test 3 - User edit
+POST http://localhost:3000/api/protected/user-edit
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1haWwiOiJjb21tcmFkZUBleGFtcGxlLmNvbSIsImV4cCI6MTc0NzA1MzI0NX0.Oi1az4ldQLYGiH6tzbK7_mA6kg7IWESyYJErWkRSpi8
+
+{
+    "name": "John Doe",
+    "instance": "New Instance",
+    "picture": "https://example.com/path/to/new-picture.jpg"
+}
