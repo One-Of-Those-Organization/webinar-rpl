@@ -2,10 +2,18 @@ import { Link } from "@heroui/link";
 import { button as buttonStyles } from "@heroui/theme";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
+import { useEffect, useState } from "react";
 
 // Default page for the application
 
 export default function IndexPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center min-h-[65vh] text-center">
@@ -25,7 +33,7 @@ export default function IndexPage() {
               variant: "solid",
               size: "lg",
             })}
-            href="/login"
+            href={isLoggedIn ? "/dashboard" : "/login"}
           >
             Get Started
           </Link>

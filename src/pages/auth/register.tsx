@@ -238,7 +238,7 @@ export default function RegisterPage() {
                   size: "lg",
                 })}
               >
-                {loading ? "Loading..." : "Masuk"}
+                {loading ? "Loading..." : "Register"}
               </button>
             </div>
           </form>
@@ -247,8 +247,11 @@ export default function RegisterPage() {
 
       {/* Right Sidebar */}
       <div className="w-full md:w-1/2 bg-purple-300 flex flex-col items-center justify-center py-12 md:py-0 order-1 md:order-2">
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-4">
           <Logo className="h-48 md:h-64 w-48 md:w-64" />
+          <p className="text-md font-poppins text-center text-purple-500">
+            Already have account?
+          </p>
           {/* Button Switch to Login */}
           <button
             type="submit"

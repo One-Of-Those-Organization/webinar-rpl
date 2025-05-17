@@ -90,6 +90,9 @@ export default function LoginPage() {
       <div className="w-full md:w-1/2 bg-purple-300 flex flex-col items-center justify-center py-12 md:py-0">
         <div className="flex flex-col items-center gap-4">
           <Logo className="h-48 md:h-64 w-48 md:w-64" />
+          <p className="text-md font-poppins text-center text-purple-500">
+            Doesn't have account?
+          </p>
           <button
             type="submit"
             onClick={() => navigate("/register")}
@@ -170,7 +173,7 @@ export default function LoginPage() {
                   size: "lg",
                 })}
               >
-                {loading ? "Loading..." : "Masuk"}
+                {loading ? "Loading..." : "Login"}
               </button>
             </div>
           </form>
