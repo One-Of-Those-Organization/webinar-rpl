@@ -1,5 +1,5 @@
 import { Input } from "@heroui/input";
-import { SearchIcon } from "./icons";
+import { SearchIcon } from "@/components/icons";
 import React from "react";
 
 export function Search(): React.ReactElement {

@@ -59,7 +59,7 @@ export const Navbar = () => {
             color="danger"
             onClick={async () => {
               localStorage.clear();
-              navigate("/login");
+              navigate("/");
             }}
           >
             Log Out
