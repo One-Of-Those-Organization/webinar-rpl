@@ -118,6 +118,7 @@ export default function App() {
       />
 
       {/* Hanya untuk admin */}
+      {/* Dashboard Admin */}
       <Route
         path="/admin"
         element={
@@ -127,6 +128,7 @@ export default function App() {
         }
       />
 
+      {/* View User Admin*/}
       <Route
         path="/admin/user"
         element={
@@ -136,6 +138,17 @@ export default function App() {
         }
       />
 
+      {/* Editing User Admin*/}
+      <Route
+        path="/admin/user/edit"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <EditAdminPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      {/* View Webinar Admin*/}
       <Route
         path="/admin/webinar"
         element={
@@ -145,8 +158,9 @@ export default function App() {
         }
       />
 
+      {/* Detail Webinar Admin*/}
       <Route
-        path="/admin/detail"
+        path="/admin/webinar/detail"
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <DetailAdminPage />
@@ -154,6 +168,7 @@ export default function App() {
         }
       />
 
+      {/* Sertifikat Admin */}
       <Route
         path="/admin/sertifikat"
         element={
@@ -163,20 +178,12 @@ export default function App() {
         }
       />
 
+      {/* Create Sertifikat Admin */}
       <Route
         path="/admin/sertifikat/create"
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <CreateSertifikatAdminPage />
-          </AdminOnlyRoute>
-        }
-      />
-
-      <Route
-        path="/admin/user/edit"
-        element={
-          <AdminOnlyRoute requireAdmin={true}>
-            <EditAdminPage />
           </AdminOnlyRoute>
         }
       />

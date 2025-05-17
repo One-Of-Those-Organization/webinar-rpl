@@ -3,7 +3,7 @@ import { siteConfig } from "@/config/site";
 import { Logo } from "@/components/icons";
 import { Search } from "@/components/search";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
 import {
@@ -23,9 +23,12 @@ import {
 
 export const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const user_data = localStorage.getItem("user_data");
+
+  const isDashboardPage = location.pathname === "/dashboard";
 
   useEffect(() => {
     try {
@@ -99,21 +102,27 @@ export const Navbar = () => {
 
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
-            <Link href="/dashboard" color="foreground">
+            <Link
+              href="/dashboard"
+              color={isDashboardPage ? "primary" : "foreground"}
+            >
               Dashboard
             </Link>
           </NavbarItem>
         )}
 
         <NavbarItem className="hidden lg:flex">
-          <Link href="/about" color="foreground">
+          <Link
+            href="/about"
+            color={location.pathname === "/about" ? "primary" : "foreground"}
+          >
             About
           </Link>
         </NavbarItem>
       </NavbarContent>
 
       <NavbarContent className="items-center gap-4" justify="end">
-        {isLoggedIn && (
+        {isLoggedIn && isDashboardPage && (
           <NavbarItem className="hidden lg:flex">
             <Search />
           </NavbarItem>
@@ -138,20 +147,32 @@ export const Navbar = () => {
       </NavbarContent>
 
       <NavbarMenu>
-        {isLoggedIn && <Search />}
+        {isLoggedIn && isDashboardPage && <Search />}
         <div className="mx-4 mt-2 flex flex-col gap-2">
           <ThemeSwitch />
           {isLoggedIn ? (
             siteConfig.navMenuItems.map((item, index) => (
               <NavbarMenuItem key={`${item}-${index}`}>
-                <Link color="foreground" href={item.href} size="lg">
+                <Link
+                  color={
+                    location.pathname === item.href ? "primary" : "foreground"
+                  }
+                  href={item.href}
+                  size="lg"
+                >
                   {item.label}
                 </Link>
               </NavbarMenuItem>
             ))
           ) : (
             <NavbarMenuItem>
-              <Link color="foreground" href="/about" size="lg">
+              <Link
+                color={
+                  location.pathname === "/about" ? "primary" : "foreground"
+                }
+                href="/about"
+                size="lg"
+              >
                 About
               </Link>
             </NavbarMenuItem>
