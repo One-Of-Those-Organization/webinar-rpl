@@ -26,6 +26,7 @@ import DetailAdminPage from "@/pages/admin/detail";
 import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
 import EditAdminPage from "@/pages/admin/edit_user";
+import AddUserPage from "@/pages/admin/add_user";
 
 export default function App() {
   return (
@@ -134,6 +135,16 @@ export default function App() {
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <ManageUserPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      {/* Add User Admin*/}
+      <Route
+        path="/admin/user/add"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <AddUserPage />
           </AdminOnlyRoute>
         }
       />
