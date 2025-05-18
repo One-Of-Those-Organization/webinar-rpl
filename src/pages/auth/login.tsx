@@ -24,24 +24,31 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Validator for must input all fields
+      if (email.length <= 0 && pass.length <= 0) {
+        setError("Please fill in all fields.");
+        toast.warn("All fields are required.");
+        return;
+      }
+
       // Validator for must input email
       if (email.length <= 0) {
         setError("Please input your Email.");
-        toast.error("Please input your Email.");
+        toast.info("Please input your Email.");
         return;
       }
 
       // Validator for must input password
       if (pass.length <= 0) {
         setError("Please input your Password.");
-        toast.error("Please input your Password.");
+        toast.info("Please input your Password.");
         return;
       }
 
       // Validator for email format
       if (!emailRegex.test(email)) {
         setError("Please input valid Email.");
-        toast.error("Please input valid Email.");
+        toast.info("Please input valid Email.");
         return;
       }
 
@@ -51,19 +58,19 @@ export default function LoginPage() {
       // Server-side validations
       if (response.error_code === 2) {
         setError("All field must be filled.");
-        toast.error("All field must be filled");
+        toast.warn("All field must be filled");
         return;
       }
 
       if (response.error_code === 3) {
         setError("Email or Password is invalid.");
-        toast.error("Email or Password is invalid.");
+        toast.warn("Email or Password is invalid.");
         return;
       }
 
       if (response.error_code === 4) {
         setError("Password is Incorrect");
-        toast.error("Password is Incorrect");
+        toast.warn("Password is Incorrect");
         return;
       }
 

@@ -35,60 +35,60 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      if (name.length <= 0) {
-        setError("Please input your Name.");
-        toast.error("Please input your Name.");
-        return;
-      }
-
       if (
         (email.length <= 0 && name.length <= 0 && pass.length <= 0) ||
         instance.length <= 0
       ) {
         setError("Please fill in all fields.");
-        toast.error("All fields are required.");
+        toast.warn("All fields are required.");
+        return;
+      }
+
+      if (name.length <= 0) {
+        setError("Please input your Name.");
+        toast.info("Please input your Name.");
         return;
       }
 
       if (email.length <= 0) {
         setError("Please input your Email.");
-        toast.error("Please input your Email.");
+        toast.info("Please input your Email.");
         return;
       }
 
       if (instance.length <= 0) {
         setError("Please input your Instance.");
-        toast.error("Please input your Instance.");
-        return;
-      }
-
-      if (!emailRegex.test(email)) {
-        setError("Invalid email format.");
-        toast.error("Please enter a valid email address.");
+        toast.info("Please input your Instance.");
         return;
       }
 
       if (pass.length <= 0) {
         setError("Please input your Password.");
-        toast.error("Please input your Password.");
+        toast.info("Please input your Password.");
         return;
       }
 
       if (confirmPass.length <= 0) {
         setError("Please input your Confirm Password.");
-        toast.error("Please input your Confirm Password.");
-        return;
-      }
-
-      if (pass !== confirmPass) {
-        setError("Passwords do not match.");
-        toast.error("Passwords do not match.");
+        toast.info("Please input your Confirm Password.");
         return;
       }
 
       if (!passwordRegex.test(pass)) {
         setError("Password must be at least 8 characters...");
-        toast.error("Please enter a stronger password.");
+        toast.info("Please enter a stronger password.");
+        return;
+      }
+
+      if (!emailRegex.test(email)) {
+        setError("Invalid email format.");
+        toast.warn("Please enter a valid email address.");
+        return;
+      }
+
+      if (pass !== confirmPass) {
+        setError("Passwords do not match.");
+        toast.warn("Passwords do not match.");
         return;
       }
 
@@ -101,13 +101,13 @@ export default function RegisterPage() {
 
       if (response.error_code === 2) {
         setError("All field must be filled.");
-        toast.error("All field must be filled.");
+        toast.warn("All field must be filled.");
         return;
       }
 
       if (response.error_code === 4) {
         setError("Email is already registered.");
-        toast.error("Email is already registered.");
+        toast.warn("Email is already registered.");
         return;
       }
 
