@@ -20,39 +20,44 @@ export default function ProfilPage() {
   const [error, setError] = useState("");
   const [isTogglingEdit, setIsTogglingEdit] = useState(false);
 
+  const [originalData, setOriginalData] = useState({
+    name: "",
+    email: "",
+    instance: "",
+    createdAt: "",
+  });
+
   // Use useEffect so it doesnt aggresively refresh
   useEffect(() => {
     try {
       if (user_data) {
         const user_data_object: UserData = JSON.parse(user_data);
 
-        setName(user_data_object.UserFullName);
-        setEmail(user_data_object.UserEmail);
-        setInstance(user_data_object.UserInstance);
-
-        // Profile is still WIP passsword too
-        setProfile(user_data_object.UserPicture);
-
         // Better Format Date
         const rawDate = user_data_object.UserCreatedAt.split("T")[0]; // Ambil "2025-05-07"
         const [year, month, day] = rawDate.split("-"); // Split jadi ["2025", "05", "07"]
         const formattedDate = `${day}-${month}-${year}`; // Susun jadi "07-05-2025"
         setCreatedAt(formattedDate);
+
+        const initData = {
+          name: user_data_object.UserFullName,
+          email: user_data_object.UserEmail,
+          instance: user_data_object.UserInstance,
+          profile: user_data_object.UserPicture,
+          createdAt: formattedDate,
+        };
+
+        setOriginalData(initData);
+        setName(initData.name);
+        setEmail(initData.email);
+        setInstance(initData.instance);
+        setProfile(initData.profile);
+        setCreatedAt(initData.createdAt);
       }
     } catch (error) {
       toast.error("Unexpected Error!");
     }
   }, []);
-
-  // Handle Not Edited Mode
-  const handleNotEditedMode = (event: any) => {
-    if (!isEdited) {
-      event.preventDefault();
-      toast.info(
-        "Please enter edit mode first to change your profile picture."
-      );
-    }
-  };
 
   // Handle Image Change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,11 +96,13 @@ export default function ProfilPage() {
       const check_user_data = JSON.parse(user_data);
       if (
         name === check_user_data.UserFullName &&
-        instance === check_user_data.UserInstance
+        instance === check_user_data.UserInstance &&
+        profile === check_user_data.UserPicture
       ) {
         toast.info("No changes to save.");
       } else {
         toast.success("Profile updated successfully.");
+        isEdited;
       }
     }
 
@@ -135,10 +142,7 @@ export default function ProfilPage() {
                 width={200}
                 height={200}
               />
-              <label
-                className="absolute -bottom-1 -right-[0px] z-10 bg-secondary-500 text-white rounded-full p-2 cursor-pointer"
-                onClick={handleNotEditedMode}
-              >
+              <label className="absolute -bottom-1 -right-[0px] z-10 bg-secondary-500 text-white rounded-full p-2 cursor-pointer">
                 <FaCamera className="w-5 h-5" />
                 <input
                   type="file"
@@ -155,7 +159,6 @@ export default function ProfilPage() {
                 variant: "solid",
                 size: "sm",
               })}
-              onClick={handleNotEditedMode}
             >
               Remove
             </Button>
@@ -341,7 +344,13 @@ export default function ProfilPage() {
                   variant: "solid",
                   size: "sm",
                 })}
-                onClick={() => handleToggleEdit(false)}
+                onClick={() => {
+                  setName(originalData.name);
+                  setEmail(originalData.email);
+                  setInstance(originalData.instance);
+                  setCreatedAt(originalData.createdAt);
+                  handleToggleEdit(false);
+                }}
               >
                 Cancel
               </button>

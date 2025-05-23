@@ -39,3 +39,7 @@ export interface UserEditData {
   instance: string;
   picture: string;
 }
+
+export interface UserImage {
+  data: string;
+}
