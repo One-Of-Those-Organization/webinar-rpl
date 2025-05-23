@@ -17,6 +17,8 @@ type Event struct {
     EventId      int         `gorm:"column:event_id;primaryKey"`
     EventDesc    string      `gorm:"column:event_desc"`
     EventName    string      `gorm:"column:event_name"`
+    EventImg     string      `gorm:"column:event_img"`
+    EventMax     int         `gorm:"column:event_max"`
     EventDStart  time.Time   `gorm:"column:event_dstart;type:datetime"`
     EventDEnd    time.Time   `gorm:"column:event_dend;type:datetime"`
     EventLink    string      `gorm:"column:event_link"`
