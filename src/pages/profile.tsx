@@ -24,6 +24,7 @@ export default function ProfilPage() {
     name: "",
     email: "",
     instance: "",
+    profile: "",
     createdAt: "",
   });
 
@@ -59,19 +60,121 @@ export default function ProfilPage() {
     }
   }, []);
 
+  // Handle Save dengan benar
+  const handleSave = async () => {
+    try {
+      if (
+        name === originalData.name &&
+        instance === originalData.instance &&
+        profile === originalData.profile
+      ) {
+        toast.info("No changes to save.");
+        return;
+      }
+
+      const response = await auth.user_edit({
+        name,
+        instance,
+        picture: profile,
+      });
+
+      if (response.success) {
+        toast.success("Profile updated successfully.");
+
+        // Update localStorage
+        const updatedData = {
+          UserFullName: name,
+          UserEmail: email,
+          UserInstance: instance,
+          UserPicture: profile,
+          UserCreatedAt: originalData.createdAt,
+        };
+        localStorage.setItem("user_data", JSON.stringify(updatedData));
+
+        setIsEdited(false);
+        setError("");
+      } else {
+        toast.error(response.message || "Failed to update profile");
+        setError(response.message || "Failed to update profile");
+      }
+    } catch (error) {
+      toast.error("Network error. Please try again.");
+      setError("Network error. Please try again.");
+    }
+  };
+
   // Handle Image Change
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
+      toast.info("Uploading image...");
 
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setProfile(result);
-        toast.success("Image changed!");
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
+
+        try {
+          setProfile(base64Image);
+
+          const response = await auth.user_image({ data: base64Image });
+
+          if (response.success) {
+            let imageUrl = "";
+
+            if (response.data?.filename) {
+              imageUrl = `/${response.data.filename}`;
+              console.log("Setting correct image URL:", imageUrl);
+            }
+
+            const userData = JSON.parse(
+              localStorage.getItem("user_data") || "{}"
+            );
+            userData.UserPicture = imageUrl;
+            localStorage.setItem("user_data", JSON.stringify(userData));
+
+            setProfile(imageUrl);
+
+            setTimeout(() => {
+              const timestampedUrl = `${imageUrl}?t=${new Date().getTime()}`;
+              setProfile(timestampedUrl);
+            }, 100);
+
+            toast.success("Image updated successfully!");
+          } else {
+            toast.error("Failed to update image");
+          }
+        } catch (error) {
+          console.error("Upload error:", error);
+          toast.error("Error uploading image");
+        }
       };
 
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    try {
+      const response = await auth.user_edit({
+        name,
+        instance,
+        picture: "/logo_if.png",
+      });
+
+      if (response.success) {
+        setProfile("/logo_if.png");
+        toast.success("Profile picture removed");
+
+        if (user_data) {
+          const userData = JSON.parse(user_data);
+          userData.UserPicture = "/logo_if.png";
+          localStorage.setItem("user_data", JSON.stringify(userData));
+        }
+      } else {
+        toast.error("Failed to remove image");
+      }
+    } catch (error) {
+      toast.error("Error removing image");
     }
   };
 
@@ -88,42 +191,6 @@ export default function ProfilPage() {
     setTimeout(() => {
       setIsTogglingEdit(false);
     }, 5);
-  };
-
-  // Handle Save
-  const handleSave = async () => {
-    if (user_data) {
-      const check_user_data = JSON.parse(user_data);
-      if (
-        name === check_user_data.UserFullName &&
-        instance === check_user_data.UserInstance &&
-        profile === check_user_data.UserPicture
-      ) {
-        toast.info("No changes to save.");
-      } else {
-        toast.success("Profile updated successfully.");
-        isEdited;
-      }
-    }
-
-    const response = await auth.user_edit({ name, instance, picture: "" });
-
-    if (response.success) {
-      // Success case
-      const updatedData = {
-        UserFullName: name,
-        UserEmail: email,
-        UserInstance: instance,
-        UserPicture: profile,
-        UserCreatedAt: createdAt,
-      };
-      localStorage.setItem("user_data", JSON.stringify(updatedData));
-      setIsEdited(false);
-      setError("");
-    } else {
-      toast.error("Failed to Update!");
-      setError("Failed to Update!");
-    }
   };
 
   // View if not in mode edit
@@ -159,6 +226,7 @@ export default function ProfilPage() {
                 variant: "solid",
                 size: "sm",
               })}
+              onClick={handleRemoveImage}
             >
               Remove
             </Button>
@@ -285,10 +353,9 @@ export default function ProfilPage() {
                 variant: "solid",
                 size: "sm",
               })}
-              href="/"
               onClick={() => {
-                setProfile("");
-                // Do something with the profile image to affect the backend
+                handleRemoveImage();
+                setProfile(originalData.profile);
               }}
             >
               Remove

@@ -65,8 +65,8 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
 
         claims := jwt.MapClaims{
             "email":  user.UserEmail,
-            "admin": user.UserRole,
-            "exp":   time.Now().Add(time.Hour * 72).Unix(),
+            "admin":  user.UserRole,
+            "exp":    time.Now().Add(time.Hour * 72).Unix(),
         }
 
         token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -189,7 +189,7 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to delete user from the DB.",
-                "error_code": 5,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -207,9 +207,9 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
 func appHandleUserEdit(backend *Backend, route fiber.Router) {
     route.Post("/user-edit", func (c *fiber.Ctx) error {
         var body struct {
-            FullName string `json:"name"`
-            Instance string `json:"instance"`
-            Picture  string `json:"picture"`
+            FullName string  `json:"name"`
+            Instance string  `json:"instance"`
+            Picture  string  `json:"picture"`
             Password *string `json:"password"`
         }
 
@@ -248,7 +248,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                     return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                         "success": false,
                         "message": "Failed to hash the password.",
-                        "error_code": 5,
+                        "error_code": 2,
                         "data": nil,
                     })
                 }
@@ -260,7 +260,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                     "success": false,
                     "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
-                    "error_code": 2,
+                    "error_code": 3,
                     "data": nil,
                 })
             }
@@ -274,7 +274,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to claim JWT Token.",
-                "error_code": 3,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -397,7 +397,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid Body Request",
-                "error_code": 1,
+                "error_code": 2,
                 "data": nil,
             })
         }
@@ -406,7 +406,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "No image data provided",
-                "error_code": 2,
+                "error_code": 3,
                 "data": nil,
             })
         }
@@ -416,7 +416,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to create image directory",
-                "error_code": 3,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -426,7 +426,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid email format",
-                "error_code": 4,
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -442,7 +442,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid base64 image data",
-                "error_code": 5,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -462,7 +462,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to save image",
-                "error_code": 5,
+                "error_code": 7,
                 "data": nil,
             })
         }

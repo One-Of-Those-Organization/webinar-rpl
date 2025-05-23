@@ -82,7 +82,8 @@ export const auth = {
     }
   },
 
-  user_image: async (imageData: UserImage): Promise<BaseResponse> => {
+  // API User Image
+  user_image: async (data: UserImage): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -93,9 +94,10 @@ export const auth = {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ data: imageData.data }),
+          body: JSON.stringify({ data: data.data }),
         }
       );
+
       const result = await response.json();
       return result;
     } catch (error) {
