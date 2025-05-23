@@ -44,7 +44,13 @@ export const auth = {
 
       if (result.success && result.token) {
         localStorage.setItem("token", result.token);
-        localStorage.setItem("user_data", JSON.stringify(result.data));
+        localStorage.setItem(
+          "user_data",
+          JSON.stringify({
+            ...result.data,
+            UserPicture: result.data.UserPicture.replace("img", "static"),
+          })
+        );
       }
       return result;
     } catch (error) {
