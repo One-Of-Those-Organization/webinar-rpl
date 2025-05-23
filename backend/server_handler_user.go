@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"strconv"
+    "strings"
+    "encoding/base64"
+    "os"
 	"time"
 	"webrpl/table"
 
@@ -100,7 +103,7 @@ func appHandleUserInfoOf(backend *Backend, route fiber.Router) {
             if admin != 1 {
                 return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                     "success": false,
-                    "message": "Invalid credentials to acces this api.",
+                    "message": "Invalid credentials to access this api.",
                     "error_code": 1,
                     "data": nil,
                 })
@@ -137,6 +140,69 @@ func appHandleUserInfoOf(backend *Backend, route fiber.Router) {
     })
 }
 
+//// -=- TODO -=- ////
+// POST: api/protected/user-edit-admin
+func appHandleUserEditAdmin(backend *Backend, route fiber.Router){}
+//// -=- TODO -=- ////
+
+// POST: api/protected/user-del-admin
+func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
+    route.Post("/user-del-admin", func (c *fiber.Ctx) error{
+        var body struct {
+            UserId int `json:"user_id"`
+        }
+
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Bad request body, %v", err),
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        admin := claims["admin"].(int)
+
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to acces this api.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        res := backend.db.Delete(&table.User{}, body.UserId)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to delete user from the DB.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "User deleted.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
 // POST: api/protected/user-edit
 func appHandleUserEdit(backend *Backend, route fiber.Router) {
     route.Post("/user-edit", func (c *fiber.Ctx) error {
@@ -144,6 +210,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
             FullName string `json:"name"`
             Instance string `json:"instance"`
             Picture  string `json:"picture"`
+            Password *string `json:"password"`
         }
 
         user := c.Locals("user").(*jwt.Token)
@@ -159,7 +226,9 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                     "data": nil,
                 })
             }
-            updates := make(map[string]interface{})
+
+            updates := make(map[string]any)
+            // updates := make(map[string]interface{})
 
             if body.FullName != "" {
                 updates["user_full_name"] = body.FullName
@@ -171,6 +240,19 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
 
             if body.Picture != "" {
                 updates["user_picture"] = body.Picture
+            }
+
+            if body.Password != nil || *body.Password == "" {
+                hashedPassword, err := HashPassword(*body.Password)
+                if err != nil {
+                    return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                        "success": false,
+                        "message": "Failed to hash the password.",
+                        "error_code": 5,
+                        "data": nil,
+                    })
+                }
+                updates["password"] = hashedPassword
             }
 
             result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
@@ -291,6 +373,111 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
     })
 }
 
+// POST: api/protected/user-upload-image
+func appHandleUploadImage(_ *Backend, route fiber.Router) {
+    route.Post("user-upload-image", func(c *fiber.Ctx) error {
+        var body struct {
+            Data string `json:"data"`
+        }
+
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        claims := user.Claims.(jwt.MapClaims)
+        email := claims["email"].(string)
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Body Request",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        if body.Data == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "No image data provided",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        imgDir := "img"
+        if err := os.MkdirAll(imgDir, 0755); err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to create image directory",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        username := strings.Split(email, "@")[0]
+        if username == "" {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email format",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        // Check if the string contains the base64 prefix and remove if present
+        base64Data := body.Data
+        if i := strings.Index(base64Data, ","); i != -1 {
+            base64Data = base64Data[i+1:]
+        }
+
+        imageData, err := base64.StdEncoding.DecodeString(base64Data)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid base64 image data",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        fileExt := ".jpg"
+        if strings.Contains(body.Data, "image/png") {
+            fileExt = ".png"
+        } else if strings.Contains(body.Data, "image/gif") {
+            fileExt = ".gif"
+        }
+
+        timestamp := time.Now().UnixNano()
+        filename := fmt.Sprintf("%s/%s_%d%s", imgDir, username, timestamp, fileExt)
+
+        err = os.WriteFile(filename, imageData, 0644)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to save image",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Image uploaded successfully",
+            "error_code": 0,
+            "data": fiber.Map{
+                "filename": filename,
+            },
+        })
+    })
+}
+
 // POST : api/register
 func appHandleRegister(backend *Backend, route fiber.Router) {
     route.Post("register", func (c *fiber.Ctx) error {
@@ -374,184 +561,6 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "successfully created new user",
-            "error_code": 0,
-            "data": nil,
-        })
-    })
-}
-
-// POST : api/event-register
-func appHandleNewEvent(backend *Backend, route fiber.Router) {
-    route.Post("event-register", func (c *fiber.Ctx) error {
-
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to claims JWT token.",
-                "error_code": 1,
-                "data": nil,
-            })
-        }
-
-        claims := user.Claims.(jwt.MapClaims)
-        isAdmin := claims["admin"].(int)
-
-        if isAdmin != 1 {
-            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid credentials for this function",
-                "error_code": 2,
-                "data": nil,
-            })
-        }
-
-        var body struct {
-            Desc          string    `json:"desc"`
-            Name          string    `json:"name"`
-            DStart        time.Time `json:"dstart"`
-            DEnd          time.Time `json:"dend"`
-            Link          string    `json:"link"`
-            Speaker       string    `json:"speaker"`
-            Att           string    `json:"att"`
-            FMaterial     []int     `json:"material_id"`
-            FCertTemplate int       `json:"cert_temp_id"`
-        }
-
-        err := c.BodyParser(&body)
-        if err != nil {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Invalid body request, %v", err),
-                "error_code": 3,
-                "data": nil,
-            })
-        }
-
-        var _NewCertTemplate table.CertTemplate
-        res := backend.db.Where("cer_id = ?", body.FCertTemplate).First(&_NewCertTemplate)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to get the cert id , %v", res.Error),
-                "error_code": 4,
-                "data": nil,
-            })
-        }
-
-        // Double Check :)
-        // TODO: Check if that id didnt exist.
-        // nangkepku kalau dia gaada id (ga dapat) -> brarti query nya 0
-        // Kalau lebih berarti dapet
-
-        if res.RowsAffected == 0 {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Certificate template with that id does not exist",
-                "error_code": 5,
-                "data": nil,
-            })
-        } 
-
-        var NewCertTemplate []table.CertTemplate
-        NewCertTemplate = append(NewCertTemplate, _NewCertTemplate)
-
-        var _NewEventMat table.EventMaterial
-        res = backend.db.Where("eventm_id = ?", body.FMaterial).First(&_NewEventMat)
-
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to get the event material id , %v", res.Error),
-                "error_code": 6,
-                "data": nil,
-            })
-        }
-
-        // Double Check :)
-        // TODO: Check if that id didnt exist.
-        // nangkepku kalau dia gaada id (ga dapat) -> brarti query nya 0
-        // Kalau lebih berarti dapet
-
-        if res.RowsAffected == 0 {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Event Material with that id does not exist",
-                "error_code": 7,
-                "data": nil,
-            })
-        }
-        
-        // Double Check :)
-        var NewEventMat []table.EventMaterial
-        NewEventMat = append(NewEventMat, _NewEventMat)
-
-        var Event table.Event
-        res = backend.db.Where("event_dstart = ? ",body.DStart).First(&Event)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to fetch new event from db.",
-                "error_code": 8,
-                "data": nil,
-            })
-        }
-
-        if res.RowsAffected > 0 {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Event with that Date is already exist",
-                "error_code": 9,
-                "data": nil,
-            })
-        }
-
-        // Double Check :)
-        res = backend.db.Where("event_name = ? ", body.Name).First(&Event)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to fetch new event from db.",
-                "error_code": 10,
-                "data": nil,
-            })
-        }
-
-        if res.RowsAffected > 0 {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Event with that name is already exist",
-                "error_code": 11,
-                "data": nil,
-            })
-        }
-        
-        // TODO: finish binding this.
-        // Bukannya ini udah yo?
-        newEvent := table.Event {
-            EventDesc: body.Desc,
-            EventName: body.Name,
-            EventDStart: body.DStart,
-            EventDEnd: body.DEnd,
-            EventSpeaker: body.Speaker,
-            EventAtt: table.AttTypeEnum(body.Att),
-            EventMaterials: NewEventMat,
-            CertTemplates: NewCertTemplate,
-        }
-
-        res = backend.db.Create(newEvent)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to create new event, %v", res.Error),
-                "error_code": 12,
-                "data": nil,
-            })
-        }
-
-        return c.Status(fiber.StatusOK).JSON(fiber.Map{
-            "success": true,
-            "message": "Successfully added the event",
             "error_code": 0,
             "data": nil,
         })

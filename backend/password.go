@@ -10,6 +10,7 @@ func HashPassword(password string) (string, error) {
     // The default is 10, but you can increase it for better security (at the cost of performance)
     hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
     if err != nil {
+        // TODO: change touse log.
         return "", fmt.Errorf("failed to hash password: %w", err)
     }
     return string(hashedBytes), nil
