@@ -32,6 +32,8 @@ func appMakeRouteHandler(backend *Backend) {
         SigningKey: jwtware.SigningKey{Key: []byte(backend.pass)},
     }))
 
+    app.Static("/static", "./img")
+
     appHandleLogin(backend, api)
     appHandleRegister(backend, api)
 

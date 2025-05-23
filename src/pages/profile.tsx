@@ -20,53 +20,161 @@ export default function ProfilPage() {
   const [error, setError] = useState("");
   const [isTogglingEdit, setIsTogglingEdit] = useState(false);
 
+  const [originalData, setOriginalData] = useState({
+    name: "",
+    email: "",
+    instance: "",
+    profile: "",
+    createdAt: "",
+  });
+
   // Use useEffect so it doesnt aggresively refresh
   useEffect(() => {
     try {
       if (user_data) {
         const user_data_object: UserData = JSON.parse(user_data);
 
-        setName(user_data_object.UserFullName);
-        setEmail(user_data_object.UserEmail);
-        setInstance(user_data_object.UserInstance);
-
-        // Profile is still WIP passsword too
-        setProfile(user_data_object.UserPicture);
-
         // Better Format Date
         const rawDate = user_data_object.UserCreatedAt.split("T")[0]; // Ambil "2025-05-07"
         const [year, month, day] = rawDate.split("-"); // Split jadi ["2025", "05", "07"]
         const formattedDate = `${day}-${month}-${year}`; // Susun jadi "07-05-2025"
         setCreatedAt(formattedDate);
+
+        const initData = {
+          name: user_data_object.UserFullName,
+          email: user_data_object.UserEmail,
+          instance: user_data_object.UserInstance,
+          profile: user_data_object.UserPicture,
+          createdAt: formattedDate,
+        };
+
+        setOriginalData(initData);
+        setName(initData.name);
+        setEmail(initData.email);
+        setInstance(initData.instance);
+        setProfile(initData.profile);
+        setCreatedAt(initData.createdAt);
       }
     } catch (error) {
       toast.error("Unexpected Error!");
     }
   }, []);
 
-  // Handle Not Edited Mode
-  const handleNotEditedMode = (event: any) => {
-    if (!isEdited) {
-      event.preventDefault();
-      toast.info(
-        "Please enter edit mode first to change your profile picture."
-      );
+  // Handle Save dengan benar
+  const handleSave = async () => {
+    try {
+      if (
+        name === originalData.name &&
+        instance === originalData.instance &&
+        profile === originalData.profile
+      ) {
+        toast.info("No changes to save.");
+        return;
+      }
+
+      const response = await auth.user_edit({
+        name,
+        instance,
+        picture: profile,
+      });
+
+      if (response.success) {
+        toast.success("Profile updated successfully.");
+
+        // Update localStorage
+        const updatedData = {
+          UserFullName: name,
+          UserEmail: email,
+          UserInstance: instance,
+          UserPicture: profile,
+          UserCreatedAt: originalData.createdAt,
+        };
+        localStorage.setItem("user_data", JSON.stringify(updatedData));
+
+        setIsEdited(false);
+        setError("");
+      } else {
+        toast.error(response.message || "Failed to update profile");
+        setError(response.message || "Failed to update profile");
+      }
+    } catch (error) {
+      toast.error("Network error. Please try again.");
+      setError("Network error. Please try again.");
     }
   };
 
   // Handle Image Change
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
+      toast.info("Uploading image...");
 
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setProfile(result);
-        toast.success("Image changed!");
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
+
+        try {
+          setProfile(base64Image);
+
+          const response = await auth.user_image({ data: base64Image });
+
+          if (response.success) {
+            let imageUrl = "";
+
+            if (response.data?.filename) {
+              imageUrl = `/${response.data.filename}`;
+              console.log("Setting correct image URL:", imageUrl);
+            }
+
+            const userData = JSON.parse(
+              localStorage.getItem("user_data") || "{}"
+            );
+            userData.UserPicture = imageUrl;
+            localStorage.setItem("user_data", JSON.stringify(userData));
+
+            setProfile(imageUrl);
+
+            setTimeout(() => {
+              const timestampedUrl = `${imageUrl}?t=${new Date().getTime()}`;
+              setProfile(timestampedUrl);
+            }, 100);
+
+            toast.success("Image updated successfully!");
+          } else {
+            toast.error("Failed to update image");
+          }
+        } catch (error) {
+          console.error("Upload error:", error);
+          toast.error("Error uploading image");
+        }
       };
 
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    try {
+      const response = await auth.user_edit({
+        name,
+        instance,
+        picture: "/logo_if.png",
+      });
+
+      if (response.success) {
+        setProfile("/logo_if.png");
+        toast.success("Profile picture removed");
+
+        if (user_data) {
+          const userData = JSON.parse(user_data);
+          userData.UserPicture = "/logo_if.png";
+          localStorage.setItem("user_data", JSON.stringify(userData));
+        }
+      } else {
+        toast.error("Failed to remove image");
+      }
+    } catch (error) {
+      toast.error("Error removing image");
     }
   };
 
@@ -85,40 +193,6 @@ export default function ProfilPage() {
     }, 5);
   };
 
-  // Handle Save
-  const handleSave = async () => {
-    if (user_data) {
-      const check_user_data = JSON.parse(user_data);
-      if (
-        name === check_user_data.UserFullName &&
-        instance === check_user_data.UserInstance
-      ) {
-        toast.info("No changes to save.");
-      } else {
-        toast.success("Profile updated successfully.");
-      }
-    }
-
-    const response = await auth.user_edit({ name, instance, picture: "" });
-
-    if (response.success) {
-      // Success case
-      const updatedData = {
-        UserFullName: name,
-        UserEmail: email,
-        UserInstance: instance,
-        UserPicture: profile,
-        UserCreatedAt: createdAt,
-      };
-      localStorage.setItem("user_data", JSON.stringify(updatedData));
-      setIsEdited(false);
-      setError("");
-    } else {
-      toast.error("Failed to Update!");
-      setError("Failed to Update!");
-    }
-  };
-
   // View if not in mode edit
   if (isEdited == false) {
     return (
@@ -135,10 +209,7 @@ export default function ProfilPage() {
                 width={200}
                 height={200}
               />
-              <label
-                className="absolute -bottom-1 -right-[0px] z-10 bg-secondary-500 text-white rounded-full p-2 cursor-pointer"
-                onClick={handleNotEditedMode}
-              >
+              <label className="absolute -bottom-1 -right-[0px] z-10 bg-secondary-500 text-white rounded-full p-2 cursor-pointer">
                 <FaCamera className="w-5 h-5" />
                 <input
                   type="file"
@@ -155,7 +226,7 @@ export default function ProfilPage() {
                 variant: "solid",
                 size: "sm",
               })}
-              onClick={handleNotEditedMode}
+              onClick={handleRemoveImage}
             >
               Remove
             </Button>
@@ -282,10 +353,9 @@ export default function ProfilPage() {
                 variant: "solid",
                 size: "sm",
               })}
-              href="/"
               onClick={() => {
-                setProfile("");
-                // Do something with the profile image to affect the backend
+                handleRemoveImage();
+                setProfile(originalData.profile);
               }}
             >
               Remove
@@ -341,7 +411,13 @@ export default function ProfilPage() {
                   variant: "solid",
                   size: "sm",
                 })}
-                onClick={() => handleToggleEdit(false)}
+                onClick={() => {
+                  setName(originalData.name);
+                  setEmail(originalData.email);
+                  setInstance(originalData.instance);
+                  setCreatedAt(originalData.createdAt);
+                  handleToggleEdit(false);
+                }}
               >
                 Cancel
               </button>

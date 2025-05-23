@@ -3,6 +3,7 @@ import {
   RegisterData,
   LoginData,
   UserEditData,
+  UserImage,
 } from "./interface.ts";
 
 const API_URL = "http://localhost:3000";
@@ -72,6 +73,32 @@ export const auth = {
         localStorage.setItem("token", result.token);
         localStorage.setItem("user_data", JSON.stringify(result.data));
       }
+      return result;
+    } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API User Image
+  user_image: async (data: UserImage): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_URL}/api/protected/user-upload-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ data: data.data }),
+        }
+      );
+
+      const result = await response.json();
       return result;
     } catch (error) {
       return {
