@@ -55,6 +55,12 @@ export const NavbarAdmin = () => {
             Profile
           </DropdownItem>
           <DropdownItem
+            key="Back to Dashboard"
+            onClick={() => navigate("/dashboard")}
+          >
+            Back to Dashboard
+          </DropdownItem>
+          <DropdownItem
             key="logout"
             color="danger"
             onClick={async () => {
@@ -97,66 +103,66 @@ export const NavbarAdmin = () => {
           </Link>
         </NavbarBrand>
         {isLoggedIn && (
-        <NavbarItem className="hidden lg:flex">
-          <Link href="/admin" color="foreground">
-            Dashboard
-          </Link>
-        </NavbarItem>
+          <NavbarItem className="hidden lg:flex">
+            <Link href="/admin" color="foreground">
+              Dashboard
+            </Link>
+          </NavbarItem>
         )}
         {isLoggedIn && (
-        <NavbarItem className="hidden lg:flex">
-          <Link href="/admin/user" color="foreground">
-            User
-          </Link>
-        </NavbarItem>
+          <NavbarItem className="hidden lg:flex">
+            <Link href="/admin/user" color="foreground">
+              User
+            </Link>
+          </NavbarItem>
         )}
         {isLoggedIn && (
-        <NavbarItem className="hidden lg:flex">
-          <Link href="/admin/webinar" color="foreground">
-            Webinar
-          </Link>
-        </NavbarItem>
+          <NavbarItem className="hidden lg:flex">
+            <Link href="/admin/webinar" color="foreground">
+              Webinar
+            </Link>
+          </NavbarItem>
         )}
       </NavbarContent>
 
       <NavbarContent className="items-center gap-4" justify="end">
         {isLoggedIn && (
-                  <NavbarItem className="hidden lg:flex">
-                    <Search />
-                  </NavbarItem>
-                )}
-                <ThemeSwitch className="hidden lg:block" />
-                <Dropdown placement="bottom-end">
-                  <DropdownTrigger>
-                    <Avatar
-                      isBordered
-                      as="button"
-                      className="transition-transform"
-                      color="secondary"
-                      name={isLoggedIn ? email : "Guest"}
-                      size="sm"
-                      src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
-                    />
-                  </DropdownTrigger>
-                  <DropdownMenu aria-label="Profile Actions" variant="flat">
-                    {renderDropdownItems()}
-                  </DropdownMenu>
-                </Dropdown>
+          <NavbarItem className="hidden lg:flex">
+            <Search />
+          </NavbarItem>
+        )}
+        <ThemeSwitch className="hidden lg:block" />
+        <Dropdown placement="bottom-end">
+          <DropdownTrigger>
+            <Avatar
+              isBordered
+              as="button"
+              className="transition-transform"
+              color="secondary"
+              name={isLoggedIn ? email : "Guest"}
+              size="sm"
+              src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+            />
+          </DropdownTrigger>
+          <DropdownMenu aria-label="Profile Actions" variant="flat">
+            {renderDropdownItems()}
+          </DropdownMenu>
+        </Dropdown>
       </NavbarContent>
 
       <NavbarMenu>
         {isLoggedIn && <Search />}
         <div className="mx-4 mt-2 flex flex-col gap-2">
           <ThemeSwitch />
-          {isLoggedIn ? (
-            siteConfig.navMenuItems.map((item, index) => (
-              <NavbarMenuItem key={`${item}-${index}`}>
-                <Link color="foreground" href={item.href} size="lg">
-                  {item.label}
-                </Link>
-              </NavbarMenuItem>
-            ))
-          ) : null}
+          {isLoggedIn
+            ? siteConfig.navMenuItems.map((item, index) => (
+                <NavbarMenuItem key={`${item}-${index}`}>
+                  <Link color="foreground" href={item.href} size="lg">
+                    {item.label}
+                  </Link>
+                </NavbarMenuItem>
+              ))
+            : null}
         </div>
       </NavbarMenu>
     </HeroUINavbar>

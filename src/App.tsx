@@ -6,6 +6,7 @@ import IndexPage from "@/pages/index";
 import LupaPassword from "@/pages/auth/lupa_password";
 import LupaPasswordOTP from "@/pages/auth/otp_lupa_password";
 import AboutPage from "@/pages/about";
+import InputOTP from "@/pages/auth/input_otp";
 
 // Authorize Page
 import DashboardPage from "@/pages/dashboard";
@@ -67,6 +68,15 @@ export default function App() {
         element={
           <GuestOnlyRoute>
             <LupaPasswordOTP />
+          </GuestOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/input_otp"
+        element={
+          <GuestOnlyRoute>
+            <InputOTP />
           </GuestOnlyRoute>
         }
       />
