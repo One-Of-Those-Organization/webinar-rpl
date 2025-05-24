@@ -1,11 +1,11 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
+	"os"
 	"strconv"
-    "strings"
-    "encoding/base64"
-    "os"
+	"strings"
 	"time"
 	"webrpl/table"
 
@@ -529,22 +529,13 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        if !isPasswordValid(body.Password) {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid password.",
-                "error_code": 4,
-                "data": nil,
-            })
-        }
-
         var userData table.User
         res := backend.db.Where("user_email = ?", body.Email).First(&userData)
         if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch user data from db.",
-                "error_code": 5,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -553,7 +544,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "User with that email already registered.",
-                "error_code": 6,
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -563,7 +554,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to hash the password.",
-                "error_code": 7,
+                "error_code": 6,
                 "data": nil,
             })
         }
