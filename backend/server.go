@@ -44,6 +44,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleUserEditAdmin(backend, protected)
     appHandleUserDelAdmin(backend, protected)
     appHandleUploadImage(backend, protected)
+    appHandleUserCount(backend, protected)
 
     // TODO: total webinar sama total user
 

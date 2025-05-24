@@ -35,60 +35,41 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      if (
-        (email.length <= 0 && name.length <= 0 && pass.length <= 0) ||
-        instance.length <= 0
-      ) {
-        setError("Please fill in all fields.");
-        toast.warn("All fields are required.");
-        return;
+      // Handle client-side validation errors
+      let clientOnlyError = null;
+
+      switch (true) {
+        case !passwordRegex.test(pass):
+          clientOnlyError = {
+            message:
+              "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+            type: "info",
+          };
+          break;
+
+        case confirmPass.length <= 0:
+          clientOnlyError = {
+            message: "Please input your Confirm Password.",
+            type: "info",
+          };
+          break;
+
+        case pass !== confirmPass:
+          clientOnlyError = {
+            message: "Passwords do not match.",
+            type: "warn",
+          };
+          break;
       }
 
-      if (name.length <= 0) {
-        setError("Please input your Name.");
-        toast.info("Please input your Name.");
-        return;
-      }
-
-      if (email.length <= 0) {
-        setError("Please input your Email.");
-        toast.info("Please input your Email.");
-        return;
-      }
-
-      if (instance.length <= 0) {
-        setError("Please input your Instance.");
-        toast.info("Please input your Instance.");
-        return;
-      }
-
-      if (pass.length <= 0) {
-        setError("Please input your Password.");
-        toast.info("Please input your Password.");
-        return;
-      }
-
-      if (confirmPass.length <= 0) {
-        setError("Please input your Confirm Password.");
-        toast.info("Please input your Confirm Password.");
-        return;
-      }
-
-      if (!passwordRegex.test(pass)) {
-        setError("Password must be at least 8 characters...");
-        toast.info("Please enter a stronger password.");
-        return;
-      }
-
-      if (!emailRegex.test(email)) {
-        setError("Invalid email format.");
-        toast.warn("Please enter a valid email address.");
-        return;
-      }
-
-      if (pass !== confirmPass) {
-        setError("Passwords do not match.");
-        toast.warn("Passwords do not match.");
+      if (clientOnlyError) {
+        setError(clientOnlyError.message);
+        if (clientOnlyError.type === "warn") {
+          toast.warn(clientOnlyError.message);
+        } else {
+          toast.info(clientOnlyError.message);
+        }
+        setLoading(false);
         return;
       }
 
@@ -99,26 +80,30 @@ export default function RegisterPage() {
         pass,
       });
 
-      if (response.error_code === 2) {
-        setError("All field must be filled.");
-        toast.warn("All field must be filled.");
-        return;
-      }
-
-      if (response.error_code === 4) {
-        setError("Email is already registered.");
-        toast.warn("Email is already registered.");
-        return;
-      }
-
-      // 4. Success/failure handling
-      if (response.success && response.error_code === 0) {
+      // Handle server-side validation errors
+      if (response.success) {
         setError("");
-        toast.success("Registration successful!");
+        toast.success("Register Successful!");
         navigate("/login");
-      } else {
-        setError("Registration failed.");
-        toast.error("Registration failed.");
+        return;
+      }
+
+      // Handle server-side validation errors
+      switch (response.error_code) {
+        case 2:
+          setError("All field must be filled.");
+          toast.warn("All field must be filled");
+          break;
+
+        case 4:
+          setError("User with that email already registered.");
+          toast.warn("User with that email already registered.");
+          break;
+
+        default:
+          setError("Register Failed.");
+          toast.error("Register Failed");
+          break;
       }
     } catch (error) {
       setError("An unexpected error occurred");
