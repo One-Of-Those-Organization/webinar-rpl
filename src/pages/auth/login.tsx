@@ -9,11 +9,10 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -24,64 +23,38 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Validator for must input all fields
-      if (email.length <= 0 && pass.length <= 0) {
-        setError("Please fill in all fields.");
-        toast.warn("All fields are required.");
-        return;
-      }
-
-      // Validator for must input email
-      if (email.length <= 0) {
-        setError("Please input your Email.");
-        toast.info("Please input your Email.");
-        return;
-      }
-
-      // Validator for must input password
-      if (pass.length <= 0) {
-        setError("Please input your Password.");
-        toast.info("Please input your Password.");
-        return;
-      }
-
-      // Validator for email format
-      if (!emailRegex.test(email)) {
-        setError("Please input valid Email.");
-        toast.info("Please input valid Email.");
-        return;
-      }
-
       // API call
       const response = await auth.login({ email, pass });
-
-      // Server-side validations
-      if (response.error_code === 2) {
-        setError("All field must be filled.");
-        toast.warn("All field must be filled");
-        return;
-      }
-
-      if (response.error_code === 3) {
-        setError("Email or Password is invalid.");
-        toast.warn("Email or Password is invalid.");
-        return;
-      }
-
-      if (response.error_code === 4) {
-        setError("Password is Incorrect");
-        toast.warn("Password is Incorrect");
-        return;
-      }
 
       // Success case
       if (response.success) {
         setError("");
         toast.success("Login Successful!");
         navigate("/dashboard");
-      } else {
-        setError("Login Failed");
-        toast.error("Login Failed");
+        return;
+      }
+
+      // Validation errors
+      switch (response.error_code) {
+        case 2:
+          setError("All field must be filled.");
+          toast.warn("All field must be filled");
+          break;
+
+        case 3:
+          setError("Email or Password is invalid.");
+          toast.warn("Email or Password is invalid.");
+          break;
+
+        case 4:
+          setError("Password is Incorrect");
+          toast.warn("Password is Incorrect");
+          break;
+
+        default:
+          setError("Login Failed.");
+          toast.error("Login Failed");
+          break;
       }
     } catch (error) {
       setError("An unexpected error occurred");

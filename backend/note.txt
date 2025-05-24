@@ -1,2 +1,7 @@
 qr absence system
 export to csv all the webinar data
+
+
+TODO:
+- Regex
+- Aksually make JWT expired

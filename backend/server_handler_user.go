@@ -35,8 +35,17 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
         if len(body.UserEmail) <= 0 || len(body.UserPassword) <= 0 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Invalid email and password",
+                "message": "Email or password empty",
                 "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        if !isEmailValid(body.UserEmail) {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email",
+                "error_code": 3,
                 "data": nil,
             })
         }
@@ -48,7 +57,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("There is a problem in the db, %v", res.Error),
-                "error_code": 3,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -58,7 +67,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Wrong Password",
-                "error_code": 4,
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -76,7 +85,7 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to generate JWT, %v", err),
-                "error_code": 5,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -142,7 +151,9 @@ func appHandleUserInfoOf(backend *Backend, route fiber.Router) {
 
 //// -=- TODO -=- ////
 // POST: api/protected/user-edit-admin
-func appHandleUserEditAdmin(backend *Backend, route fiber.Router){}
+func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
+
+}
 //// -=- TODO -=- ////
 
 // POST: api/protected/user-del-admin
@@ -189,7 +200,7 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to delete user from the DB.",
-                "error_code": 5,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -248,7 +259,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                     return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                         "success": false,
                         "message": "Failed to hash the password.",
-                        "error_code": 5,
+                        "error_code": 2,
                         "data": nil,
                     })
                 }
@@ -260,7 +271,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                     "success": false,
                     "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
-                    "error_code": 2,
+                    "error_code": 3,
                     "data": nil,
                 })
             }
@@ -274,7 +285,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to claim JWT Token.",
-                "error_code": 3,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -397,7 +408,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid Body Request",
-                "error_code": 1,
+                "error_code": 2,
                 "data": nil,
             })
         }
@@ -406,7 +417,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "No image data provided",
-                "error_code": 2,
+                "error_code": 3,
                 "data": nil,
             })
         }
@@ -416,7 +427,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to create image directory",
-                "error_code": 3,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -426,7 +437,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid email format",
-                "error_code": 4,
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -442,11 +453,12 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid base64 image data",
-                "error_code": 5,
+                "error_code": 6,
                 "data": nil,
             })
         }
 
+        // todo: block if its too big and not image format
         fileExt := ".jpg"
         if strings.Contains(body.Data, "image/png") {
             fileExt = ".png"
@@ -462,7 +474,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to save image",
-                "error_code": 5,
+                "error_code": 7,
                 "data": nil,
             })
         }
@@ -508,13 +520,31 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             })
         }
 
+        if !isEmailValid(body.Email) {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email format.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        if !isPasswordValid(body.Password) {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid password.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
         var userData table.User
         res := backend.db.Where("user_email = ?", body.Email).First(&userData)
         if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch user data from db.",
-                "error_code": 3,
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -523,7 +553,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "User with that email already registered.",
-                "error_code": 4,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -533,7 +563,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to hash the password.",
-                "error_code": 5,
+                "error_code": 7,
                 "data": nil,
             })
         }
@@ -553,7 +583,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to write to db, %v", result.Error),
-                "error_code": 6,
+                "error_code": 8,
                 "data": nil,
             })
         }
@@ -563,6 +593,49 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             "message": "successfully created new user",
             "error_code": 0,
             "data": nil,
+        })
+    })
+}
+
+// GET : /api/user-count
+func appHandleUserCount(backend *Backend, route fiber.Router) {
+    route.Get("/user-count", func (c *fiber.Ctx) error {
+
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        claims := user.Claims.(jwt.MapClaims)
+        admin := claims["admin"].(int)
+
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to acces this api.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+        var count int64
+        res := backend.db.Model(&table.User{}).Count(&count)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch user count.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data",
+            "error_code": 0,
+            "data": count,
         })
     })
 }
