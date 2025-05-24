@@ -7,7 +7,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Declare data and conditional here
-export default function OTPLupaPassword() {
+export default function InputOTP() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -63,7 +63,7 @@ export default function OTPLupaPassword() {
       <div className="w-full md:w-1/2 flex items-center justify-center py-12 md:py-0 px-4 order-2">
         <div className="w-full max-w-xl">
           <h1 className="text-3xl font-poppins md:text-4xl font-bold mb-6 md:mb-8">
-            FORGOT PASSWORD
+            INPUT CODE OTP
           </h1>
           <form onSubmit={handleLupaPassword}>
             {/* Show Error */}
@@ -73,8 +73,8 @@ export default function OTPLupaPassword() {
             <div className="mb-4 md:mb-6">
               <Input
                 color="secondary"
-                label="Email"
-                type="email"
+                label="OTP Code"
+                type="text"
                 variant="flat"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -86,7 +86,7 @@ export default function OTPLupaPassword() {
               <button
                 type="submit"
                 disabled={loading}
-                onClick={() => navigate("/input_otp")}
+                onClick={() => navigate("/lupa_password")}
                 className={buttonStyles({
                   color: "secondary",
                   radius: "full",
@@ -94,7 +94,7 @@ export default function OTPLupaPassword() {
                   size: "lg",
                 })}
               >
-                {loading ? "Loading..." : "Send Code"}
+                {loading ? "Loading..." : "Change Password"}
               </button>
             </div>
           </form>

@@ -113,4 +113,24 @@ export const auth = {
       };
     }
   },
+
+  // API Get All Users
+  get_all_users: async (): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/protected/get-all-users`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return await response.json();
+    } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
 };
