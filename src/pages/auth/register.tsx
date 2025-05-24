@@ -12,7 +12,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [email, setEmail] = useState("");
   const [instance, setInstance] = useState("");
   const [pass, setPass] = useState("");
@@ -39,14 +38,6 @@ export default function RegisterPage() {
       let clientOnlyError = null;
 
       switch (true) {
-        case !passwordRegex.test(pass):
-          clientOnlyError = {
-            message:
-              "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
-            type: "info",
-          };
-          break;
-
         case confirmPass.length <= 0:
           clientOnlyError = {
             message: "Please input your Confirm Password.",
@@ -57,6 +48,14 @@ export default function RegisterPage() {
         case pass !== confirmPass:
           clientOnlyError = {
             message: "Passwords do not match.",
+            type: "warn",
+          };
+          break;
+
+        case !passwordRegex.test(pass):
+          clientOnlyError = {
+            message:
+              "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
             type: "warn",
           };
           break;
@@ -95,7 +94,12 @@ export default function RegisterPage() {
           toast.warn("All field must be filled");
           break;
 
-        case 4:
+        case 3:
+          setError("Invalid Email.");
+          toast.warn("Invalid Email.");
+          break;
+
+        case 5:
           setError("User with that email already registered.");
           toast.warn("User with that email already registered.");
           break;
