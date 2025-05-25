@@ -4,6 +4,8 @@ import {
   LoginData,
   UserEditData,
   UserImage,
+  WebinarData, // Later for Get Webinar Data
+  WebinarInput,
 } from "./interface.ts";
 
 const API_URL = "http://localhost:3000";
@@ -126,6 +128,32 @@ export const auth = {
       });
 
       return await response.json();
+    } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API Get Webinar Data
+  add_webinar: async (data: WebinarInput): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/event-register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success && result.token) {
+        localStorage.setItem("token", result.token);
+      }
+      return result;
     } catch (error) {
       return {
         message: "Failed to connect to server",
