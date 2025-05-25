@@ -1,6 +1,7 @@
 package main
 
 import (
+    "strconv"
 	"fmt"
 	"time"
 	"webrpl/table"
@@ -24,7 +25,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
         }
 
         claims := user.Claims.(jwt.MapClaims)
-        isAdmin := claims["admin"].(int)
+        isAdmin := claims["admin"].(float64)
 
         if isAdmin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -126,14 +127,66 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
     })
 }
 
-// GET : api/event-info-all
-func appHandleEventInfoAll(_ *Backend, route fiber.Router) {
+// GET : api/protected/event-info-all
+func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
     route.Get("event-info-all", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        isAdmin := claims["admin"].(float64)
+
+        if isAdmin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        offsetQuery := c.Query("offset")
+        if offsetQuery == "" {
+            offsetQuery = "0";
+        }
+
+        limitQuery := c.Query("limit")
+        if limitQuery == "" {
+            limitQuery = "10000"
+        }
+
+        offset, err := strconv.Atoi(offsetQuery)
+        if err != nil {
+            offset = 0
+        }
+        limit, err := strconv.Atoi(limitQuery)
+        if err != nil {
+            limit = 10000
+        }
+
+        var eventData []table.Event
+        res := backend.db.Offset(offset).Limit(limit).Find(&eventData)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch user data from db.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
-            "success": false,
-            "message": "TODO",
+            "success": true,
+            "message": "Check data.",
             "error_code": 0,
-            "data": nil,
+            "data": eventData,
         })
     })
 }
