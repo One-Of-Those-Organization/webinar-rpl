@@ -23,19 +23,20 @@ func main() {
         return
     }
     l.Println("INFO: DB init task completed successfully.")
+    password := getCredentialFromEnv()
 
-    // DO THE SERVER STUFF
-
-    // AllowOrigins: "http://localhost:5173",
-    // AllowCredentials: false,
-
-    app := appCreateNewServer(db, "secret")
+    app := appCreateNewServer(db, password)
     app.app.Use(cors.New(cors.Config{
         AllowOrigins: "*",
         AllowHeaders: "Origin, Content-Type, Accept, Authorization",
         AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
         AllowCredentials: false,
     }))
+
+    if !checkOrMakeAdmin(app, password) {
+        l.Panic("ERR: There is a problem when making user 0 (SUPER ADMIN)")
+    }
+
     appMakeRouteHandler(app)
     if err := app.app.Listen(":3000"); err != nil {
         l.Fatal("ERR: Server failed to start: ", err)
