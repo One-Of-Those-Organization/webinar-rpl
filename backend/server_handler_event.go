@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// POST : api/event-register
+// POST : api/protected/event-register
 func appHandleNewEvent(backend *Backend, route fiber.Router) {
     route.Post("event-register", func (c *fiber.Ctx) error {
 
@@ -45,9 +45,6 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             Att           string    `json:"att"`
             Img           string    `json:"img"`
             Max           int       `json:"max"`
-            // FMaterial     []int     `json:"material_id"`
-            FMaterial     int     `json:"material_id"`
-            FCertTemplate int       `json:"cert_temp_id"`
         }
 
         err := c.BodyParser(&body)
@@ -60,55 +57,8 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             })
         }
 
-        var _NewCertTemplate table.CertTemplate
-        res := backend.db.Where("cer_id = ?", body.FCertTemplate).First(&_NewCertTemplate)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to get the cert id , %v", res.Error),
-                "error_code": 4,
-                "data": nil,
-            })
-        }
-
-        if res.RowsAffected <= 0 {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Certificate template with that id does not exist",
-                "error_code": 5,
-                "data": nil,
-            })
-        }
-
-        var NewCertTemplate []table.CertTemplate
-        NewCertTemplate = append(NewCertTemplate, _NewCertTemplate)
-
-        var _NewEventMat table.EventMaterial
-        res = backend.db.Where("eventm_id = ?", body.FMaterial).First(&_NewEventMat)
-
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to get the event material id , %v", res.Error),
-                "error_code": 6,
-                "data": nil,
-            })
-        }
-
-        if res.RowsAffected == 0 {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Event Material with that id does not exist",
-                "error_code": 7,
-                "data": nil,
-            })
-        }
-
-        var NewEventMat []table.EventMaterial
-        NewEventMat = append(NewEventMat, _NewEventMat)
-
         var Event table.Event
-        res = backend.db.Where("event_dstart = ? ",body.DStart).First(&Event)
+        res := backend.db.Where("event_dstart = ? ",body.DStart).First(&Event)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
@@ -155,8 +105,6 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             EventAtt: table.AttTypeEnum(body.Att),
             EventImg: body.Img,
             EventMax: body.Max,
-            EventMaterials: NewEventMat,
-            CertTemplates: NewCertTemplate,
         }
 
         res = backend.db.Create(newEvent)
