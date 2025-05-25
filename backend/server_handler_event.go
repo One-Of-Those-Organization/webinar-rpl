@@ -45,7 +45,8 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
             Att           string    `json:"att"`
             Img           string    `json:"img"`
             Max           int       `json:"max"`
-            FMaterial     []int     `json:"material_id"`
+            // FMaterial     []int     `json:"material_id"`
+            FMaterial     int     `json:"material_id"`
             FCertTemplate int       `json:"cert_temp_id"`
         }
 
@@ -171,6 +172,18 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "Successfully added the event",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// GET : api/event-info-all
+func appHandleEventInfoAll(_ *Backend, route fiber.Router) {
+    route.Get("event-info-all", func (c *fiber.Ctx) error {
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": false,
+            "message": "TODO",
             "error_code": 0,
             "data": nil,
         })

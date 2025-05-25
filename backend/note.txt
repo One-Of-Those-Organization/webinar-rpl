@@ -4,3 +4,4 @@ export to csv all the webinar data
 
 TODO:
 - Aksually make JWT expired (see user.Valid)
+- add CRUD to other table first to make add event usable.
