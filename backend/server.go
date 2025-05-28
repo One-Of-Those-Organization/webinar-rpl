@@ -50,7 +50,8 @@ func appMakeRouteHandler(backend *Backend) {
 
     // EVENT STUFF
     appHandleNewEvent(backend, protected)
-    appHandleEventInfoAll(backend, protected) // WIP
+    appHandleEventInfoAll(backend, api)
+    appHandleEventInfoOf(backend, api)
 
     // MATERIAL STUFF
     appHandleNewMaterial(backend, protected) // WIP
