@@ -11,7 +11,7 @@ import (
 )
 
 // POST : api/protected/event-register
-func appHandleNewEvent(backend *Backend, route fiber.Router) {
+func appHandleEventNew(backend *Backend, route fiber.Router) {
     route.Post("event-register", func (c *fiber.Ctx) error {
 
         user := c.Locals("user").(*jwt.Token)
@@ -127,7 +127,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
     })
 }
 
-// GET : api/event-info-all
+// GET : api/protected/event-info-all
 func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
     route.Get("event-info-all", func (c *fiber.Ctx) error {
         user := c.Locals("user").(*jwt.Token)
@@ -142,6 +142,14 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
 
         claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
+        if email == "" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Not logged in.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
 
         offsetQuery := c.Query("offset")
         if offsetQuery == "" {
@@ -168,7 +176,7 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch user data from db.",
-                "error_code": 2,
+                "error_code": 3,
                 "data": nil,
             })
         }
@@ -182,9 +190,30 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
     })
 }
 
-// GET : api/event-info-of
+// GET : api/protected/event-info-of
 func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
     route.Get("event-info-of", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        email := claims["email"].(string)
+        if email == "" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Not logged in.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
         infoOf := c.Query("id")
         var event table.Event
         res := backend.db.Where("event_id = ?", infoOf).First(&event)
@@ -192,7 +221,7 @@ func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch event data from db.",
-                "error_code": 1,
+                "error_code": 3,
                 "data": nil,
             })
         }
@@ -202,6 +231,59 @@ func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
             "message": "Check data.",
             "error_code": 0,
             "data": event,
+        })
+    })
+}
+
+// POST : api/protected/event-del
+func appHandleEventDel(backend *Backend, route fiber.Router) {
+    route.Post("event-del", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        claims := user.Claims.(jwt.MapClaims)
+        admin := claims["admin"].(float64)
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to acces this api.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            EventId int `json:"id"`
+        }
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+        res := backend.db.Delete(&table.Event{}, body.EventId)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to delete event from the DB.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data.",
+            "error_code": 0,
+            "data": nil,
         })
     })
 }

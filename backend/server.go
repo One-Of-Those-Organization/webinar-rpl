@@ -49,9 +49,10 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleRegisterAdmin(backend, protected)
 
     // EVENT STUFF
-    appHandleNewEvent(backend, protected)
-    appHandleEventInfoAll(backend, api)
-    appHandleEventInfoOf(backend, api)
+    appHandleEventInfoAll(backend, protected)
+    appHandleEventInfoOf(backend, protected)
+    appHandleEventNew(backend, protected)
+    appHandleEventDel(backend, protected)
 
     // MATERIAL STUFF
     appHandleNewMaterial(backend, protected) // WIP
