@@ -53,6 +53,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventInfoOf(backend, protected)
     appHandleEventNew(backend, protected)
     appHandleEventDel(backend, protected)
+    appHandleEventEdit(backend, protected)
 
     // MATERIAL STUFF
     appHandleNewMaterial(backend, protected) // WIP

@@ -287,3 +287,113 @@ func appHandleEventDel(backend *Backend, route fiber.Router) {
         })
     })
 }
+
+// NOTE: Event if the stuff not edited please send the old data because its too painfull to
+//       do if, if check on every entry.
+
+// POST : api/protected/event-edit
+func appHandleEventEdit(backend *Backend, route fiber.Router) {
+	route.Post("event-edit", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        isAdmin := claims["admin"].(float64)
+
+        if isAdmin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+			EventId       *int       `json:"id"`
+            Desc          *string    `json:"desc"`
+            Name          *string    `json:"name"`
+            DStart        *time.Time `json:"dstart"`
+            DEnd          *time.Time `json:"dend"`
+            Link          *string    `json:"link"`
+            Speaker       *string    `json:"speaker"`
+            Att           *string    `json:"att"`
+            Img           *string    `json:"img"`
+            Max           *int       `json:"max"`
+			// TODO add the foreign key stuff too
+        }
+
+		err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+		}
+
+		event := table.Event{}
+		result := backend.db.First(&event, body.EventId)
+		if result.Error != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Event not found with ID: %d", body.EventId),
+				"error_code": 4,
+				"data": nil,
+			})
+		}
+
+		if body.Desc != nil {
+			event.EventDesc = *body.Desc
+		}
+		if body.Name != nil {
+			event.EventName = *body.Name
+		}
+		if body.DStart != nil {
+			event.EventDStart = *body.DStart
+		}
+		if body.DEnd != nil {
+			event.EventDEnd = *body.DEnd
+		}
+		if body.Link != nil {
+			event.EventLink = *body.Link
+		}
+		if body.Speaker != nil {
+			event.EventSpeaker = *body.Speaker
+		}
+		if body.Att != nil {
+			event.EventAtt = table.AttTypeEnum(*body.Att)
+		}
+		if body.Img != nil {
+			event.EventImg = *body.Img
+		}
+		if body.Max != nil {
+			event.EventMax = *body.Max
+		}
+
+		result = backend.db.Save(&event)
+		if result.Error != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Failed to update event: %v", result.Error),
+				"error_code": 5,
+				"data": nil,
+			})
+		}
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Event edited successfully.",
+            "error_code": 0,
+            "data": nil,
+        })
+	})
+}
