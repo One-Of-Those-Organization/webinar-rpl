@@ -127,7 +127,7 @@ func appHandleNewEvent(backend *Backend, route fiber.Router) {
     })
 }
 
-// GET : api/protected/event-info-all
+// GET : api/event-info-all
 func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
     route.Get("event-info-all", func (c *fiber.Ctx) error {
         user := c.Locals("user").(*jwt.Token)
@@ -141,16 +141,7 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
         }
 
         claims := user.Claims.(jwt.MapClaims)
-        isAdmin := claims["admin"].(float64)
-
-        if isAdmin != 1 {
-            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid credentials for this function",
-                "error_code": 2,
-                "data": nil,
-            })
-        }
+        email := claims["email"].(string)
 
         offsetQuery := c.Query("offset")
         if offsetQuery == "" {
@@ -177,7 +168,7 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch user data from db.",
-                "error_code": 3,
+                "error_code": 2,
                 "data": nil,
             })
         }
@@ -187,6 +178,30 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
             "message": "Check data.",
             "error_code": 0,
             "data": eventData,
+        })
+    })
+}
+
+// GET : api/event-info-of
+func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
+    route.Get("event-info-of", func (c *fiber.Ctx) error {
+        infoOf := c.Query("id")
+        var event table.Event
+        res := backend.db.Where("event_id = ?", infoOf).First(&event)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch event data from db.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data.",
+            "error_code": 0,
+            "data": event,
         })
     })
 }
