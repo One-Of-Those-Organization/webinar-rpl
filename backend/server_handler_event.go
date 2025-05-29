@@ -90,7 +90,7 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
             EventLink: body.Link,
         }
 
-        res = backend.db.Create(newEvent)
+        res = backend.db.Create(&newEvent)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
