@@ -59,31 +59,12 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
         }
 
         var Event table.Event
-        res := backend.db.Where("event_dstart = ? ",body.DStart).First(&Event)
-        if res.Error != nil {
+        res := backend.db.Where("event_name = ? ", body.Name).First(&Event)
+        if res.Error == nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch new event from db.",
-                "error_code": 8,
-                "data": nil,
-            })
-        }
-
-        if res.RowsAffected > 0 {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Event with that Date is already exist",
-                "error_code": 9,
-                "data": nil,
-            })
-        }
-
-        res = backend.db.Where("event_name = ? ", body.Name).First(&Event)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to fetch new event from db.",
-                "error_code": 10,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -92,7 +73,7 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Event with that name is already exist",
-                "error_code": 11,
+                "error_code": 7,
                 "data": nil,
             })
         }
@@ -114,7 +95,7 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to create new event, %v", res.Error),
-                "error_code": 12,
+                "error_code": 8,
                 "data": nil,
             })
         }
