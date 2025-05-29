@@ -140,7 +140,7 @@ export const auth = {
   add_webinar: async (data: WebinarInput): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/event-register`, {
+      const response = await fetch(`${API_URL}/api/protected/event-register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
