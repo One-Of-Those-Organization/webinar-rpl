@@ -106,6 +106,7 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
             EventAtt: table.AttTypeEnum(body.Att),
             EventImg: body.Img,
             EventMax: body.Max,
+            EventLink: body.Link,
         }
 
         res = backend.db.Create(newEvent)
