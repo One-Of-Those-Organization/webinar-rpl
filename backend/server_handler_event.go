@@ -327,7 +327,8 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
             Att           *string    `json:"att"`
             Img           *string    `json:"img"`
             Max           *int       `json:"max"`
-			// TODO add the foreign key stuff too
+            EventMat      *int       `json:"event_mat_id"`
+            CertTemplate  *int       `json:"cert_template_id"`
         }
 
 		err := c.BodyParser(&body)
@@ -378,6 +379,34 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
 		if body.Max != nil {
 			event.EventMax = *body.Max
 		}
+        if body.CertTemplate != nil {
+            var cert_temp table.CertTemplate
+            res := backend.db.Where("cert_id = ?", *body.CertTemplate).First(&cert_temp)
+            if res.Error != nil {
+                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                    "success": false,
+                    "message": fmt.Sprintf("Failed to fetch cert template with that id : %v", res.Error),
+                    "error_code": 5,
+                    "data": nil,
+                })
+            }
+            event.CertTemplates = make([]table.CertTemplate, 1)
+            event.CertTemplates = append(event.CertTemplates, cert_temp)
+        }
+        if body.EventMat != nil {
+            var mat table.EventMaterial
+            res := backend.db.Where("eventm_id = ?", *body.EventMat).First(&mat)
+            if res.Error != nil {
+                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                    "success": false,
+                    "message": fmt.Sprintf("Failed to fetch event material with that id : %v", res.Error),
+                    "error_code": 6,
+                    "data": nil,
+                })
+            }
+            event.EventMaterials = make([]table.EventMaterial, 1)
+            event.EventMaterials = append(event.EventMaterials, mat)
+        }
 
 		result = backend.db.Save(&event)
 		if result.Error != nil {
