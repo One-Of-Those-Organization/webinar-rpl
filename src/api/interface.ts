@@ -1,4 +1,4 @@
-// Base Response
+// Base Response for promises
 export interface BaseResponse {
   message: string;
   success: boolean;
@@ -8,7 +8,7 @@ export interface BaseResponse {
   data?: any;
 }
 
-// Export UserData {JSON}
+// Export User Data {JSON}
 export interface UserData {
   UserId: number;
   UserFullName: string;
@@ -19,7 +19,7 @@ export interface UserData {
   UserCreatedAt: string;
 }
 
-// Register Data
+// Register Data (POST)
 export interface RegisterData {
   name: string;
   email: string;
@@ -27,19 +27,33 @@ export interface RegisterData {
   pass: string;
 }
 
-// Login Data
+// Login Data (POST)
 export interface LoginData {
   email: string;
   pass: string;
 }
 
-// User Edit Data
+// User Edit Data (POST)
 export interface UserEditData {
   name: string;
   instance: string;
   picture: string;
 }
 
+// User Image Data (POST)
 export interface UserImage {
   data: string;
+}
+
+// Webinar Add Data (POST)
+export interface WebinarInput {
+  description: string;
+  name: string;
+  dstart: string;
+  dend: string;
+  speaker: string;
+  att: string;
+  link: string;
+  image: string;
+  max: number;
 }

@@ -26,9 +26,11 @@ export const Navbar = () => {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const user_data = localStorage.getItem("user_data");
 
   const isDashboardPage = location.pathname === "/dashboard";
+  const isAdminPage = location.pathname === "/admin";
 
   useEffect(() => {
     try {
@@ -40,6 +42,9 @@ export const Navbar = () => {
         // Set value to useState
         setEmail(user_data_object.UserEmail);
         setIsLoggedIn(true);
+        if (user_data_object.UserRole === 1) {
+          setIsAdmin(true);
+        }
       }
     } catch (error) {
       console.log("Unexpected Error");
@@ -47,29 +52,7 @@ export const Navbar = () => {
   }, []);
 
   const renderDropdownItems = () => {
-    if (isLoggedIn) {
-      return (
-        <>
-          <DropdownItem key="profile" className="h-14 gap-2">
-            <p className="font-semibold">Signed in as</p>
-            <p className="font-semibold">{email}</p>
-          </DropdownItem>
-          <DropdownItem key="my-profile" onClick={() => navigate("/profile")}>
-            Profile
-          </DropdownItem>
-          <DropdownItem
-            key="logout"
-            color="danger"
-            onClick={async () => {
-              localStorage.clear();
-              navigate("/");
-            }}
-          >
-            Log Out
-          </DropdownItem>
-        </>
-      );
-    } else {
+    if (!isLoggedIn) {
       return (
         <DropdownItem key="login" onClick={() => navigate("/login")}>
           <p className="font-semibold">Login</p>
@@ -77,6 +60,38 @@ export const Navbar = () => {
         </DropdownItem>
       );
     }
+
+    // User sudah login, tampilkan menu berdasarkan role
+    return (
+      <>
+        <DropdownItem key="profile" className="h-14 gap-2">
+          <p className="font-semibold">Signed in as</p>
+          <p className="font-semibold">{email}</p>
+        </DropdownItem>
+
+        <DropdownItem key="my-profile" onClick={() => navigate("/profile")}>
+          Profile
+        </DropdownItem>
+
+        {/* Tambahkan menu Admin Dashboard jika user adalah admin */}
+        {isAdmin && (
+          <DropdownItem key="admin" onClick={() => navigate("/admin")}>
+            Admin Dashboard
+          </DropdownItem>
+        )}
+
+        <DropdownItem
+          key="logout"
+          color="danger"
+          onClick={async () => {
+            localStorage.clear();
+            navigate("/");
+          }}
+        >
+          Log Out
+        </DropdownItem>
+      </>
+    );
   };
 
   return (
@@ -151,19 +166,35 @@ export const Navbar = () => {
         <div className="mx-4 mt-2 flex flex-col gap-2">
           <ThemeSwitch />
           {isLoggedIn ? (
-            siteConfig.navMenuItems.map((item, index) => (
-              <NavbarMenuItem key={`${item}-${index}`}>
-                <Link
-                  color={
-                    location.pathname === item.href ? "primary" : "foreground"
-                  }
-                  href={item.href}
-                  size="lg"
-                >
-                  {item.label}
-                </Link>
-              </NavbarMenuItem>
-            ))
+            <>
+              {/* Menu items untuk user yang login */}
+              {siteConfig.navMenuItems.map((item, index) => (
+                <NavbarMenuItem key={`${item}-${index}`}>
+                  <Link
+                    color={
+                      location.pathname === item.href ? "primary" : "foreground"
+                    }
+                    href={item.href}
+                    size="lg"
+                  >
+                    {item.label}
+                  </Link>
+                </NavbarMenuItem>
+              ))}
+
+              {/* Tambahkan Admin Dashboard ke menu mobile jika user adalah admin */}
+              {isAdmin && (
+                <NavbarMenuItem>
+                  <Link
+                    color={isAdminPage ? "primary" : "foreground"}
+                    href="/admin"
+                    size="lg"
+                  >
+                    Admin Dashboard
+                  </Link>
+                </NavbarMenuItem>
+              )}
+            </>
           ) : (
             <NavbarMenuItem>
               <Link

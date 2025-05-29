@@ -26,15 +26,15 @@ export default function LoginPage() {
       // API call
       const response = await auth.login({ email, pass });
 
-      // Success case
-      if (response.success) {
+      // Check for successful login first
+      if (response.success === true) {
         setError("");
         toast.success("Login Successful!");
         navigate("/dashboard");
         return;
       }
 
-      // Validation errors
+      // Only handle errors if the login wasn't successful
       switch (response.error_code) {
         case 2:
           setError("All field must be filled.");
@@ -42,11 +42,11 @@ export default function LoginPage() {
           break;
 
         case 3:
-          setError("Email or Password is invalid.");
-          toast.warn("Email or Password is invalid.");
+          setError("Invalid Email.");
+          toast.warn("Invalid Email.");
           break;
 
-        case 4:
+        case 5:
           setError("Password is Incorrect");
           toast.warn("Password is Incorrect");
           break;
@@ -93,7 +93,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-poppins md:text-4xl font-bold mb-6 md:mb-8">
             LOGIN
           </h1>
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} noValidate>
             {/* Show Error */}
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
             <div className="mb-4 md:mb-6">

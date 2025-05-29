@@ -1,4 +1,5 @@
-import React, {SVGProps} from "react";
+import React, { SVGProps } from "react";
+import { Link } from "react-router-dom";
 import {
   Table,
   TableHeader,
@@ -19,20 +20,25 @@ import {
   ChipProps,
   SortDescriptor,
 } from "@heroui/react";
-import { ChevronDownIcon, PlusIcon, SearchIcon, VerticalDotsIcon } from "./icons";
+import {
+  ChevronDownIcon,
+  PlusIcon,
+  SearchIcon,
+  VerticalDotsIcon,
+} from "./icons";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
 
 export const columns = [
-  {name: "ID", uid: "id", sortable: true},
-  {name: "NAME", uid: "name", sortable: true},
-  {name: "NIM", uid: "nim", sortable: true},
-  {name: "ROLE", uid: "role", sortable: true},
-  {name: "EMAIL", uid: "email"},
-  {name: "INSTANSI", uid: "instansi", sortable: true},
-  {name: "ACTIONS", uid: "actions"},
+  { name: "ID", uid: "id", sortable: true },
+  { name: "NAME", uid: "name", sortable: true },
+  { name: "NIM", uid: "nim", sortable: true },
+  { name: "ROLE", uid: "role", sortable: true },
+  { name: "EMAIL", uid: "email" },
+  { name: "INSTANSI", uid: "instansi", sortable: true },
+  { name: "ACTIONS", uid: "actions" },
 ];
 
 export const users = [
@@ -98,9 +104,11 @@ type User = (typeof users)[0];
 
 export default function App() {
   const [filterValue, setFilterValue] = React.useState("");
-  const [selectedKeys, setSelectedKeys] = React.useState<Selection>(new Set([]));
+  const [selectedKeys, setSelectedKeys] = React.useState<Selection>(
+    new Set([])
+  );
   const [visibleColumns, setVisibleColumns] = React.useState<Selection>(
-    new Set(INITIAL_VISIBLE_COLUMNS),
+    new Set(INITIAL_VISIBLE_COLUMNS)
   );
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
@@ -120,14 +128,16 @@ export default function App() {
 
   const headerColumns = React.useMemo(() => {
     if (visibleColumns === "all") return columns;
-    return columns.filter((column) => Array.from(visibleColumns).includes(column.uid));
+    return columns.filter((column) =>
+      Array.from(visibleColumns).includes(column.uid)
+    );
   }, [visibleColumns]);
 
   const filteredItems = React.useMemo(() => {
     let filteredUsers = [...users];
     if (hasSearchFilter) {
       filteredUsers = filteredUsers.filter((user) =>
-        user.name.toLowerCase().includes(filterValue.toLowerCase()),
+        user.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
     return filteredUsers;
@@ -151,7 +161,7 @@ export default function App() {
   // Role color mapping
   const roleColorMap: Record<string, ChipProps["color"]> = {
     Admin: "primary", // blue
-    User: "success",  // green
+    User: "success", // green
   };
 
   const renderCell = React.useCallback((user: User, columnKey: React.Key) => {
@@ -161,7 +171,7 @@ export default function App() {
       case "name":
         return (
           <User
-            avatarProps={{radius: "full", size: "sm", src: user.avatar}}
+            avatarProps={{ radius: "full", size: "sm", src: user.avatar }}
             classNames={{
               description: "text-default-500",
             }}
@@ -203,9 +213,12 @@ export default function App() {
     }
   }, []);
 
-  const onRowsPerPageChange = React.useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRowsPerPage(Number(e.target.value));
-  }, []);
+  const onRowsPerPageChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setRowsPerPage(Number(e.target.value));
+    },
+    []
+  );
 
   const onSearchChange = React.useCallback((value?: string) => {
     if (value) {
@@ -260,13 +273,21 @@ export default function App() {
                 ))}
               </DropdownMenu>
             </Dropdown>
-            <Button className="bg-foreground text-background" endContent={<PlusIcon />} size="sm">
-              Add New
-            </Button>
+            <Link to="/admin/user/add">
+              <Button
+                className="bg-foreground text-background"
+                endContent={<PlusIcon />}
+                size="sm"
+              >
+                Tambah User
+              </Button>
+            </Link>
           </div>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-default-400 text-small">Total {users.length} users</span>
+          <span className="text-default-400 text-small">
+            Total {users.length} users
+          </span>
           <label className="flex items-center text-default-400 text-small">
             Rows per page:
             <select
@@ -349,7 +370,9 @@ export default function App() {
       <TableBody emptyContent={"No users found"} items={sortedItems}>
         {(item) => (
           <TableRow key={item.id}>
-            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+            {(columnKey) => (
+              <TableCell>{renderCell(item, columnKey)}</TableCell>
+            )}
           </TableRow>
         )}
       </TableBody>

@@ -1,301 +1,377 @@
-import { Input } from "@heroui/input";
+import { Input, Textarea } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
 import { Image } from "@heroui/react";
-import { useState, useEffect } from "react";
-import { CloseIcon, PlusIcon, SearchIcon } from "@/components/icons";
+import { useState } from "react";
+import { auth } from "@/api/auth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Button,
+} from "@heroui/react";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
+// Fungsi untuk memformat tanggal sesuai kebutuhan backend
+const formatDateForBackend = (dateString: string): string => {
+  if (!dateString) return "";
+
+  // Jika tanggal sudah dalam format ISO, tidak perlu diformat ulang
+  if (dateString.includes("T")) return dateString;
+
+  // Mengubah format yyyy-MM-dd menjadi yyyy-MM-ddT00:00:00Z (ISO string)
+  return `${dateString}T00:00:00Z`;
 };
 
+// Type untuk attendance enum
+type AttTypeEnum = "online" | "offline";
+
 export function CreateWebinar() {
+  const [webinarInput, setWebinarInput] = useState({
+    name: "",
+    image: "www.google.com",
+    dstart: "",
+    dend: "",
+    speaker: "",
+    attendance: "online" as AttTypeEnum,
+    link: "",
+    max: 0,
+    description: "",
+  });
+  const navigate = useNavigate();
+  const [error, setError] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedPanitia, setSelectedPanitia] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] =
+    useState<string>("Online");
 
-  // Load initial users when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      fetchInitialUsers();
-    }
-  }, [isOpen]);
+  const handleAttendanceChange = (value: AttTypeEnum) => {
+    setWebinarInput({
+      ...webinarInput,
+      attendance: value,
+    });
+    setSelectedAttendance(value === "online" ? "Online" : "Offline");
+  };
 
-  const fetchInitialUsers = async () => {
+  const AddWebinar = async () => {
     setIsLoading(true);
     try {
-      // Replace with actual API call
-      const mockUsers = [
-        { id: "1", name: "John Doe", email: "john@example.com", avatar: "https://i.pravatar.cc/150?img=1" },
-        { id: "2", name: "Jane Smith", email: "jane@example.com", avatar: "https://i.pravatar.cc/150?img=2" },
-        { id: "3", name: "Robert Johnson", email: "robert@example.com", avatar: "https://i.pravatar.cc/150?img=3" },
-        { id: "4", name: "Emily Davis", email: "emily@example.com", avatar: "https://i.pravatar.cc/150?img=4" },
-        { id: "5", name: "Michael Wilson", email: "michael@example.com", avatar: "https://i.pravatar.cc/150?img=5" },
-        { id: "6", name: "Sarah Brown", email: "sarah@example.com", avatar: "https://i.pravatar.cc/150?img=6" },
-        { id: "7", name: "David Taylor", email: "david@example.com", avatar: "https://i.pravatar.cc/150?img=7" },
-        { id: "8", name: "Laura Martinez", email: "laura@example.com", avatar: "https://i.pravatar.cc/150?img=8" },
-        { id: "9", name: "James Anderson", email: "james@example.com", avatar: "https://i.pravatar.cc/150?img=9" },
-        { id: "10", name: "Jennifer Thomas", email: "jennifer@example.com", avatar: "https://i.pravatar.cc/150?img=10" },
-      ];
-      setUsers(mockUsers);
+      const formattedWebinarData = {
+        name: webinarInput.name,
+        image: webinarInput.image,
+        dstart: formatDateForBackend(webinarInput.dstart),
+        dend: formatDateForBackend(webinarInput.dend),
+        speaker: webinarInput.speaker,
+        att: webinarInput.attendance,
+        link: webinarInput.link,
+        max: webinarInput.max,
+        description: webinarInput.description,
+      };
+
+      const response = await auth.add_webinar(formattedWebinarData);
+
+      // Handle the response if successful
+      if (response.success) {
+        setError("");
+        toast.success("Webinar Created Successfully!");
+        navigate("/admin/webinar");
+        setIsOpen(false);
+        return;
+      }
+      // Handle the response if there is an error
+      switch (response.error_code) {
+        case 5:
+          setError("Webinar already exists with that date.");
+          toast.error("Webinar already exists with that date.");
+          break;
+
+        case 7:
+          setError("Webinar already exists with that name.");
+          toast.error("Webinar already exists with that name.");
+          break;
+
+        default:
+          setError("Add Webinar Failed.");
+          toast.error("Add Webinar Failed");
+          break;
+      }
     } catch (error) {
-      console.error("Failed to fetch users:", error);
+      setError("An error occurred. Please try again.");
+      toast.error("An error occurred");
+      console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSearchUsers = async () => {
-    if (!searchQuery.trim()) {
-      fetchInitialUsers();
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Replace with actual search API call
-      // For now, we'll just filter the mock data
-      const filtered = users.filter(user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setUsers(filtered);
-    } catch (error) {
-      console.error("Search failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddPanitia = (user: User) => {
-    if (selectedPanitia.length < 10 && !selectedPanitia.some(p => p.id === user.id)) {
-      setSelectedPanitia([...selectedPanitia, user]);
-    }
-  };
-
-  const handleRemovePanitia = (id: string) => {
-    setSelectedPanitia(selectedPanitia.filter(user => user.id !== id));
+  // Fungsi untuk handle input perubahan waktu (jam:menit)
+  const handleTimeChange = (field: "dstart" | "dend", value: string) => {
+    const dateValue = webinarInput[field].split("T")[0];
+    setWebinarInput({
+      ...webinarInput,
+      [field]: `${dateValue}T${value}:00Z`,
+    });
   };
 
   return (
     <>
-      <button 
-        onClick={() => setIsOpen(true)} 
-        className={buttonStyles()}
-      >
-        <PlusIcon size={20} />
-        <span className="ml-2">Create Webinar</span>
+      <button onClick={() => setIsOpen(true)} className={buttonStyles()}>
+        Add Webinar
       </button>
-      
+
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h1 className="text-2xl font-bold text-white mb-6">Create Webinar</h1>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column - Webinar Details */}
-                <div>
-                  <Image
-                    className="object-cover w-full h-48 rounded-lg mb-4"
-                    alt="Preview Image Webinar"
-                    src="https://heroui.com/images/hero-card-complete.jpeg"
+              <h1 className="text-2xl font-bold text-white mb-6 text-center">
+                Create Webinar
+              </h1>
+              <div>
+                <Image
+                  className="object-cover rounded-lg mb-4"
+                  alt="Preview Image Webinar"
+                  src="https://heroui.com/images/hero-card-complete.jpeg"
+                />
+
+                <div className="space-y-4">
+                  <Input
+                    color="secondary"
+                    label="Title"
+                    type="text"
+                    variant="flat"
+                    className="w-full"
+                    value={webinarInput.name}
+                    onChange={(e) =>
+                      setWebinarInput({
+                        ...webinarInput,
+                        name: e.target.value,
+                      })
+                    }
+                    required
                   />
-                  
-                  <div className="space-y-4">
+                  <Input
+                    color="secondary"
+                    label="Image"
+                    type="file"
+                    variant="flat"
+                    className="w-full"
+                    // TODO : Handle image Upload here
+                    required
+                  />
+                  <Input
+                    color="secondary"
+                    label="Max Attendees"
+                    type="number"
+                    variant="flat"
+                    value={webinarInput.max || ""}
+                    className="w-full"
+                    onChange={(e) =>
+                      setWebinarInput({
+                        ...webinarInput,
+                        max: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    required
+                  />
+
+                  {/* Date Inputs - Now with separate date and time inputs */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
                       color="secondary"
-                      label="Title"
-                      type="text"
-                      variant="flat"
-                      className="w-full"
-                      required
-                    />
-                    <Input
-                      color="secondary"
-                      label="Image"
-                      type="file"
-                      variant="flat"
-                      className="w-full"
-                      required
-                    />
-                    <Input
-                      color="secondary"
-                      label="Date"
+                      label="Date Start"
                       type="date"
                       variant="flat"
+                      value={webinarInput.dstart.split("T")[0]}
                       className="w-full"
+                      onChange={(e) =>
+                        setWebinarInput({
+                          ...webinarInput,
+                          dstart: e.target.value,
+                        })
+                      }
                       required
                     />
                     <Input
                       color="secondary"
-                      label="Place"
-                      type="text"
+                      label="Time Start"
+                      type="time"
                       variant="flat"
                       className="w-full"
+                      onChange={(e) =>
+                        handleTimeChange("dstart", e.target.value)
+                      }
                       required
-                    />
-                    <Input
-                      color="secondary"
-                      label="Materi"
-                      type="file"
-                      variant="flat"
-                      className="w-full"
-
-                    />
-                    <Input
-                      color="secondary"
-                      label="Link"
-                      type="text"
-                      variant="flat"
-                      className="w-full"
-                    />
-                    <Input
-                      color="secondary"
-                      label="Description"
-                      type="text"
-                      variant="flat"
-                      className="w-full"
                     />
                   </div>
-                </div>
-                
-                {/* Right Column - Panitia Selection */}
-                <div>
-                  <h2 className="text-xl font-semibold text-white mb-4">Add Panitia (Max: 10)</h2>
-                  
-                  {/* Search and Select Panitia */}
-                  <div className="mb-4">
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      color="secondary"
+                      label="Date End"
+                      type="date"
+                      variant="flat"
+                      value={webinarInput.dend.split("T")[0]}
+                      className="w-full"
+                      onChange={(e) =>
+                        setWebinarInput({
+                          ...webinarInput,
+                          dend: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <Input
+                      color="secondary"
+                      label="Time End"
+                      type="time"
+                      variant="flat"
+                      className="w-full"
+                      onChange={(e) => handleTimeChange("dend", e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <Input
+                    color="secondary"
+                    label="Speaker"
+                    type="text"
+                    variant="flat"
+                    className="w-full"
+                    value={webinarInput.speaker}
+                    onChange={(e) =>
+                      setWebinarInput({
+                        ...webinarInput,
+                        speaker: e.target.value,
+                      })
+                    }
+                    required
+                  />
+
+                  <div className="w-full">
+                    <label className="block text-sm font-medium mb-1.5 text-secondary-500 dark:text-secondary-500">
+                      Attendance Type
+                    </label>
                     <div className="relative">
-                      <Input
-                        color="secondary"
-                        label="Search Users"
-                        type="text"
-                        variant="flat"
-                        className="w-full"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSearchUsers()}
-                      />
-                      <button
-                        onClick={handleSearchUsers}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                      >
-                        <SearchIcon size={18} />
-                      </button>
+                      <Dropdown>
+                        <DropdownTrigger>
+                          <Button className="w-full justify-between h-[40px] px-3 py-2 text-left text-sm text-secondary-500 dark:text-secondary-300 bg-purple-100 dark:bg-purple-900/30 rounded-md border-none hover:bg-purple-200 dark:hover:bg-purple-800/40">
+                            <span>{selectedAttendance}</span>
+                            <span className="ml-auto">▼</span>
+                          </Button>
+                        </DropdownTrigger>
+                        <DropdownMenu
+                          aria-label="Attendance Type"
+                          variant="flat"
+                          onAction={(key) =>
+                            handleAttendanceChange(key as AttTypeEnum)
+                          }
+                          className="text-secondary-500 dark:text-secondary-300"
+                        >
+                          <DropdownItem
+                            key="online"
+                            className="text-secondary-500 dark:text-secondary-300"
+                          >
+                            Online
+                          </DropdownItem>
+                          <DropdownItem
+                            key="offline"
+                            className="text-secondary-500 dark:text-secondary-300"
+                          >
+                            Offline
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
                     </div>
                   </div>
-                  
-                  {/* User List */}
-                  <div className="border border-gray-700 rounded-lg overflow-hidden">
-                    {isLoading ? (
-                      <div className="p-4 text-center text-gray-400">Loading...</div>
-                    ) : users.length === 0 ? (
-                      <div className="p-4 text-center text-gray-400">
-                        No users found
-                      </div>
-                    ) : (
-                      <ul className="divide-y divide-gray-700 max-h-[115mm] overflow-y-auto scrollbar-hide">
-                        {users.map(user => (
-                          <li key={user.id} className="p-3 hover:bg-gray-700 transition-colors">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                <img 
-                                  src={user.avatar} 
-                                  alt={user.name} 
-                                  className="w-10 h-10 rounded-full mr-3"
-                                />
-                                <div>
-                                  <p className="text-white font-medium">{user.name}</p>
-                                  <p className="text-gray-400 text-sm">{user.email}</p>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => handleAddPanitia(user)}
-                                disabled={selectedPanitia.some(p => p.id === user.id) || selectedPanitia.length >= 10}
-                                className={buttonStyles({
-                                  color: "primary",
-                                  radius: "full",
-                                  variant: "solid",
-                                  size: "sm",
-                                  className: "ml-2",
-                                  isDisabled: selectedPanitia.some(p => p.id === user.id) || selectedPanitia.length >= 10
-                                })}
-                              >
-                                {selectedPanitia.some(p => p.id === user.id) ? "Added" : "Add"}
-                              </button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+
+                  {/* Tampilkan Link Zoom hanya jika Online dipilih */}
+                  {webinarInput.attendance === "online" && (
+                    <Input
+                      color="secondary"
+                      label="Link Zoom (Online)"
+                      type="text"
+                      variant="flat"
+                      className="w-full"
+                      value={webinarInput.link}
+                      onChange={(e) =>
+                        setWebinarInput({
+                          ...webinarInput,
+                          link: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  )}
+
+                  {/* Tampilkan Location jika Offline dipilih */}
+                  {webinarInput.attendance === "offline" && (
+                    <Input
+                      color="secondary"
+                      label="Location (Offline)"
+                      type="text"
+                      variant="flat"
+                      className="w-full"
+                      value={webinarInput.link}
+                      onChange={(e) =>
+                        setWebinarInput({
+                          ...webinarInput,
+                          link: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  )}
+
+                  <Textarea
+                    color="secondary"
+                    label="Description Webinar"
+                    type="text"
+                    variant="flat"
+                    className="w-full"
+                    value={webinarInput.description}
+                    onChange={(e) =>
+                      setWebinarInput({
+                        ...webinarInput,
+                        description: e.target.value,
+                      })
+                    }
+                    required
+                  />
                 </div>
               </div>
+              {error && <div className="text-red-500 mt-4">{error}</div>}
+            </div>
 
-              <div className="mt-6 border-t border-gray-700 pt-4">
-                {/* Selected Panitia */}
-                <div className="mb-4">
-                    <h3 className="text-sm font-medium text-gray-300 mb-2">Selected Panitia:</h3>
-                    {selectedPanitia.length === 0 ? (
-                      <p className="text-gray-400 text-sm">No panitia selected yet</p>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedPanitia.map(user => (
-                          <div key={user.id} className="flex items-center bg-gray-700 rounded-full px-3 py-1">
-                            <img 
-                              src={user.avatar} 
-                              alt={user.name} 
-                              className="w-6 h-6 rounded-full mr-2"
-                            />
-                            <span className="text-white text-sm">{user.name}</span>
-                            <button 
-                              onClick={() => handleRemovePanitia(user.id)}
-                              className="ml-2 text-gray-300 hover:text-white"
-                            >
-                              <CloseIcon size={14} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="text-xs text-gray-400 mt-1">
-                      {selectedPanitia.length}/10 selected
-                    </div>
-                  </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className={buttonStyles({
-                    color: "danger",
-                    radius: "full",
-                    variant: "solid",
-                    size: "md",
-                  })}
-                >
-                  Cancel
-                </button>
-                <button
-                  className={buttonStyles({
-                    color: "primary",
-                    radius: "full",
-                    variant: "solid",
-                    size: "md",
-                  })}
-                >
-                  Create Webinar
-                </button>
-              </div>
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700">
+              <button
+                onClick={() => setIsOpen(false)}
+                className={buttonStyles({
+                  color: "danger",
+                  radius: "full",
+                  variant: "solid",
+                  size: "md",
+                })}
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={AddWebinar}
+                disabled={isLoading}
+                className={buttonStyles({
+                  color: "primary",
+                  radius: "full",
+                  variant: "solid",
+                  size: "md",
+                })}
+              >
+                {isLoading ? "Creating..." : "Create Webinar"}
+              </button>
             </div>
-            </div>
-        </div> 
+          </div>
+        </div>
       )}
     </>
   );

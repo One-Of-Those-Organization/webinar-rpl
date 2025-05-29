@@ -34,6 +34,7 @@ func appMakeRouteHandler(backend *Backend) {
 
     app.Static("/static", "./img")
 
+    // USER STUFF
     appHandleLogin(backend, api)
     appHandleRegister(backend, api)
 
@@ -45,10 +46,17 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleUserDelAdmin(backend, protected)
     appHandleUploadImage(backend, protected)
     appHandleUserCount(backend, protected)
+    appHandleRegisterAdmin(backend, protected)
 
-    // TODO: total webinar sama total user
+    // EVENT STUFF
+    appHandleEventInfoAll(backend, protected)
+    appHandleEventInfoOf(backend, protected)
+    appHandleEventNew(backend, protected)
+    appHandleEventDel(backend, protected)
+    appHandleEventEdit(backend, protected)
 
-    appHandleNewEvent(backend, protected)
+    // MATERIAL STUFF
+    appHandleNewMaterial(backend, protected) // WIP
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")
