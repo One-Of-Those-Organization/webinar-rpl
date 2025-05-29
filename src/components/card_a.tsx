@@ -1,8 +1,19 @@
 import { Card, CardHeader, CardBody, Image, Link } from "@heroui/react";
 import React from "react";
 import { EditIcon, TrashIcon } from "./icons";
+import { auth } from "@/api/auth";
 
 export function CardViewAdmin(): React.ReactElement {
+  async function loadWebinarData() {
+    const result = await auth.get_all_webinar();
+    if (result.success) {
+      const webinar_data = localStorage.getItem("webinar_data");
+      console.log("Webinar data from localStorage:", webinar_data);
+      // Proses data di sini
+    }
+  }
+
+  loadWebinarData();
   return (
     <Link href="/">
       <Card className="py-4">
