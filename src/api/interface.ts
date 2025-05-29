@@ -45,21 +45,6 @@ export interface UserImage {
   data: string;
 }
 
-// Webinar Data (GET)
-export interface WebinarData {
-  name: string;
-  desc: string;
-  img: string;
-  max: number;
-  dstart: string;
-  dend: string;
-  link: string;
-  speaker: string;
-  att: string;
-  material_id: number[];
-  cert_temp_id: number;
-}
-
 // Webinar Add Data (POST)
 export interface WebinarInput {
   description: string;

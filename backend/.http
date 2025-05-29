@@ -52,3 +52,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1ha
   "img": "https://example.com/images/react-workshop.jpg",
   "max": 100
 }
+
+### Test 6 - Get All Events
+GET http://localhost:3000/api/protected/event-info-all
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1haWwiOiJjb21tcmFkZUBleGFtcGxlLmNvbSIsImV4cCI6MTc0ODc5NDIzOX0.IjLrWI-VfObMwNyTZR0ehRL96g-PLEbJNFXKWKCIjLA
