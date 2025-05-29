@@ -368,10 +368,20 @@ func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
             offsetQuery = "0";
         }
 
+        limitQuery := c.Query("limit")
+        if limitQuery == "" {
+            limitQuery = "10000"
+        }
+
         offset, err := strconv.Atoi(offsetQuery)
         if err != nil {
             offset = 0
         }
+        limit, err := strconv.Atoi(limitQuery)
+        if err != nil {
+            limit = 10000
+        }
+
         user := c.Locals("user").(*jwt.Token)
         if user != nil {
             claims := user.Claims.(jwt.MapClaims)
@@ -388,7 +398,7 @@ func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
 
             var userData []table.User
 
-            res := backend.db.Offset(offset).Limit(1000).Find(&userData)
+            res := backend.db.Offset(offset).Limit(limit).Find(&userData)
             if res.Error != nil {
                 return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                     "success": false,
