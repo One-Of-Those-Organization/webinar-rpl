@@ -62,11 +62,13 @@ export interface WebinarData {
 
 // Webinar Add Data (POST)
 export interface WebinarInput {
-  name: string;
-  image: string;
-  date: string;
-  place: string;
-  materi: string;
-  link: string;
   description: string;
+  name: string;
+  dstart: string;
+  dend: string;
+  speaker: string;
+  att: string;
+  link: string;
+  image: string;
+  max: number;
 }

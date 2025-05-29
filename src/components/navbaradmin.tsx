@@ -19,7 +19,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
-import { Search } from "@/components/search";
 
 export const NavbarAdmin = () => {
   const navigate = useNavigate();
@@ -126,11 +125,7 @@ export const NavbarAdmin = () => {
       </NavbarContent>
 
       <NavbarContent className="items-center gap-4" justify="end">
-        {isLoggedIn && (
-          <NavbarItem className="hidden lg:flex">
-            <Search />
-          </NavbarItem>
-        )}
+        {isLoggedIn && <NavbarItem className="hidden lg:flex"></NavbarItem>}
         <ThemeSwitch className="hidden lg:block" />
         <Dropdown placement="bottom-end">
           <DropdownTrigger>
@@ -151,7 +146,6 @@ export const NavbarAdmin = () => {
       </NavbarContent>
 
       <NavbarMenu>
-        {isLoggedIn && <Search />}
         <div className="mx-4 mt-2 flex flex-col gap-2">
           <ThemeSwitch />
           {isLoggedIn
