@@ -151,3 +151,64 @@ func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
         })
     })
 }
+
+// POST : api/protected/material-del
+func appHandleMaterialDel(backend *Backend, route fiber.Router) {
+    route.Post("material-del", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        isAdmin := claims["admin"].(float64)
+        if isAdmin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            EventMatId int `json:"id"`
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        res := backend.db.Delete(&table.EventMaterial{}, body.EventMatId)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to delete event material from the DB.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Event Material deleted.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// WIP
+// POST : api/protected/material-edit
+func appHandleMaterialEdit(backend *Backend, route fiber.Router) {}
