@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"webrpl/table"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,7 +13,7 @@ import (
 //       its not allowed to add more.
 
 // POST : api/protected/material-register
-func appHandleNewMaterial(backend *Backend, route fiber.Router) {
+func appHandleMaterialNew(backend *Backend, route fiber.Router) {
     route.Post("material-register", func (c *fiber.Ctx) error {
         user := c.Locals("user").(*jwt.Token)
         if user == nil {
@@ -77,10 +78,76 @@ func appHandleNewMaterial(backend *Backend, route fiber.Router) {
         }
 
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
-            "success": false,
-            "message": "WIP",
+            "success": true,
+            "message": "New material added.",
             "error_code": 0,
             "data": nil,
+        })
+    })
+}
+
+// GET : protected/material-info-of
+func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
+    route.Get("material-info-of", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        email := claims["email"].(string)
+
+        if email == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email on JWT.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        infoOf := c.Query("id")
+        var infoOfInt int
+
+        if infoOf == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Query.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+        infoOfInt, err := strconv.Atoi(infoOf)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid Query : %v", err),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        var eventMat table.EventMaterial
+        res := backend.db.Where("eventm_id = ?", infoOfInt).First(&eventMat)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch event material from db.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data.",
+            "error_code": 0,
+            "data": eventMat,
         })
     })
 }
