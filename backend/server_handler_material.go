@@ -86,7 +86,7 @@ func appHandleMaterialNew(backend *Backend, route fiber.Router) {
     })
 }
 
-// GET : protected/material-info-of
+// GET : api/protected/material-info-of
 func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
     route.Get("material-info-of", func (c *fiber.Ctx) error {
         user := c.Locals("user").(*jwt.Token)
@@ -211,4 +211,78 @@ func appHandleMaterialDel(backend *Backend, route fiber.Router) {
 
 // WIP
 // POST : api/protected/material-edit
-func appHandleMaterialEdit(backend *Backend, route fiber.Router) {}
+func appHandleMaterialEdit(backend *Backend, route fiber.Router) {
+    route.Post("material-edit", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        isAdmin := claims["admin"].(float64)
+        if isAdmin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            Id           int     `json:"id"`
+            EventId      *int    `json:"event_id"`
+            EventAttach  *string `json:"event_attach"`
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        eventMaterial := table.EventMaterial{}
+        result := backend.db.First(&eventMaterial, body.Id)
+		if result.Error != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Event Material not found with ID: %d", body.EventId),
+				"error_code": 4,
+				"data": nil,
+			})
+		}
+        if body.EventId != nil {
+            eventMaterial.EventId = *body.EventId
+        }
+
+        if body.EventAttach != nil {
+            eventMaterial.EventMatAttachment = *body.EventAttach
+        }
+
+		result = backend.db.Save(&eventMaterial)
+        if result.Error != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Failed to update event: %v", result.Error),
+				"error_code": 5,
+				"data": nil,
+			})
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Event Material Data saved.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
