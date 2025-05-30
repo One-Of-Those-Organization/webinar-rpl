@@ -4,7 +4,6 @@ import {
   LoginData,
   UserEditData,
   UserImage,
-  WebinarData, // Later for Get Webinar Data
   WebinarInput,
 } from "./interface.ts";
 
@@ -136,11 +135,11 @@ export const auth = {
     }
   },
 
-  // API Get Webinar Data
+  // API Add Webinar
   add_webinar: async (data: WebinarInput): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/event-register`, {
+      const response = await fetch(`${API_URL}/api/protected/event-register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -155,6 +154,37 @@ export const auth = {
       }
       return result;
     } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API Get All Webinars
+  get_all_webinar: async (): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/protected/event-info-all`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+      console.log("API response:", result);
+
+      if (result.success) {
+        if (result.token) {
+          localStorage.setItem("token", result.token);
+        }
+        console.log("Menyimpan data:", result.data);
+        localStorage.setItem("webinar_data", JSON.stringify(result.data));
+      }
+      return result;
+    } catch (error) {
+      console.error("Error fetching webinar data:", error); // Tambahkan log error
       return {
         message: "Failed to connect to server",
         success: false,
