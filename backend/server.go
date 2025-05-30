@@ -59,8 +59,8 @@ func appMakeRouteHandler(backend *Backend) {
     // MATERIAL STUFF
     appHandleMaterialNew(backend, protected)
     appHandleMaterialInfoOf(backend, protected)
-    appHandleEventDel(backend, protected)
-    appHandleEventEdit(backend, protected)
+    appHandleMaterialDel(backend, protected)
+    appHandleMaterialEdit(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")

@@ -209,7 +209,6 @@ func appHandleMaterialDel(backend *Backend, route fiber.Router) {
     })
 }
 
-// WIP
 // POST : api/protected/material-edit
 func appHandleMaterialEdit(backend *Backend, route fiber.Router) {
     route.Post("material-edit", func (c *fiber.Ctx) error {
