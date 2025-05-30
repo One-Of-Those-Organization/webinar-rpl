@@ -463,7 +463,7 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
 }
 
 // POST: api/protected/user-upload-image
-func appHandleUploadImage(_ *Backend, route fiber.Router) {
+func appHandleUserUploadImage(_ *Backend, route fiber.Router) {
     route.Post("user-upload-image", func(c *fiber.Ctx) error {
         var body struct {
             Data string `json:"data"`

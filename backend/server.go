@@ -44,7 +44,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleUserEdit(backend, protected)
     appHandleUserEditAdmin(backend, protected)
     appHandleUserDelAdmin(backend, protected)
-    appHandleUploadImage(backend, protected)
+    appHandleUserUploadImage(backend, protected)
     appHandleUserCount(backend, protected)
     appHandleRegisterAdmin(backend, protected)
 
@@ -54,6 +54,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventNew(backend, protected)
     appHandleEventDel(backend, protected)
     appHandleEventEdit(backend, protected)
+    appHandleEventUploadImage(backend, protected)
 
     // MATERIAL STUFF
     appHandleNewMaterial(backend, protected) // WIP
