@@ -304,7 +304,7 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-			EventId       *int       `json:"id"`
+			EventId       int       `json:"id"`
             Desc          *string    `json:"desc"`
             Name          *string    `json:"name"`
             DStart        *time.Time `json:"dstart"`
