@@ -536,7 +536,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             })
         }
 
-        // todo: block if its too big and not image format
+        // TODO: block if its too big and not image format
         fileExt := ".jpg"
         if strings.Contains(body.Data, "image/png") {
             fileExt = ".png"
@@ -544,8 +544,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             fileExt = ".gif"
         }
 
-        timestamp := time.Now().UnixNano()
-        filename := fmt.Sprintf("%s/%s_%d%s", imgDir, username, timestamp, fileExt)
+        filename := fmt.Sprintf("%s/%s_%s", imgDir, username, fileExt)
 
         err = os.WriteFile(filename, imageData, 0644)
         if err != nil {
