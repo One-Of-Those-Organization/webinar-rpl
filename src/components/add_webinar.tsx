@@ -66,7 +66,7 @@ export function CreateWebinar() {
         att: webinarInput.attendance,
         link: webinarInput.link,
         max: webinarInput.max,
-        description: webinarInput.description,
+        desc: webinarInput.description,
       };
 
       const response = await auth.add_webinar(formattedWebinarData);
@@ -76,6 +76,7 @@ export function CreateWebinar() {
         setError("");
         toast.success("Webinar Created Successfully!");
         navigate("/admin/webinar");
+        window.location.reload();
         setIsOpen(false);
         return;
       }

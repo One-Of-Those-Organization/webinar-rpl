@@ -47,6 +47,7 @@ export interface UserImage {
 
 // Webinar Add Data (POST)
 export interface WebinarInput {
+  id: number;
   description: string;
   name: string;
   dstart: string;
