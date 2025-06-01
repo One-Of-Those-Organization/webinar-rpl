@@ -8,9 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// TODO
 // POST : api/protected/cert-register
-func appHandleNewCertTemp(backend *Backend, route fiber.Router) {
+func appHandleCertTempNew(backend *Backend, route fiber.Router) {
     route.Post("cert-register", func (c *fiber.Ctx) error {
         user := c.Locals("user").(*jwt.Token)
         if user == nil {
