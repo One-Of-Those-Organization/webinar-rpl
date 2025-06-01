@@ -62,6 +62,9 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleMaterialDel(backend, protected)
     appHandleMaterialEdit(backend, protected)
 
+    // CERTIFICATE TEMPLATE STUFF
+    appHandleCertTempNew(backend, protected)
+
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")
     })
