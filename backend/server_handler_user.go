@@ -463,7 +463,7 @@ func appHandleUserInfo(backend *Backend, route fiber.Router) {
 }
 
 // POST: api/protected/user-upload-image
-func appHandleUploadImage(_ *Backend, route fiber.Router) {
+func appHandleUserUploadImage(_ *Backend, route fiber.Router) {
     route.Post("user-upload-image", func(c *fiber.Ctx) error {
         var body struct {
             Data string `json:"data"`
@@ -536,7 +536,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             })
         }
 
-        // todo: block if its too big and not image format
+        // TODO: block if its too big and not image format
         fileExt := ".jpg"
         if strings.Contains(body.Data, "image/png") {
             fileExt = ".png"
@@ -544,8 +544,7 @@ func appHandleUploadImage(_ *Backend, route fiber.Router) {
             fileExt = ".gif"
         }
 
-        timestamp := time.Now().UnixNano()
-        filename := fmt.Sprintf("%s/%s_%d%s", imgDir, username, timestamp, fileExt)
+        filename := fmt.Sprintf("%s/%s_%s", imgDir, username, fileExt)
 
         err = os.WriteFile(filename, imageData, 0644)
         if err != nil {

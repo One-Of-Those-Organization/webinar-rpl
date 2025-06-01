@@ -1,6 +1,10 @@
 package main
+// NOTE: Maybe need to change it to not check the jwt so not logged in people can get the webinar?
 
 import (
+	"encoding/base64"
+    "strings"
+    "os"
     "strconv"
 	"fmt"
 	"time"
@@ -60,20 +64,11 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
 
         var Event table.Event
         res := backend.db.Where("event_name = ? ", body.Name).First(&Event)
-        if res.Error == nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to fetch new event from db.",
-                "error_code": 6,
-                "data": nil,
-            })
-        }
-
         if res.RowsAffected > 0 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Event with that name is already exist",
-                "error_code": 7,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -90,12 +85,21 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
             EventLink: body.Link,
         }
 
+        if newEvent.EventDesc == "" || newEvent.EventName == "" || newEvent.EventSpeaker == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Empty desc, name, speaker field is not allowed.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
         res = backend.db.Create(&newEvent)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to create new event, %v", res.Error),
-                "error_code": 8,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -190,20 +194,31 @@ func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
         if email == "" {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
-                "message": "Not logged in.",
+                "message": "Invalid email on JWT.",
                 "error_code": 2,
                 "data": nil,
             })
         }
 
         infoOf := c.Query("id")
+
+        infoOfInt, err := strconv.Atoi(infoOf)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid Query : %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
         var event table.Event
-        res := backend.db.Where("event_id = ?", infoOf).First(&event)
+        res := backend.db.Where("event_id = ?", infoOfInt).First(&event)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch event data from db.",
-                "error_code": 3,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -299,7 +314,7 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-			EventId       *int       `json:"id"`
+			EventId       int       `json:"id"`
             Desc          *string    `json:"desc"`
             Name          *string    `json:"name"`
             DStart        *time.Time `json:"dstart"`
@@ -395,7 +410,7 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
 				"message": fmt.Sprintf("Failed to update event: %v", result.Error),
-				"error_code": 5,
+				"error_code": 7,
 				"data": nil,
 			})
 		}
@@ -407,4 +422,121 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
             "data": nil,
         })
 	})
+}
+
+// POST: api/protected/event-upload-image
+func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
+    route.Post("event-upload-image", func(c *fiber.Ctx) error {
+        var body struct {
+            EventId int `json:"id"`
+            Data    string `json:"data"`
+        }
+
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        admin := claims["admin"].(float64)
+
+        if admin != 1 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Body Request",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var EventObj table.Event
+        res := backend.db.Where("event_id = ?", body.EventId).First(&EventObj)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch event from the event id provided.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        if body.Data == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "No image data provided",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        imgDir := "img"
+        if err := os.MkdirAll(imgDir, 0755); err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to create image directory",
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
+        // Check if the string contains the base64 prefix and remove if present
+        base64Data := body.Data
+        if i := strings.Index(base64Data, ","); i != -1 {
+            base64Data = base64Data[i+1:]
+        }
+
+        imageData, err := base64.StdEncoding.DecodeString(base64Data)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid base64 image data",
+                "error_code": 7,
+                "data": nil,
+            })
+        }
+
+        // TODO: block if its too big and not image format
+        fileExt := ".jpg"
+        if strings.Contains(body.Data, "image/png") {
+            fileExt = ".png"
+        } else if strings.Contains(body.Data, "image/gif") {
+            fileExt = ".gif"
+        }
+
+        filename := fmt.Sprintf("%s/%s_%s", imgDir, EventObj.EventName, fileExt)
+
+        err = os.WriteFile(filename, imageData, 0644)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to save image",
+                "error_code": 8,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Image uploaded successfully",
+            "error_code": 0,
+            "data": fiber.Map{
+                "filename": filename,
+            },
+        })
+    })
 }

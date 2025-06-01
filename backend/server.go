@@ -44,7 +44,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleUserEdit(backend, protected)
     appHandleUserEditAdmin(backend, protected)
     appHandleUserDelAdmin(backend, protected)
-    appHandleUploadImage(backend, protected)
+    appHandleUserUploadImage(backend, protected)
     appHandleUserCount(backend, protected)
     appHandleRegisterAdmin(backend, protected)
 
@@ -54,9 +54,16 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventNew(backend, protected)
     appHandleEventDel(backend, protected)
     appHandleEventEdit(backend, protected)
+    appHandleEventUploadImage(backend, protected)
 
     // MATERIAL STUFF
-    appHandleNewMaterial(backend, protected) // WIP
+    appHandleMaterialNew(backend, protected)
+    appHandleMaterialInfoOf(backend, protected)
+    appHandleMaterialDel(backend, protected)
+    appHandleMaterialEdit(backend, protected)
+
+    // CERTIFICATE TEMPLATE STUFF
+    appHandleCertTempNew(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")
