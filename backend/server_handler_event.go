@@ -1,4 +1,5 @@
 package main
+// NOTE: Maybe need to change it to not check the jwt so not logged in people can get the webinar?
 
 import (
 	"encoding/base64"
@@ -84,12 +85,21 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
             EventLink: body.Link,
         }
 
+        if newEvent.EventDesc == "" || newEvent.EventName == "" || newEvent.EventSpeaker == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Empty desc, name, speaker field is not allowed.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
         res = backend.db.Create(&newEvent)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to create new event, %v", res.Error),
-                "error_code": 5,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -191,23 +201,23 @@ func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
         }
 
         infoOf := c.Query("id")
-        var infoOfInt int
 
-        var event table.Event
-        res := backend.db.Where("event_id = ?", infoOf).First(&event)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to fetch event data from db.",
-                "error_code": 3,
-                "data": nil,
-            })
-        }
         infoOfInt, err := strconv.Atoi(infoOf)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Invalid Query : %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var event table.Event
+        res := backend.db.Where("event_id = ?", infoOfInt).First(&event)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch event data from db.",
                 "error_code": 4,
                 "data": nil,
             })
