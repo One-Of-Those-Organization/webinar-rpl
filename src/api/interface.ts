@@ -58,6 +58,7 @@ export interface WebinarInput {
   max: number;
 }
 
+// Static Webinar Data (GET)
 export class Webinar {
   name: string = "";
   speaker: string = "";
@@ -94,4 +95,9 @@ export class Webinar {
   get imageUrl(): string {
     return this.image || "https://heroui.com/images/hero-card-complete.jpeg";
   }
+}
+
+// Webinar Image Data (POST)
+export interface WebinarImage {
+  data: string;
 }
