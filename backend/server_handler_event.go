@@ -191,23 +191,23 @@ func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
         }
 
         infoOf := c.Query("id")
-        var infoOfInt int
 
-        var event table.Event
-        res := backend.db.Where("event_id = ?", infoOf).First(&event)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to fetch event data from db.",
-                "error_code": 3,
-                "data": nil,
-            })
-        }
         infoOfInt, err := strconv.Atoi(infoOf)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Invalid Query : %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var event table.Event
+        res := backend.db.Where("event_id = ?", infoOfInt).First(&event)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch event data from db.",
                 "error_code": 4,
                 "data": nil,
             })
