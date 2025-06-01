@@ -25,7 +25,7 @@ export default function WebinarPage() {
         if (result.success) {
           const WebinarData = result.data.map((item: any) => {
             const webinar = Webinar.fromApiResponse(item);
-            // Set initial loading state for each webinar image
+            console.log("Webinar Data:", webinar);
             setImageLoading((prev) => ({
               ...prev,
               [webinar.id || item.ID]: true,
