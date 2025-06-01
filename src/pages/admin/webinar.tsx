@@ -5,12 +5,12 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, Image } from "@heroui/react";
 import { EditIcon, TrashIcon } from "@/components/icons";
 import { auth } from "@/api/auth";
-import { WebinarInput } from "@/api/interface";
+import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 
 export default function WebinarPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [webinarList, setWebinarList] = useState<WebinarInput[]>([]);
+  const [webinarList, setWebinarList] = useState<Webinar[]>([]);
 
   useEffect(() => {
     async function loadWebinarData() {
@@ -18,7 +18,10 @@ export default function WebinarPage() {
         const result = await auth.get_all_webinar();
 
         if (result.success) {
-          setWebinarList(result.data);
+          const WebinarData = result.data.map((item: any) =>
+            Webinar.fromApiResponse(item)
+          );
+          setWebinarList(WebinarData);
         }
       } catch (error) {
         toast.error("Failed to load webinar data. Please try again later.");
@@ -65,36 +68,33 @@ export default function WebinarPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
             {webinarList.map((webinar, index) => (
               <Card
-                key={webinar.ID || index}
+                key={webinar.id || index}
                 className="h-full flex flex-col relative pb-14"
               >
                 <Image
                   alt="Webinar image"
                   className="object-cover w-full h-42 rounded-t"
-                  src={
-                    webinar.EventImg ||
-                    "https://heroui.com/images/hero-card-complete.jpeg"
-                  }
+                  src={webinar.imageUrl}
                 />
                 <CardHeader className="p-3 flex flex-col">
                   <h4
                     className="font-bold text-lg truncate"
-                    title={webinar.EventName}
+                    title={webinar.name}
                   >
-                    {webinar.EventName || "Judul tidak tersedia"}
+                    {webinar.name || "Judul tidak tersedia"}
                   </h4>
                   <p className="text-xs uppercase font-bold text-gray-700 truncate">
-                    {webinar.EventSpeaker || "Pembicara tidak tersedia"}
+                    {webinar.speaker || "Pembicara tidak tersedia"}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {formatDate(webinar.EventDStart)}
+                    {formatDate(webinar.dstart)}
                   </p>
-                  {webinar.EventDesc && (
+                  {webinar.description && (
                     <p
                       className="text-xs text-gray-600 mt-2 line-clamp-2"
-                      title={webinar.EventDesc}
+                      title={webinar.description}
                     >
-                      {webinar.EventDesc}
+                      {webinar.description}
                     </p>
                   )}
                 </CardHeader>

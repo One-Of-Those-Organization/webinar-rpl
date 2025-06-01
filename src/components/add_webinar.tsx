@@ -71,7 +71,7 @@ export function CreateWebinar() {
 
       const response = await auth.add_webinar(formattedWebinarData);
 
-      // Handle the response if successful
+      // Server Side Success Handling
       if (response.success) {
         setError("");
         toast.success("Webinar Created Successfully!");
@@ -80,21 +80,16 @@ export function CreateWebinar() {
         setIsOpen(false);
         return;
       }
-      // Handle the response if there is an error
+      // Server Side Error Handling
       switch (response.error_code) {
-        case 5:
-          setError("Webinar already exists with that date.");
-          toast.error("Webinar already exists with that date.");
-          break;
-
-        case 7:
+        case 4:
           setError("Webinar already exists with that name.");
-          toast.error("Webinar already exists with that name.");
+          toast.info("Webinar already exists with that name.");
           break;
 
         default:
-          setError("Add Webinar Failed.");
-          toast.error("Add Webinar Failed");
+          setError("Add Webinar Failed. Please contact support.");
+          toast.error("Add Webinar Failed. Please contact support.");
           break;
       }
     } catch (error) {
@@ -165,14 +160,17 @@ export function CreateWebinar() {
                     label="Max Attendees"
                     type="number"
                     variant="flat"
-                    value={webinarInput.max || ""}
+                    value={
+                      webinarInput.max === 0 ? "" : webinarInput.max.toString()
+                    }
                     className="w-full"
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const value = e.target.value;
                       setWebinarInput({
                         ...webinarInput,
-                        max: parseInt(e.target.value) || 0,
-                      })
-                    }
+                        max: value === "" ? 0 : parseInt(value) || 0,
+                      });
+                    }}
                     required
                   />
 
