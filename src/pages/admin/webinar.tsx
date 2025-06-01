@@ -7,10 +7,15 @@ import { EditIcon, TrashIcon } from "@/components/icons";
 import { auth } from "@/api/auth";
 import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 export default function WebinarPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [webinarList, setWebinarList] = useState<Webinar[]>([]);
+  const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   useEffect(() => {
     async function loadWebinarData() {
@@ -18,9 +23,15 @@ export default function WebinarPage() {
         const result = await auth.get_all_webinar();
 
         if (result.success) {
-          const WebinarData = result.data.map((item: any) =>
-            Webinar.fromApiResponse(item)
-          );
+          const WebinarData = result.data.map((item: any) => {
+            const webinar = Webinar.fromApiResponse(item);
+            // Set initial loading state for each webinar image
+            setImageLoading((prev) => ({
+              ...prev,
+              [webinar.id || item.ID]: true,
+            }));
+            return webinar;
+          });
           setWebinarList(WebinarData);
         }
       } catch (error) {
@@ -32,6 +43,11 @@ export default function WebinarPage() {
 
     loadWebinarData();
   }, []);
+
+  // Function untuk handling image load
+  const handleImageLoad = (webinarId: string | number) => {
+    setImageLoading((prev) => ({ ...prev, [webinarId]: false }));
+  };
 
   // Function untuk formatting tanggal
   const formatDate = (dateStr: string | undefined) => {
@@ -50,6 +66,36 @@ export default function WebinarPage() {
     }
   };
 
+  // Function untuk render skeleton cards saat loading
+  const renderSkeletonCards = () => {
+    return Array(8)
+      .fill(0)
+      .map((_, index) => (
+        <Card
+          key={`skeleton-${index}`}
+          className="h-full flex flex-col relative pb-14"
+        >
+          <Skeleton
+            height={168}
+            className="rounded-t"
+            style={{ borderRadius: "0.5rem 0.5rem 0 0" }}
+          />
+          <CardHeader className="p-3 flex flex-col">
+            <Skeleton height={24} width="80%" className="mb-1" />
+            <Skeleton height={16} width="60%" className="mb-1" />
+            <Skeleton height={14} width="50%" className="mb-2" />
+            <Skeleton height={32} count={2} className="mb-1" />
+          </CardHeader>
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <div className="flex space-x-2">
+              <Skeleton height={36} width="48%" />
+              <Skeleton height={36} width="48%" />
+            </div>
+          </div>
+        </Card>
+      ));
+  };
+
   return (
     <DefaultLayout>
       <section>
@@ -61,8 +107,8 @@ export default function WebinarPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-10 text-gray-500">
-            Loading Webinar...
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+            {renderSkeletonCards()}
           </div>
         ) : webinarList && webinarList.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
@@ -71,11 +117,26 @@ export default function WebinarPage() {
                 key={webinar.id || index}
                 className="h-full flex flex-col relative pb-14"
               >
-                <Image
-                  alt="Webinar image"
-                  className="object-cover w-full h-42 rounded-t"
-                  src={webinar.imageUrl}
-                />
+                <div className="relative">
+                  {imageLoading[webinar.id || index] && (
+                    <Skeleton
+                      height={168}
+                      className="rounded-t absolute top-0 left-0 w-full"
+                      style={{ borderRadius: "0.5rem 0.5rem 0 0" }}
+                    />
+                  )}
+                  <Image
+                    alt="Webinar image"
+                    className={`object-cover w-full h-42 rounded-t ${
+                      imageLoading[webinar.id || index]
+                        ? "opacity-0"
+                        : "opacity-100"
+                    }`}
+                    src={webinar.imageUrl}
+                    onLoad={() => handleImageLoad(webinar.id || index)}
+                    onError={() => handleImageLoad(webinar.id || index)}
+                  />
+                </div>
                 <CardHeader className="p-3 flex flex-col">
                   <h4
                     className="font-bold text-lg truncate"

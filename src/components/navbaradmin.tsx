@@ -16,16 +16,22 @@ import {
   DropdownItem,
   Avatar,
 } from "@heroui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
 
 export const NavbarAdmin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const user_data = localStorage.getItem("user_data");
+
+  // Path checks untuk active state
+  const isDashboardPage = location.pathname === "/admin";
+  const isUserPage = location.pathname === "/admin/user";
+  const isWebinarPage = location.pathname === "/admin/webinar";
 
   useEffect(() => {
     try {
@@ -105,21 +111,30 @@ export const NavbarAdmin = () => {
         </NavbarBrand>
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
-            <Link href="/admin" color="foreground">
+            <Link
+              href="/admin"
+              color={isDashboardPage ? "primary" : "foreground"}
+            >
               Dashboard
             </Link>
           </NavbarItem>
         )}
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
-            <Link href="/admin/user" color="foreground">
+            <Link
+              href="/admin/user"
+              color={isUserPage ? "primary" : "foreground"}
+            >
               User
             </Link>
           </NavbarItem>
         )}
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
-            <Link href="/admin/webinar" color="foreground">
+            <Link
+              href="/admin/webinar"
+              color={isWebinarPage ? "primary" : "foreground"}
+            >
               Webinar
             </Link>
           </NavbarItem>
@@ -157,7 +172,13 @@ export const NavbarAdmin = () => {
           {isLoggedIn
             ? siteConfig.navMenuItems.map((item, index) => (
                 <NavbarMenuItem key={`${item}-${index}`}>
-                  <Link color="foreground" href={item.href} size="lg">
+                  <Link
+                    color={
+                      location.pathname === item.href ? "primary" : "foreground"
+                    }
+                    href={item.href}
+                    size="lg"
+                  >
                     {item.label}
                   </Link>
                 </NavbarMenuItem>
