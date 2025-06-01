@@ -213,7 +213,7 @@ func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
         }
 
         var event table.Event
-        res := backend.db.Where("event_id = ?", infoOfInt).First(&event)
+        res := backend.db.Where("id = ?", infoOfInt).First(&event)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
@@ -465,7 +465,7 @@ func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
         }
 
         var EventObj table.Event
-        res := backend.db.Where("event_id = ?", body.EventId).First(&EventObj)
+        res := backend.db.Where("id = ?", body.EventId).First(&EventObj)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,

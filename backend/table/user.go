@@ -8,7 +8,7 @@ import (
 // IF 1 then its an ADMIN other is NORMAL USER
 type User struct {
     gorm.Model
-    UserId         int       `gorm:"column:user_id;primaryKey"`
+    ID             int       `gorm:"primaryKey"`
     UserFullName   string    `gorm:"column:user_full_name"`
     UserPassword   string    `gorm:"column:user_password" json:"-"`
     UserEmail      string    `gorm:"column:user_email"`

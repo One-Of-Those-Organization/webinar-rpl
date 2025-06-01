@@ -13,7 +13,7 @@ const (
 
 type EventParticipant struct {
     gorm.Model
-    EventPId     int               `gorm:"column:eventp_id;primaryKey"`
+    ID           int               `gorm:"primaryKey"`
     EventId      int               `gorm:"column:event_id"`
     UserId       int               `gorm:"column:user_id"`
     EventPRole   UserEventRoleEnum `gorm:"column:eventp_role"`
