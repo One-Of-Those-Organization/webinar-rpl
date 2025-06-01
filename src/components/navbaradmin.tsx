@@ -23,6 +23,7 @@ import { UserData } from "@/api/interface";
 export const NavbarAdmin = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const user_data = localStorage.getItem("user_data");
 
@@ -35,6 +36,7 @@ export const NavbarAdmin = () => {
 
         // Set value to useState
         setEmail(user_data_object.UserEmail);
+        setProfilePicture(user_data_object.UserPicture);
         setIsLoggedIn(true);
       }
     } catch (error) {
@@ -136,7 +138,11 @@ export const NavbarAdmin = () => {
               color="secondary"
               name={isLoggedIn ? email : "Guest"}
               size="sm"
-              src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+              src={
+                isLoggedIn && profilePicture
+                  ? profilePicture
+                  : "https://i.pravatar.cc/150?u=a042581f4e29026704d"
+              }
             />
           </DropdownTrigger>
           <DropdownMenu aria-label="Profile Actions" variant="flat">

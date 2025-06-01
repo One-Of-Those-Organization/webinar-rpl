@@ -25,6 +25,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const user_data = localStorage.getItem("user_data");
@@ -41,6 +42,7 @@ export const Navbar = () => {
 
         // Set value to useState
         setEmail(user_data_object.UserEmail);
+        setProfilePicture(user_data_object.UserPicture);
         setIsLoggedIn(true);
         if (user_data_object.UserRole === 1) {
           setIsAdmin(true);
@@ -152,7 +154,11 @@ export const Navbar = () => {
               color="secondary"
               name={isLoggedIn ? email : "Guest"}
               size="sm"
-              src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+              src={
+                isLoggedIn && profilePicture
+                  ? profilePicture
+                  : "https://i.pravatar.cc/150?u=a042581f4e29026704d"
+              }
             />
           </DropdownTrigger>
           <DropdownMenu aria-label="Profile Actions" variant="flat">
