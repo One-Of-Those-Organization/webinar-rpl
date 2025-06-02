@@ -425,7 +425,7 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
 }
 
 // POST: api/protected/event-upload-image
-func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
+func appHandleEventUploadImage(_ *Backend, route fiber.Router) {
     route.Post("event-upload-image", func(c *fiber.Ctx) error {
         var body struct {
             Data    string `json:"data"`
