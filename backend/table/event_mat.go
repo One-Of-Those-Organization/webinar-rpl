@@ -6,7 +6,7 @@ import (
 
 type EventMaterial struct {
     gorm.Model
-    EventMatId         int    `gorm:"column:eventm_id;primaryKey"`
+    ID                 int    `gorm:"primaryKey"`
     EventId            int    `gorm:"column:event_id"`
     EventMatAttachment string `gorm:"column:eventm_attach"`
 

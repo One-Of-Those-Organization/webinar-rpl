@@ -132,7 +132,7 @@ func appHandleCertTempInfoOf(backend *Backend, route fiber.Router) {
         }
 
         var certTemp table.CertTemplate
-        res := backend.db.Where("cert_id = ?", infoOfInt).First(&certTemp)
+        res := backend.db.Where("id = ?", infoOfInt).First(&certTemp)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,

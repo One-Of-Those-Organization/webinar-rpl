@@ -14,7 +14,7 @@ const (
 
 type Event struct {
     gorm.Model
-    EventId      int         `gorm:"column:event_id;primaryKey"`
+    ID           int         `gorm:"primaryKey"`
     EventDesc    string      `gorm:"column:event_desc"`
     EventName    string      `gorm:"column:event_name"`
     EventImg     string      `gorm:"column:event_img"`

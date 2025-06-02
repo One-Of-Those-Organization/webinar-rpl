@@ -228,7 +228,7 @@ func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
 func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
     route.Post("/user-del-admin", func (c *fiber.Ctx) error{
         var body struct {
-            UserId int `json:"user_id"`
+            UserID int `json:"id"`
         }
 
         user := c.Locals("user").(*jwt.Token)
@@ -263,7 +263,7 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
             })
         }
 
-        res := backend.db.Delete(&table.User{}, body.UserId)
+        res := backend.db.Delete(&table.User{}, body.UserID)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
