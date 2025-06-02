@@ -1,5 +1,6 @@
-import React, { SVGProps } from "react";
+import React, { SVGProps, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   Table,
   TableHeader,
@@ -19,6 +20,12 @@ import {
   Selection,
   ChipProps,
   SortDescriptor,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
 } from "@heroui/react";
 import {
   ChevronDownIcon,
@@ -26,6 +33,8 @@ import {
   SearchIcon,
   VerticalDotsIcon,
 } from "./icons";
+import { auth } from "@/api/auth";
+import { Users } from "@/api/interface";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -34,75 +43,25 @@ export type IconSvgProps = SVGProps<SVGSVGElement> & {
 export const columns = [
   { name: "ID", uid: "id", sortable: true },
   { name: "NAME", uid: "name", sortable: true },
-  { name: "NIM", uid: "nim", sortable: true },
   { name: "ROLE", uid: "role", sortable: true },
   { name: "EMAIL", uid: "email" },
   { name: "INSTANSI", uid: "instansi", sortable: true },
   { name: "ACTIONS", uid: "actions" },
 ];
 
-export const users = [
-  {
-    id: 1,
-    name: "Tony Reichert",
-    nim: "1234567890",
-    role: "Admin",
-    email: "tony.reichert@example.com",
-    instansi: "Universitas A",
-    avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-  },
-  {
-    id: 2,
-    name: "Zoey Lang",
-    nim: "2345678901",
-    role: "User",
-    email: "zoey.lang@example.com",
-    instansi: "Universitas B",
-    avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
-  },
-  {
-    id: 3,
-    name: "Jane Fisher",
-    nim: "3456789012",
-    role: "Admin",
-    email: "jane.fisher@example.com",
-    instansi: "Universitas C",
-    avatar: "https://i.pravatar.cc/150?u=a04258114e29026702d",
-  },
-  {
-    id: 4,
-    name: "William Howard",
-    nim: "4567890123",
-    role: "User",
-    email: "william.howard@example.com",
-    instansi: "Universitas D",
-    avatar: "https://i.pravatar.cc/150?u=a048581f4e29026701d",
-  },
-  {
-    id: 5,
-    name: "Kristen Copper",
-    nim: "5678901234",
-    role: "User",
-    email: "kristen.cooper@example.com",
-    instansi: "Universitas E",
-    avatar: "https://i.pravatar.cc/150?u=a092581d4ef9026700d",
-  },
-  {
-    id: 6,
-    name: "Brian Kim",
-    nim: "6789012345",
-    role: "Admin",
-    email: "brian.kim@example.com",
-    instansi: "Universitas F",
-    avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-  },
-];
 
-const INITIAL_VISIBLE_COLUMNS = ["name", "nim", "role", "email", "actions"];
 
-type User = (typeof users)[0];
+const INITIAL_VISIBLE_COLUMNS = ["name", "role", "email","instansi", "actions"];
+
+
 
 export default function App() {
+  const [users, setUsers] = React.useState<Users[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const {isOpen, onOpen, onClose} = useDisclosure();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<Users | null>(null);
   const [filterValue, setFilterValue] = React.useState("");
   const [selectedKeys, setSelectedKeys] = React.useState<Selection>(
     new Set([])
@@ -116,6 +75,39 @@ export default function App() {
     direction: "ascending",
   });
   const [page, setPage] = React.useState(1);
+
+  // Fetch data users dari API
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await auth.get_all_users();
+        
+        if (response.success && response.data) {
+          // Transform data dari API ke format yang sesuai dengan tabel
+          const formattedUsers = response.data.map((user: any) => ({
+            id: user.ID,
+            name: user.UserFullName,
+            role: user.UserRole === 1 ? "Admin" : "User",
+            email: user.UserEmail,
+            instansi: user.UserInstance || "N/A",
+            avatar: user.UserPicture || "https://i.pravatar.cc/150?u=a042581f4e29026024d",
+          }));
+          setUsers(formattedUsers);
+        } else {
+          console.error("Failed to fetch users:", response.message);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   // Fix: Reset to page 1 when rowsPerPage changes
   React.useEffect(() => {
@@ -150,9 +142,9 @@ export default function App() {
   }, [page, filteredItems, rowsPerPage]);
 
   const sortedItems = React.useMemo(() => {
-    return [...items].sort((a: User, b: User) => {
-      const first = a[sortDescriptor.column as keyof User];
-      const second = b[sortDescriptor.column as keyof User];
+    return [...items].sort((a: Users, b: Users) => {
+      const first = a[sortDescriptor.column as keyof Users];
+      const second = b[sortDescriptor.column as keyof Users];
       const cmp = String(first).localeCompare(String(second));
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
@@ -164,8 +156,34 @@ export default function App() {
     User: "success", // green
   };
 
-  const renderCell = React.useCallback((user: User, columnKey: React.Key) => {
-    const cellValue = user[columnKey as keyof User];
+    const handleDelete = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      const response = await auth.user_del_admin({ id: userToDelete.id });
+      
+      if (response.success) {
+        toast.success("User deleted successfully");
+        setIsDeleting(false);
+        // Refresh data setelah delete
+        const updatedUsers = users.filter(user => user.id !== userToDelete.id);
+        setUsers(updatedUsers);
+        const fetchUsers = async () => { /* ... */ };
+        await fetchUsers();
+      } else {
+        toast.error(response.message || "Failed to delete user");
+      }
+    } catch (error) {
+      toast.error("Failed to connect to server");
+    } finally {
+      onClose();
+      setUserToDelete(null);
+    }
+  };
+
+  const renderCell = React.useCallback((user: Users, columnKey: React.Key) => {
+    const cellValue = user[columnKey as keyof Users];
 
     switch (columnKey) {
       case "name":
@@ -175,7 +193,7 @@ export default function App() {
             classNames={{
               description: "text-default-500",
             }}
-            name={cellValue}
+            name={String(cellValue)}
           >
             {user.email}
           </User>
@@ -188,28 +206,37 @@ export default function App() {
             size="sm"
             variant="dot"
           >
-            {cellValue}
+            {String(cellValue)}
           </Chip>
         );
       case "actions":
-        return (
-          <div className="relative flex justify-end items-center gap-2">
-            <Dropdown>
-              <DropdownTrigger>
-                <Button isIconOnly radius="full" size="sm" variant="light">
-                  <VerticalDotsIcon className="text-default-400" />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu>
-                <DropdownItem key="view">View</DropdownItem>
-                <DropdownItem key="edit">Edit</DropdownItem>
-                <DropdownItem key="delete">Delete</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </div>
+      return (
+        <div className="relative flex justify-end items-center gap-2">
+          <Dropdown>
+            <DropdownTrigger>
+              <Button isIconOnly radius="full" size="sm" variant="light">
+                <VerticalDotsIcon className="text-default-400" />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu>
+              <DropdownItem key="view">View</DropdownItem>
+              <DropdownItem key="edit">Edit</DropdownItem>
+              <DropdownItem 
+                key="delete" 
+                onClick={() => {
+                  setUserToDelete(user);
+                  onOpen();
+                }}
+                className="text-danger"
+              >
+                Delete
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        </div>
         );
       default:
-        return cellValue;
+        return cellValue ? String(cellValue) : "";
     }
   }, []);
 
@@ -337,6 +364,7 @@ export default function App() {
   }, [selectedKeys, filteredItems.length, page, pages, hasSearchFilter]);
 
   return (
+    <>
     <Table
       isCompact
       removeWrapper
@@ -355,14 +383,14 @@ export default function App() {
       topContentPlacement="outside"
       onSelectionChange={setSelectedKeys}
       onSortChange={setSortDescriptor}
-    >
+      >
       <TableHeader columns={headerColumns}>
         {(column) => (
           <TableColumn
-            key={column.uid}
+          key={column.uid}
             align={column.uid === "actions" ? "center" : "start"}
             allowsSorting={column.sortable}
-          >
+            >
             {column.name}
           </TableColumn>
         )}
@@ -377,5 +405,31 @@ export default function App() {
         )}
       </TableBody>
     </Table>
+    <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalContent>
+          <ModalHeader className="flex flex-col text-center">Confirm Deletion</ModalHeader>
+          <ModalBody>
+            <p>Are you sure you want to delete user: <strong>{userToDelete?.name}</strong>?</p>
+            <p className="text-danger">This action cannot be undone.</p>
+          </ModalBody>
+          <ModalFooter>
+            <Button 
+              variant="light" 
+              onClick={onClose}
+              className="mr-2"
+            >
+              Cancel
+            </Button>
+            <Button 
+              color="danger" 
+              onClick={handleDelete}
+              isLoading={isDeleting}
+            >
+                {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+        </>
   );
 }
