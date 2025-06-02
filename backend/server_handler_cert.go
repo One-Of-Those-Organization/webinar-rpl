@@ -150,3 +150,60 @@ func appHandleCertTempInfoOf(backend *Backend, route fiber.Router) {
         })
 	})
 }
+
+// POST : api/protected/cert-del
+func appHandleCertDel(backend *Backend, route fiber.Router) {
+    route.Post("cert-del", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        isAdmin := claims["admin"].(float64)
+        if isAdmin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            CertTempID int `json:"id"`
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        res := backend.db.Delete(&table.CertTemplate{}, body.CertTempID)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to delete certificate template from the DB.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Certificate Template deleted.",
+            "data": nil,
+            "error_code": 0,
+        })
+    })
+}
