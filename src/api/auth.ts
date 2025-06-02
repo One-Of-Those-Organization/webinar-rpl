@@ -5,6 +5,7 @@ import {
   UserEditData,
   UserImage,
   WebinarInput,
+  WebinarImage,
 } from "./interface.ts";
 
 const API_URL = "http://localhost:3000";
@@ -185,6 +186,32 @@ export const auth = {
       return result;
     } catch (error) {
       console.error("Error fetching webinar data:", error); // Tambahkan log error
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API Post Webinar Image
+  post_webinar_image: async (data: WebinarImage): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_URL}/api/protected/event-upload-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ data: data.data }),
+        }
+      );
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
       return {
         message: "Failed to connect to server",
         success: false,

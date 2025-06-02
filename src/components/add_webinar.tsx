@@ -45,7 +45,12 @@ export function CreateWebinar() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAttendance, setSelectedAttendance] =
     useState<string>("Online");
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string>(
+    "https://heroui.com/images/hero-card-complete.jpeg"
+  );
 
+  // Function to handle attendance type change, cause backend expects "online" or "offline"
   const handleAttendanceChange = (value: AttTypeEnum) => {
     setWebinarInput({
       ...webinarInput,
@@ -55,8 +60,29 @@ export function CreateWebinar() {
   };
 
   const AddWebinar = async () => {
+    // Validasi input
+    if (
+      !webinarInput.name ||
+      !webinarInput.dstart ||
+      !webinarInput.dend ||
+      !webinarInput.speaker
+    ) {
+      setError("Please fill all required fields");
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    // Validasi tanggal
+    const startDate = new Date(webinarInput.dstart);
+    const endDate = new Date(webinarInput.dend);
+    if (startDate >= endDate) {
+      setError("End date must be after start date");
+      toast.error("End date must be after start date");
+      return;
+    }
     setIsLoading(true);
     try {
+      // Get Webinar Data
       const formattedWebinarData = {
         name: webinarInput.name,
         image: webinarInput.image,
@@ -69,6 +95,7 @@ export function CreateWebinar() {
         desc: webinarInput.description,
       };
 
+      // Call API to add webinar
       const response = await auth.add_webinar(formattedWebinarData);
 
       // Server Side Success Handling
@@ -101,13 +128,65 @@ export function CreateWebinar() {
     }
   };
 
-  // Fungsi untuk handle input perubahan waktu (jam:menit)
+  // Function to handle time change for start and end times
   const handleTimeChange = (field: "dstart" | "dend", value: string) => {
     const dateValue = webinarInput[field].split("T")[0];
     setWebinarInput({
       ...webinarInput,
       [field]: `${dateValue}T${value}:00Z`,
     });
+  };
+
+  // Function to handle webinar image upload
+  const handleWebinarImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImageLoading(true);
+    toast.info("Uploading Webinar Image...");
+    const reader = new FileReader();
+
+    reader.onloadend = async () => {
+      const base64Image = reader.result as string;
+
+      // Set preview langsung dengan base64 untuk UX yang lebih baik
+      setPreviewImage(base64Image);
+
+      try {
+        const response = await auth.post_webinar_image({ data: base64Image });
+
+        if (response.success) {
+          let serverPath = response.data?.filename || response.data;
+
+          const staticUrl = `http://localhost:3000/${serverPath.replace("img", "static")}`;
+
+          // Simpan URL gambar ke state
+          setWebinarInput({
+            ...webinarInput,
+            image: staticUrl,
+          });
+
+          // Update preview dengan URL final
+          setPreviewImage(staticUrl);
+
+          toast.success("Webinar Image Uploaded Successfully!");
+        } else {
+          setPreviewImage("https://heroui.com/images/hero-card-complete.jpeg");
+          setError("Image upload failed. Please try again.");
+          toast.error("Image upload failed. Please try again.");
+        }
+      } catch (error) {
+        setPreviewImage("https://heroui.com/images/hero-card-complete.jpeg");
+        setError("An error occurred while uploading the image.");
+        toast.error("An error occurred while uploading the image.");
+      } finally {
+        setIsImageLoading(false);
+      }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -124,11 +203,18 @@ export function CreateWebinar() {
                 Create Webinar
               </h1>
               <div>
-                <Image
-                  className="object-cover rounded-lg mb-4"
-                  alt="Preview Image Webinar"
-                  src="https://heroui.com/images/hero-card-complete.jpeg"
-                />
+                <div className="flex items-center justify-center mb-4 relative">
+                  {isImageLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-lg">
+                      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500"></div>
+                    </div>
+                  )}
+                  <Image
+                    className="object-cover rounded-lg w-full h-64"
+                    alt="Preview Image Webinar"
+                    src={previewImage}
+                  />
+                </div>
 
                 <div className="space-y-4">
                   <Input
@@ -150,9 +236,11 @@ export function CreateWebinar() {
                     color="secondary"
                     label="Image"
                     type="file"
+                    accept="image/*"
                     variant="flat"
                     className="w-full"
-                    // TODO : Handle image Upload here
+                    onChange={handleWebinarImageUpload}
+                    disabled={isImageLoading}
                     required
                   />
                   <Input
@@ -343,7 +431,7 @@ export function CreateWebinar() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700">
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700 p-4">
               <button
                 onClick={() => setIsOpen(false)}
                 className={buttonStyles({
@@ -352,13 +440,13 @@ export function CreateWebinar() {
                   variant: "solid",
                   size: "md",
                 })}
-                disabled={isLoading}
+                disabled={isLoading || isImageLoading}
               >
                 Cancel
               </button>
               <button
                 onClick={AddWebinar}
-                disabled={isLoading}
+                disabled={isLoading || isImageLoading}
                 className={buttonStyles({
                   color: "primary",
                   radius: "full",
