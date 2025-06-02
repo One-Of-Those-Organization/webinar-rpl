@@ -6,6 +6,7 @@ import {
   UserImage,
   WebinarInput,
   WebinarImage,
+  RegisterAdmin,
 } from "./interface.ts";
 
 const API_URL = "http://localhost:3000";
@@ -120,7 +121,7 @@ export const auth = {
   get_all_users: async (): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/protected/get-all-users`, {
+      const response = await fetch(`${API_URL}/api/protected/user-info-all`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -218,4 +219,71 @@ export const auth = {
       };
     }
   },
+
+  // API REGISTER ADMIN
+register_admin: async (data: RegisterAdmin): Promise<BaseResponse> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return {
+        success: false,
+        message: "No authentication token found",
+        error_code: 401
+      };
+    }
+
+    const response = await fetch(`${API_URL}/api/protected/register-admin`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      return {
+        success: false,
+        message: "Session expired. Please login again.",
+        error_code: 401
+      };
+    }
+
+    const result = await response.json();
+    
+    if (result.success && result.token) {
+      localStorage.setItem("token", result.token);
+    }
+    
+    return result;
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to connect to server"
+    };
+  }
+},
+  
+// API DELETE ADMIN USER
+user_del_admin: async (data: { id: number }): Promise<BaseResponse> => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${API_URL}/api/protected/user-del-admin`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+
+    return await response.json();
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to connect to server"
+    };
+  }
+},
 };

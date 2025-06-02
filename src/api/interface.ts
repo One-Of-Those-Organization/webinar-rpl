@@ -25,6 +25,7 @@ export interface RegisterData {
   email: string;
   instance: string;
   pass: string;
+  picture?: string; 
 }
 
 // Login Data (POST)
@@ -100,4 +101,24 @@ export class Webinar {
 // Webinar Image Data (POST)
 export interface WebinarImage {
   data: string;
+}
+
+// User Table Data (GET)
+export interface Users {
+  originalData: { ID: number; UserFullName: string; UserEmail: string; UserInstance: string; UserRole: number; UserPicture: string | undefined; UserCreatedAt: string; };
+  id: number;
+  name: string;
+  role: string;
+  email: string;
+  instansi: string;
+  avatar?: string;
+}
+
+// Admin Register Data (POST)
+export interface RegisterAdmin {
+  email: string;
+  name: string;
+  pass: string;
+  instance: string;
+  picture?: string;
 }
