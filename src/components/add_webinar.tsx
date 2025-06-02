@@ -85,7 +85,7 @@ export function CreateWebinar() {
       // Get Webinar Data
       const formattedWebinarData = {
         name: webinarInput.name,
-        image: webinarInput.image,
+        img: webinarInput.image,
         dstart: formatDateForBackend(webinarInput.dstart),
         dend: formatDateForBackend(webinarInput.dend),
         speaker: webinarInput.speaker,

@@ -54,7 +54,7 @@ export interface WebinarInput {
   speaker: string;
   att: string;
   link: string;
-  image: string;
+  img: string;
   max: number;
 }
 
@@ -67,7 +67,7 @@ export class Webinar {
   dend: string = "";
   att: string = "";
   link: string = "";
-  image: string = "";
+  img: string = "";
   id: number = 0;
   max: number = 0;
 
@@ -86,14 +86,14 @@ export class Webinar {
       speaker: apiData.EventSpeaker || "",
       att: apiData.EventAtt || "",
       link: apiData.EventLink || "",
-      image: apiData.EventImg || "",
+      img: apiData.EventImg || "",
       max: apiData.EventMax || 0,
     });
   }
 
   // Method to get fallback image if none exists
   get imageUrl(): string {
-    return this.image || "https://heroui.com/images/hero-card-complete.jpeg";
+    return this.img || "https://heroui.com/images/hero-card-complete.jpeg";
   }
 }
 
