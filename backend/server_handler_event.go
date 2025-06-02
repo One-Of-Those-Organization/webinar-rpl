@@ -428,7 +428,6 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
 func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
     route.Post("event-upload-image", func(c *fiber.Ctx) error {
         var body struct {
-            EventId int `json:"id"`
             Data    string `json:"data"`
         }
 
@@ -464,22 +463,11 @@ func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
             })
         }
 
-        var EventObj table.Event
-        res := backend.db.Where("id = ?", body.EventId).First(&EventObj)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to fetch event from the event id provided.",
-                "error_code": 4,
-                "data": nil,
-            })
-        }
-
         if body.Data == "" {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "No image data provided",
-                "error_code": 5,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -489,7 +477,7 @@ func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to create image directory",
-                "error_code": 6,
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -505,7 +493,7 @@ func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid base64 image data",
-                "error_code": 7,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -518,14 +506,14 @@ func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
             fileExt = ".gif"
         }
 
-        filename := fmt.Sprintf("%s/%s_%s", imgDir, EventObj.EventName, fileExt)
+        filename := fmt.Sprintf("%s/%d_%s", imgDir, time.Now().Unix(), fileExt)
 
         err = os.WriteFile(filename, imageData, 0644)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to save image",
-                "error_code": 8,
+                "error_code": 7,
                 "data": nil,
             })
         }
