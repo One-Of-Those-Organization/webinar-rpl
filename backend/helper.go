@@ -11,8 +11,6 @@ import (
     "golang.org/x/crypto/bcrypt"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 func isEmailValid(e string) bool {
     _, err := mail.ParseAddress(e)
     return err == nil
@@ -84,6 +82,7 @@ func CheckPassword(hashedPassword, plainPassword string) bool {
 }
 
 func RandStringBytes(n int, rand_t *rand.Rand) string {
+    const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     b := make([]byte, n)
     for i := range b {
         b[i] = letterBytes[rand.Intn(len(letterBytes))]

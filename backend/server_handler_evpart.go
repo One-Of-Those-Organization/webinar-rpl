@@ -21,6 +21,7 @@ func appHandleEventParticipate(backend *Backend, route fiber.Router) {
             })
         }
         claims := user.Claims.(jwt.MapClaims)
+        admin := claims["admin"].(float64)
         email := claims["email"].(string)
 
         if email == "" {
@@ -47,13 +48,31 @@ func appHandleEventParticipate(backend *Backend, route fiber.Router) {
             })
         }
 
+        if admin != 1 && body.Role == "comittee" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Credentials.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        if body.Role != "normal" && body.Role != "comittee" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Role, the only valid strings are : `normal` and `comittee`",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
         var event table.Event
         res := backend.db.Where("id = ?", body.EventId).First(&event)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch event from db.",
-                "error_code": 4,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -64,7 +83,7 @@ func appHandleEventParticipate(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch the specified user from db.",
-                "error_code": 5,
+                "error_code": 7,
                 "data": nil,
             })
         }
@@ -84,7 +103,7 @@ func appHandleEventParticipate(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to create new event participant, %v", res.Error),
-                "error_code": 5,
+                "error_code": 8,
                 "data": nil,
             })
         }
