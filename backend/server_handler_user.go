@@ -537,11 +537,15 @@ func appHandleUserUploadImage(_ *Backend, route fiber.Router) {
         }
 
         // TODO: block if its too big and not image format
-        fileExt := ".jpg"
+        var fileExt string
         if strings.Contains(body.Data, "image/png") {
             fileExt = ".png"
         } else if strings.Contains(body.Data, "image/gif") {
             fileExt = ".gif"
+        } else if strings.Contains(body.Data, "image/jpg") {
+            fileExt = ".jpg"
+        } else if strings.Contains(body.Data, "image/webp") {
+            fileExt = ".webp"
         }
 
         filename := fmt.Sprintf("%s/%s_%s", imgDir, username, fileExt)
