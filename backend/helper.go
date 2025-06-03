@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/mail"
+    "math/rand"
 	"os"
 	"webrpl/table"
     "errors"
@@ -9,6 +10,8 @@ import (
     "fmt"
     "golang.org/x/crypto/bcrypt"
 )
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func isEmailValid(e string) bool {
     _, err := mail.ParseAddress(e)
@@ -78,4 +81,12 @@ func HashPassword(password string) (string, error) {
 func CheckPassword(hashedPassword, plainPassword string) bool {
     err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
     return err == nil
+}
+
+func RandStringBytes(n int, rand_t *rand.Rand) string {
+    b := make([]byte, n)
+    for i := range b {
+        b[i] = letterBytes[rand.Intn(len(letterBytes))]
+    }
+    return string(b)
 }

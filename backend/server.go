@@ -1,6 +1,9 @@
 package main
 
 import (
+    "time"
+    "math/rand"
+
     jwtware "github.com/gofiber/contrib/jwt"
     "github.com/gofiber/fiber/v2"
     "gorm.io/gorm"
@@ -10,9 +13,11 @@ type Backend struct {
     app   *fiber.App
     db    *gorm.DB
     pass  string
+    rand  *rand.Rand
 }
 
 func appCreateNewServer(db *gorm.DB, secret string) *Backend {
+    rand_t := rand.New(rand.NewSource(time.Now().UnixNano()))
     app := fiber.New(fiber.Config{
         AppName: "Webinar-RPL Backend",
     })
@@ -21,6 +26,7 @@ func appCreateNewServer(db *gorm.DB, secret string) *Backend {
         app:   app,
         db:    db,
         pass: secret,
+        rand: rand_t,
     }
 }
 
@@ -66,6 +72,10 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertTempNew(backend, protected)
     appHandleCertTempInfoOf(backend, protected)
     appHandleCertDel(backend, protected)
+    appHandleCertGen(backend, protected) // WIP
+
+    // EVENT PARTICIPANT STUFF
+    appHandleEventParticipate(backend, protected) // WIP
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")

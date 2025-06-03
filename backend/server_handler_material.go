@@ -37,7 +37,7 @@ func appHandleMaterialNew(backend *Backend, route fiber.Router) {
             })
         }
         var body struct {
-            EventId      int    `json:"event_id"`
+            EventId      int    `json:"id"`
             EventAttach  string `json:"event_attach"`
         }
 
@@ -52,7 +52,7 @@ func appHandleMaterialNew(backend *Backend, route fiber.Router) {
         }
 
         var event table.Event
-        res := backend.db.Where("event_id = ?", body.EventId).First(&event)
+        res := backend.db.Where("id = ?", body.EventId).First(&event)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,

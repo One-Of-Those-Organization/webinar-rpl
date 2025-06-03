@@ -35,7 +35,7 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-            EventId       int    `json:"event_id"`
+            EventId       int    `json:"id"`
             // CertTemplate is a html+css that will be autofilled. (this is path btw.)
             CertTemplate  string `json:"cert_temp"`
         }
@@ -208,14 +208,27 @@ func appHandleCertDel(backend *Backend, route fiber.Router) {
     })
 }
 
+// TODO : After done implementing webinar participant
+// GET : api/protected/cert-gen
+func appHandleCertGen(_ *Backend, route fiber.Router) {
+    route.Get("cert-gen", func (c *fiber.Ctx) error {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "success": false,
+            "message": "WIP.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
 // POST : api/protected/cert-edit
 func appHandleCertEdit(backend *Backend, route fiber.Router) {
     route.Post("cert-edit", func (c *fiber.Ctx) error {
         user := c.Locals("user").(*jwt.Token)
         if user == nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Failed to claim JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
