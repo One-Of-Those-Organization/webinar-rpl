@@ -1,6 +1,7 @@
 package main
 
 import (
+    "strconv"
 	"fmt"
 	"webrpl/table"
 
@@ -8,9 +9,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// POST : api/protected/event-participate
-func appHandleEventParticipate(backend *Backend, route fiber.Router) {
-    route.Post("event-participate", func (c *fiber.Ctx) error {
+// POST : api/protected/event-participate-register
+func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
+    route.Post("event-participate-register", func (c *fiber.Ctx) error {
         user := c.Locals("user").(*jwt.Token)
         if user == nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -111,8 +112,87 @@ func appHandleEventParticipate(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "New Event EventParticipant created.",
-            "data": nil,
             "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// WIP
+// GET : api/protected/event-participate-info-of
+func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
+    route.Get("event-participate-info-of", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        claims := user.Claims.(jwt.MapClaims)
+        email := claims["email"].(string)
+
+        if email == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email on JWT.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        idQuery := c.Query("event_id")
+        if idQuery == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid event id supplied.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+        idQueryInt, err := strconv.Atoi(idQuery)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid event id supplied.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.User
+        res := backend.db.Where("email = ?", email).First(&currentUser)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Should be unreachable but here we are, %v", res.Error),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        var evPart table.EventParticipant
+        res = backend.db.Where(&table.EventParticipant{
+            EventId: idQueryInt,
+            UserId: currentUser.ID,
+        }).First(&evPart)
+
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch the event participant with that id, %v", res.Error),
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "WIP",
+            "error_code": 0,
+            "data": evPart,
         })
     })
 }

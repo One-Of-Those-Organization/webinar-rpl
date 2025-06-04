@@ -75,10 +75,10 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertGen(backend, protected) // WIP
 
     // EVENT PARTICIPANT STUFF
-    appHandleEventParticipate(backend, protected) // WIP
+    appHandleEventParticipateRegister(backend, protected) // WIP
+    appHandleEventParticipateInfoOf(backend, protected)   // WIP
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")
     })
 }
-
