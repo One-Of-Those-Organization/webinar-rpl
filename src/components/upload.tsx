@@ -54,7 +54,7 @@ const Upload = ({ accept = "image/*,.pdf", onFileUpload }: UploadProps) => {
 
   const handleFiles = (files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    
+
     const hasDirectory = fileArray.some(file => {
       return file.name === '' || 
              file.size === 0 || 
