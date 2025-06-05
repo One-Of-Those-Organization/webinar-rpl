@@ -121,7 +121,7 @@ export default function ProfilPage() {
         if (response.success) {
           let serverPath = response.data?.filename || "";
 
-          const staticUrl = `http://localhost:3000/${serverPath.replace("img", "static")}`;
+          const staticUrl = `http://localhost:3000/${serverPath.replace("img", "static")}?t=${Date.now()}`;
 
           const userData = JSON.parse(
             localStorage.getItem("user_data") || "{}"

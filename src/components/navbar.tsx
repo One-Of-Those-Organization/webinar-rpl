@@ -49,7 +49,7 @@ export const Navbar = () => {
     } catch (error) {
       console.log("Unexpected Error");
     }
-  }, []);
+  }, [user_data]);
 
   const renderDropdownItems = () => {
     if (!isLoggedIn) {
