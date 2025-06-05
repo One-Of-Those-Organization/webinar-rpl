@@ -198,7 +198,6 @@ func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
 }
 // MAYBE WILL NOT BE IMPLEMENTED: POST api/protected/event-participate-del
 
-// WIP
 // NOTE: Only allowed to change EventPRole only
 // POST : api/protected/event-participate-edit
 func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
@@ -257,8 +256,29 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to edit the event participant from the db, %v", res.Error),
+                "message": fmt.Sprintf("Failed to get the event participant from the db, %v", res.Error),
                 "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        if table.UserEventRoleEnum(body.EventPRole) == "comittee" || table.UserEventRoleEnum(body.EventPRole) == "normal" {
+            eventPart.EventPRole = table.UserEventRoleEnum(body.EventPRole)
+        } else {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Role.",
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
+		res = backend.db.Save(&eventPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to update the event participant from the db, %v", res.Error),
+                "error_code": 7,
                 "data": nil,
             })
         }
