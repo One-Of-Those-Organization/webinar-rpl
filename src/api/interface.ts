@@ -25,7 +25,7 @@ export interface RegisterData {
   email: string;
   instance: string;
   pass: string;
-  picture?: string; 
+  picture?: string;
 }
 
 // Login Data (POST)
@@ -105,7 +105,15 @@ export interface WebinarImage {
 
 // User Table Data (GET)
 export interface Users {
-  originalData: { ID: number; UserFullName: string; UserEmail: string; UserInstance: string; UserRole: number; UserPicture: string | undefined; UserCreatedAt: string; };
+  originalData: {
+    ID: number;
+    UserFullName: string;
+    UserEmail: string;
+    UserInstance: string;
+    UserRole: number;
+    UserPicture: string | undefined;
+    UserCreatedAt: string;
+  };
   id: number;
   name: string;
   role: string;

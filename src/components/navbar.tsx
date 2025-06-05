@@ -35,7 +35,6 @@ export const Navbar = () => {
 
   useEffect(() => {
     try {
-      // Check kalau dapet data (biar ga null)
       if (user_data) {
         // Fetch (parse) data from json
         const user_data_object: UserData = JSON.parse(user_data);
