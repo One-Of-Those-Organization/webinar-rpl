@@ -38,7 +38,7 @@ import {
   SearchIcon,
   VerticalDotsIcon,
 } from "./icons";
-import { auth } from "@/api/auth";
+import { auth_user } from "@/api/auth_user";
 import { Users } from "@/api/interface";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -99,7 +99,7 @@ export default function UserManagementTable() {
     const fetchUsersData = async () => {
       try {
         setIsLoading(true);
-        const response = await auth.get_all_users();
+        const response = await auth_user.get_all_users();
 
         if (response.success && response.data) {
           const transformedUsers = response.data.map((user: any) => ({
@@ -170,7 +170,7 @@ export default function UserManagementTable() {
 
     try {
       setIsDeleting(true);
-      const response = await auth.user_del_admin({ id: userToDelete.id });
+      const response = await auth_user.user_del_admin({ id: userToDelete.id });
 
       if (response.success) {
         toast.success("User deleted successfully");

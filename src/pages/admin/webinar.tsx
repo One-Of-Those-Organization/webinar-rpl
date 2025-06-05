@@ -4,7 +4,7 @@ import { CreateWebinar } from "@/components/add_webinar";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, Image } from "@heroui/react";
 import { EditIcon, TrashIcon } from "@/components/icons";
-import { auth } from "@/api/auth";
+import { auth_webinar } from "@/api/auth_webinar";
 import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
@@ -20,7 +20,7 @@ export default function WebinarPage() {
   useEffect(() => {
     async function loadWebinarData() {
       try {
-        const result = await auth.get_all_webinar();
+        const result = await auth_webinar.get_all_webinar();
 
         if (result.success) {
           const WebinarData = result.data.map((item: any) => {
