@@ -137,6 +137,11 @@ export default function ProfilPage() {
             }));
           }
 
+          const resp = await auth.post_update_user_pfp(response.data)
+
+          if (!resp.success) {
+            toast.error("Failed to update image");
+          }
           toast.success("Image updated successfully!");
         } else {
           toast.error("Failed to update image");

@@ -98,7 +98,6 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             "token": t,
         })
     })
-
 }
 
 // GET : api/protected/user-info-of
