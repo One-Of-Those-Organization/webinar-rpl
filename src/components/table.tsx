@@ -1,6 +1,11 @@
-import React, { SVGProps, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
+import {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  ChangeEvent,
+  Key,
+} from "react";
 import {
   Table,
   TableHeader,
@@ -35,229 +40,255 @@ import {
 } from "./icons";
 import { auth } from "@/api/auth";
 import { Users } from "@/api/interface";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
-export type IconSvgProps = SVGProps<SVGSVGElement> & {
-  size?: number;
+// ===== CONSTANTS =====
+const USER_ROLES = {
+  ADMIN: 1,
+  USER: 2,
+} as const;
+
+const ROLE_LABELS = {
+  [USER_ROLES.ADMIN]: "Admin",
+  [USER_ROLES.USER]: "User",
+} as const;
+
+const ROLE_COLORS: Record<string, ChipProps["color"]> = {
+  Admin: "primary",
+  User: "success",
 };
 
-export const columns = [
+const TABLE_COLUMNS = [
   { name: "ID", uid: "id", sortable: true },
   { name: "NAME", uid: "name", sortable: true },
   { name: "ROLE", uid: "role", sortable: true },
-  { name: "EMAIL", uid: "email" },
+  { name: "EMAIL", uid: "email", sortable: false },
   { name: "INSTANSI", uid: "instansi", sortable: true },
-  { name: "ACTIONS", uid: "actions" },
+  { name: "ACTIONS", uid: "actions", sortable: false },
 ];
 
+const VISIBLE_COLUMNS = ["name", "role", "email", "instansi", "actions"];
 
+const DEFAULT_ROWS_PER_PAGE = 5;
+const DEFAULT_AVATAR = "/logo_if.png";
 
-const INITIAL_VISIBLE_COLUMNS = ["name", "role", "email","instansi", "actions"];
-
-
-
-export default function App() {
-  const [users, setUsers] = React.useState<Users[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const {isOpen, onOpen, onClose} = useDisclosure();
+export default function UserManagementTable() {
+  const [users, setUsers] = useState<Users[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = React.useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<Users | null>(null);
-  const [filterValue, setFilterValue] = React.useState("");
-  const [selectedKeys, setSelectedKeys] = React.useState<Selection>(
-    new Set([])
+  const [searchValue, setSearchValue] = useState("");
+  const [visibleColumns, setVisibleColumns] = useState<Selection>(
+    new Set(VISIBLE_COLUMNS)
   );
-  const [visibleColumns, setVisibleColumns] = React.useState<Selection>(
-    new Set(INITIAL_VISIBLE_COLUMNS)
-  );
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [sortDescriptor, setSortDescriptor] = React.useState<SortDescriptor>({
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "name",
     direction: "ascending",
   });
-  const [page, setPage] = React.useState(1);
 
-  // Fetch data users dari API
-  React.useEffect(() => {
-    const fetchUsers = async () => {
+  const {
+    isOpen: isDeleteModalOpen,
+    onOpen: openDeleteModal,
+    onClose: closeDeleteModal,
+  } = useDisclosure();
+
+  useEffect(() => {
+    const fetchUsersData = async () => {
       try {
         setIsLoading(true);
-        setError(null);
-
         const response = await auth.get_all_users();
-        
+
         if (response.success && response.data) {
-          // Transform data dari API ke format yang sesuai dengan tabel
-          const formattedUsers = response.data.map((user: any) => ({
+          const transformedUsers = response.data.map((user: any) => ({
             id: user.ID,
             name: user.UserFullName,
-            role: user.UserRole === 1 ? "Admin" : "User",
+            role:
+              ROLE_LABELS[user.UserRole as keyof typeof ROLE_LABELS] || "User",
             email: user.UserEmail,
-            instansi: user.UserInstance || "N/A",
-            avatar: user.UserPicture || "https://i.pravatar.cc/150?u=a042581f4e29026024d",
+            instansi: user.UserInstance || "-",
+            avatar: user.UserPicture || DEFAULT_AVATAR,
           }));
-          setUsers(formattedUsers);
+          setUsers(transformedUsers);
         } else {
-          console.error("Failed to fetch users:", response.message);
+          toast.error("Failed to fetch users data");
+          console.error("API Error:", response.message);
         }
       } catch (error) {
-        console.error("Error fetching users:", error);
+        toast.error("Network error occurred");
+        console.error("Network Error:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUsers();
+    fetchUsersData();
   }, []);
 
-  // Fix: Reset to page 1 when rowsPerPage changes
-  React.useEffect(() => {
-    setPage(1);
+  // Reset page when rows per page changes
+  useEffect(() => {
+    setCurrentPage(1);
   }, [rowsPerPage]);
 
-  const pages = Math.ceil(users.length / rowsPerPage);
-
-  const hasSearchFilter = Boolean(filterValue);
-
-  const headerColumns = React.useMemo(() => {
-    if (visibleColumns === "all") return columns;
-    return columns.filter((column) =>
+  const headerColumns = useMemo(() => {
+    if (visibleColumns === "all") return TABLE_COLUMNS;
+    return TABLE_COLUMNS.filter((column) =>
       Array.from(visibleColumns).includes(column.uid)
     );
   }, [visibleColumns]);
 
-  const filteredItems = React.useMemo(() => {
-    let filteredUsers = [...users];
-    if (hasSearchFilter) {
-      filteredUsers = filteredUsers.filter((user) =>
-        user.name.toLowerCase().includes(filterValue.toLowerCase())
-      );
-    }
-    return filteredUsers;
-  }, [users, filterValue]);
+  const filteredUsers = useMemo(() => {
+    if (!searchValue) return users;
+    return users.filter((user) =>
+      user.name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [users, searchValue]);
 
-  const items = React.useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return filteredItems.slice(start, end);
-  }, [page, filteredItems, rowsPerPage]);
+  const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
 
-  const sortedItems = React.useMemo(() => {
-    return [...items].sort((a: Users, b: Users) => {
-      const first = a[sortDescriptor.column as keyof Users];
-      const second = b[sortDescriptor.column as keyof Users];
-      const cmp = String(first).localeCompare(String(second));
-      return sortDescriptor.direction === "descending" ? -cmp : cmp;
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [currentPage, filteredUsers, rowsPerPage]);
+
+  const sortedUsers = useMemo(() => {
+    return [...paginatedUsers].sort((a: Users, b: Users) => {
+      const firstValue = a[sortDescriptor.column as keyof Users];
+      const secondValue = b[sortDescriptor.column as keyof Users];
+      const comparison = String(firstValue).localeCompare(String(secondValue));
+      return sortDescriptor.direction === "descending"
+        ? -comparison
+        : comparison;
     });
-  }, [sortDescriptor, items]);
+  }, [sortDescriptor, paginatedUsers]);
 
-  // Role color mapping
-  const roleColorMap: Record<string, ChipProps["color"]> = {
-    Admin: "primary", // blue
-    User: "success", // green
-  };
-
-    const handleDelete = async () => {
+  const handleDeleteUser = async () => {
     if (!userToDelete) return;
-    
+
     try {
       setIsDeleting(true);
       const response = await auth.user_del_admin({ id: userToDelete.id });
-      
+
       if (response.success) {
         toast.success("User deleted successfully");
-        setIsDeleting(false);
-        // Refresh data setelah delete
-        const updatedUsers = users.filter(user => user.id !== userToDelete.id);
+
+        // Update local state
+        const updatedUsers = users.filter(
+          (user) => user.id !== userToDelete.id
+        );
         setUsers(updatedUsers);
-        const fetchUsers = async () => { /* ... */ };
-        await fetchUsers();
+
+        // Handle pagination after deletion
+        const newFilteredUsers = updatedUsers.filter((user) =>
+          searchValue
+            ? user.name.toLowerCase().includes(searchValue.toLowerCase())
+            : true
+        );
+        const newTotalPages = Math.ceil(newFilteredUsers.length / rowsPerPage);
+
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(1);
+        }
       } else {
         toast.error(response.message || "Failed to delete user");
       }
     } catch (error) {
       toast.error("Failed to connect to server");
     } finally {
-      onClose();
+      setIsDeleting(false);
+      closeDeleteModal();
       setUserToDelete(null);
     }
   };
 
-  const renderCell = React.useCallback((user: Users, columnKey: React.Key) => {
-    const cellValue = user[columnKey as keyof Users];
-
-    switch (columnKey) {
-      case "name":
-        return (
-          <User
-            avatarProps={{ radius: "full", size: "sm", src: user.avatar }}
-            classNames={{
-              description: "text-default-500",
-            }}
-            name={String(cellValue)}
-          >
-            {user.email}
-          </User>
-        );
-      case "role":
-        return (
-          <Chip
-            className="capitalize border-none gap-1 text-default-600"
-            color={roleColorMap[user.role] || "default"}
-            size="sm"
-            variant="dot"
-          >
-            {String(cellValue)}
-          </Chip>
-        );
-      case "actions":
-      return (
-        <div className="relative flex justify-end items-center gap-2">
-          <Dropdown>
-            <DropdownTrigger>
-              <Button isIconOnly radius="full" size="sm" variant="light">
-                <VerticalDotsIcon className="text-default-400" />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu>
-              <DropdownItem key="view">View</DropdownItem>
-              <DropdownItem key="edit">Edit</DropdownItem>
-              <DropdownItem 
-                key="delete" 
-                onClick={() => {
-                  setUserToDelete(user);
-                  onOpen();
-                }}
-                className="text-danger"
-              >
-                Delete
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        </div>
-        );
-      default:
-        return cellValue ? String(cellValue) : "";
-    }
-  }, []);
-
-  const onRowsPerPageChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleRowsPerPageChange = useCallback(
+    (e: ChangeEvent<HTMLSelectElement>) => {
       setRowsPerPage(Number(e.target.value));
     },
     []
   );
 
-  const onSearchChange = React.useCallback((value?: string) => {
-    if (value) {
-      setFilterValue(value);
-      setPage(1);
-    } else {
-      setFilterValue("");
-    }
+  const handleSearchChange = useCallback((value?: string) => {
+    setSearchValue(value || "");
+    setCurrentPage(1);
   }, []);
 
-  const topContent = React.useMemo(() => {
-    return (
+  const handleOpenDeleteModal = useCallback(
+    (user: Users) => {
+      setUserToDelete(user);
+      openDeleteModal();
+    },
+    [openDeleteModal]
+  );
+
+  const renderUserCell = useCallback(
+    (user: Users, columnKey: Key) => {
+      const cellValue = user[columnKey as keyof Users];
+
+      switch (columnKey) {
+        case "name":
+          return (
+            <User
+              avatarProps={{ radius: "full", size: "sm", src: user.avatar }}
+              classNames={{ description: "text-default-500" }}
+              name={String(cellValue)}
+            />
+          );
+
+        case "role":
+          return (
+            <Chip
+              className="capitalize border-none gap-1 text-default-600"
+              color={ROLE_COLORS[user.role] || "default"}
+              size="sm"
+              variant="dot"
+            >
+              {String(cellValue)}
+            </Chip>
+          );
+
+        case "actions":
+          return (
+            <div className="relative flex justify-end items-center gap-2">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button
+                    isIconOnly
+                    radius="full"
+                    size="sm"
+                    variant="light"
+                    isDisabled={isDeleting}
+                  >
+                    <VerticalDotsIcon className="text-default-400" />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu>
+                  <DropdownItem key="view">View</DropdownItem>
+                  <DropdownItem key="edit">Edit</DropdownItem>
+                  <DropdownItem
+                    key="delete"
+                    onClick={() => handleOpenDeleteModal(user)}
+                    className="text-danger"
+                  >
+                    Delete
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </div>
+          );
+
+        default:
+          return cellValue ? String(cellValue) : "-";
+      }
+    },
+    [isDeleting, handleOpenDeleteModal]
+  );
+
+  const topContent = useMemo(
+    () => (
       <div className="flex flex-col gap-4">
         <div className="flex justify-between gap-3 items-end">
           <Input
@@ -269,11 +300,13 @@ export default function App() {
             placeholder="Search by name..."
             size="sm"
             startContent={<SearchIcon className="text-default-300" />}
-            value={filterValue}
+            value={searchValue}
             variant="bordered"
-            onClear={() => setFilterValue("")}
-            onValueChange={onSearchChange}
+            onClear={() => setSearchValue("")}
+            onValueChange={handleSearchChange}
+            isDisabled={isLoading}
           />
+
           <div className="flex gap-3">
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex">
@@ -281,6 +314,7 @@ export default function App() {
                   endContent={<ChevronDownIcon className="text-small" />}
                   size="sm"
                   variant="flat"
+                  isDisabled={isLoading}
                 >
                   Columns
                 </Button>
@@ -293,34 +327,39 @@ export default function App() {
                 selectionMode="multiple"
                 onSelectionChange={setVisibleColumns}
               >
-                {columns.map((column) => (
+                {TABLE_COLUMNS.map((column) => (
                   <DropdownItem key={column.uid} className="capitalize">
                     {column.name}
                   </DropdownItem>
                 ))}
               </DropdownMenu>
             </Dropdown>
+
             <Link to="/admin/user/add">
               <Button
                 className="bg-foreground text-background"
                 endContent={<PlusIcon />}
                 size="sm"
+                isDisabled={isLoading}
               >
                 Tambah User
               </Button>
             </Link>
           </div>
         </div>
+
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Total {users.length} users
+            Total {isLoading ? "..." : users.length} users
           </span>
+
           <label className="flex items-center text-default-400 text-small">
             Rows per page:
             <select
-              className="bg-transparent outline-none text-default-400 text-small"
+              className="bg-transparent outline-none text-default-400 text-small ml-2"
               value={rowsPerPage}
-              onChange={onRowsPerPageChange}
+              onChange={handleRowsPerPageChange}
+              disabled={isLoading}
             >
               <option value="5">5</option>
               <option value="10">10</option>
@@ -329,107 +368,110 @@ export default function App() {
           </label>
         </div>
       </div>
-    );
-  }, [
-    filterValue,
-    visibleColumns,
-    onSearchChange,
-    onRowsPerPageChange,
-    users.length,
-    rowsPerPage,
-  ]);
+    ),
+    [
+      searchValue,
+      visibleColumns,
+      handleSearchChange,
+      handleRowsPerPageChange,
+      users.length,
+      rowsPerPage,
+      isLoading,
+    ]
+  );
 
-  const bottomContent = React.useMemo(() => {
-    return (
-      <div className="py-2 px-2 flex justify-between items-center">
+  const bottomContent = useMemo(
+    () => (
+      <div className="py-2 px-2 flex justify-center items-center">
         <Pagination
           showControls
-          classNames={{
-            cursor: "bg-foreground text-background",
-          }}
+          classNames={{ cursor: "bg-foreground text-background" }}
           color="default"
-          isDisabled={hasSearchFilter}
-          page={page}
-          total={pages}
+          isDisabled={isLoading}
+          page={currentPage}
+          total={totalPages}
           variant="light"
-          onChange={setPage}
+          onChange={setCurrentPage}
         />
-        <span className="text-small text-default-400">
-          {selectedKeys === "all"
-            ? "All users selected"
-            : `${selectedKeys.size} of ${filteredItems.length} selected`}
-        </span>
+      </div>
+    ),
+    [currentPage, totalPages, isLoading]
+  );
+
+  // ===== LOADING STATE =====
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground" />
       </div>
     );
-  }, [selectedKeys, filteredItems.length, page, pages, hasSearchFilter]);
+  }
 
   return (
     <>
-    <Table
-      isCompact
-      removeWrapper
-      aria-label="User table"
-      bottomContent={bottomContent}
-      bottomContentPlacement="outside"
-      checkboxesProps={{
-        classNames: {
-          wrapper: "after:bg-foreground after:text-background text-background",
-        },
-      }}
-      selectedKeys={selectedKeys}
-      selectionMode="multiple"
-      sortDescriptor={sortDescriptor}
-      topContent={topContent}
-      topContentPlacement="outside"
-      onSelectionChange={setSelectedKeys}
-      onSortChange={setSortDescriptor}
+      <Table
+        isCompact
+        removeWrapper
+        aria-label="User management table"
+        bottomContent={bottomContent}
+        bottomContentPlacement="outside"
+        sortDescriptor={sortDescriptor}
+        topContent={topContent}
+        topContentPlacement="outside"
+        onSortChange={setSortDescriptor}
       >
-      <TableHeader columns={headerColumns}>
-        {(column) => (
-          <TableColumn
-          key={column.uid}
-            align={column.uid === "actions" ? "center" : "start"}
-            allowsSorting={column.sortable}
+        <TableHeader columns={headerColumns}>
+          {(column) => (
+            <TableColumn
+              key={column.uid}
+              align={column.uid === "actions" ? "center" : "start"}
+              allowsSorting={column.sortable}
             >
-            {column.name}
-          </TableColumn>
-        )}
-      </TableHeader>
-      <TableBody emptyContent={"No users found"} items={sortedItems}>
-        {(item) => (
-          <TableRow key={item.id}>
-            {(columnKey) => (
-              <TableCell>{renderCell(item, columnKey)}</TableCell>
-            )}
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
-    <Modal isOpen={isOpen} onClose={onClose}>
+              {column.name}
+            </TableColumn>
+          )}
+        </TableHeader>
+
+        <TableBody emptyContent="No users found" items={sortedUsers}>
+          {(user) => (
+            <TableRow key={user.id}>
+              {(columnKey) => (
+                <TableCell>{renderUserCell(user, columnKey)}</TableCell>
+              )}
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+
+      <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal}>
         <ModalContent>
-          <ModalHeader className="flex flex-col text-center">Confirm Deletion</ModalHeader>
+          <ModalHeader className="flex flex-col text-center">
+            Confirm Deletion
+          </ModalHeader>
+
           <ModalBody>
-            <p>Are you sure you want to delete user: <strong>{userToDelete?.name}</strong>?</p>
+            <p>
+              Are you sure you want to delete user:{" "}
+              <strong>{userToDelete?.name}</strong>?
+            </p>
             <p className="text-danger">This action cannot be undone.</p>
           </ModalBody>
+
           <ModalFooter>
-            <Button 
-              variant="light" 
-              onClick={onClose}
-              className="mr-2"
-            >
+            <Button variant="light" onClick={closeDeleteModal}>
               Cancel
             </Button>
-            <Button 
-              color="danger" 
-              onClick={handleDelete}
+            <Button
+              color="danger"
+              onClick={handleDeleteUser}
               isLoading={isDeleting}
+              disabled={isDeleting}
             >
-                {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
-        </>
+    </>
   );
 }
