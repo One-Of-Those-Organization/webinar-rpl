@@ -2,7 +2,18 @@ import DefaultLayout from "@/layouts/default_admin";
 import { Search } from "@/components/search";
 import { CreateWebinar } from "@/components/add_webinar";
 import { useState, useEffect } from "react";
-import { Card, CardHeader, Image } from "@heroui/react";
+import {
+  Card,
+  CardHeader,
+  Image,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useDisclosure,
+} from "@heroui/react";
 import { EditIcon, TrashIcon } from "@/components/icons";
 import { auth_webinar } from "@/api/auth_webinar";
 import { Webinar } from "@/api/interface";
@@ -19,6 +30,17 @@ export default function WebinarPage() {
     {}
   );
 
+  // State untuk delete confirmation - simplified
+  const [webinarToDelete, setWebinarToDelete] = useState<Webinar | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // HeroUI modal hooks
+  const {
+    isOpen: isDeleteModalOpen,
+    onOpen: openDeleteModal,
+    onClose: closeDeleteModal,
+  } = useDisclosure();
+
   useEffect(() => {
     async function loadWebinarData() {
       try {
@@ -34,6 +56,8 @@ export default function WebinarPage() {
             return webinar;
           });
           setWebinarList(WebinarData);
+        } else {
+          toast.error(result.message || "Gagal memuat data webinar");
         }
       } catch (error) {
         toast.error("Failed to load webinar data. Please try again later.");
@@ -78,6 +102,57 @@ export default function WebinarPage() {
   // Function untuk handling image load
   const handleImageLoad = (webinarId: string | number) => {
     setImageLoading((prev) => ({ ...prev, [webinarId]: false }));
+  };
+
+  // Function untuk edit webinar
+  const handleEditWebinar = (webinar: Webinar) => {
+    // Navigate dengan state data
+    navigate(`/admin/webinar/edit/${webinar.id}`, {
+      state: { webinar },
+    });
+  };
+
+  // Function untuk show delete confirmation - HeroUI style
+  const handleOpenDeleteModal = (webinar: Webinar) => {
+    setWebinarToDelete(webinar);
+    openDeleteModal();
+  };
+
+  // Function untuk close modal dan reset state
+  const handleCloseDeleteModal = () => {
+    if (!isDeleting) {
+      setWebinarToDelete(null);
+      closeDeleteModal();
+    }
+  };
+
+  // Function untuk delete webinar - HeroUI style
+  const handleDeleteWebinar = async () => {
+    if (!webinarToDelete || isDeleting) return;
+
+    try {
+      setIsDeleting(true);
+      const result = await auth_webinar.delete_webinar({
+        id: webinarToDelete.id || 0,
+      });
+
+      if (result.success) {
+        toast.success("Webinar berhasil dihapus!");
+
+        // Update list tanpa reload - remove deleted webinar
+        setWebinarList((prev) =>
+          prev.filter((item) => item.id !== webinarToDelete.id)
+        );
+
+        handleCloseDeleteModal();
+      } else {
+        toast.error(result.message || "Gagal menghapus webinar");
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan saat menghapus webinar");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Function untuk formatting tanggal
@@ -163,15 +238,15 @@ export default function WebinarPage() {
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <div className="flex space-x-2">
                     <button
-                      className="flex-1 flex justify-center items-center bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600"
-                      onClick={() => console.log("Edit webinar", webinar)}
+                      className="flex-1 flex justify-center items-center bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition-colors"
+                      onClick={() => handleEditWebinar(webinar)}
                     >
                       <EditIcon size={14} className="mr-1" />
                       <span>Edit</span>
                     </button>
                     <button
-                      className="flex-1 flex justify-center items-center bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600"
-                      onClick={() => console.log("Delete webinar", webinar)}
+                      className="flex-1 flex justify-center items-center bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600 transition-colors"
+                      onClick={() => handleOpenDeleteModal(webinar)}
                     >
                       <TrashIcon size={14} className="mr-1" />
                       <span>Delete</span>
@@ -186,6 +261,43 @@ export default function WebinarPage() {
             Tidak ada webinar yang tersedia.
           </div>
         )}
+
+        {/* HeroUI Delete Confirmation Modal */}
+        <Modal isOpen={isDeleteModalOpen} onClose={handleCloseDeleteModal}>
+          <ModalContent>
+            <ModalHeader className="flex flex-col text-center">
+              Konfirmasi Hapus Webinar
+            </ModalHeader>
+
+            <ModalBody>
+              <p>
+                Apakah Anda yakin ingin menghapus webinar:{" "}
+                <strong>{webinarToDelete?.name}</strong>?
+              </p>
+              <p className="text-danger">
+                Tindakan ini tidak dapat dibatalkan.
+              </p>
+            </ModalBody>
+
+            <ModalFooter>
+              <Button
+                variant="light"
+                onPress={handleCloseDeleteModal}
+                isDisabled={isDeleting}
+              >
+                Batal
+              </Button>
+              <Button
+                color="danger"
+                onPress={handleDeleteWebinar}
+                isLoading={isDeleting}
+                isDisabled={isDeleting}
+              >
+                {isDeleting ? "Menghapus..." : "Hapus"}
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </section>
       <ToastContainer />
     </DefaultLayout>

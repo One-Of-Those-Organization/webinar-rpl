@@ -28,6 +28,7 @@ import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
 import EditAdminPage from "@/pages/admin/edit_user";
 import AddUserPage from "@/pages/admin/add_user";
+import EditWebinarPage from "@/pages/admin/edit_webinar";
 
 export default function App() {
   return (
@@ -185,6 +186,16 @@ export default function App() {
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <DetailAdminPage />
+          </AdminOnlyRoute>
+        }
+      />
+
+      {/* Edit Webinar Admin*/}
+      <Route
+        path="/admin/edit_webinar"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <EditWebinarPage />
           </AdminOnlyRoute>
         }
       />

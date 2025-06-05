@@ -1,6 +1,6 @@
 import { Link } from "@heroui/link";
 import { button as buttonStyles } from "@heroui/theme";
-import DefaultLayout from "@/layouts/default";
+import DefaultLayout from "@/layouts/default_admin";
 import { Image } from "@heroui/react";
 
 // Detail Webinar Page
