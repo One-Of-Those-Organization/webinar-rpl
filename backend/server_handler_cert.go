@@ -35,7 +35,7 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-            EventId       int    `json:"event_id"`
+            EventId       int    `json:"id"`
             // CertTemplate is a html+css that will be autofilled. (this is path btw.)
             CertTemplate  string `json:"cert_temp"`
         }
@@ -202,6 +202,99 @@ func appHandleCertDel(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "Certificate Template deleted.",
+            "data": nil,
+            "error_code": 0,
+        })
+    })
+}
+
+// TODO : After done implementing webinar participant
+// GET : api/protected/cert-gen
+func appHandleCertGen(_ *Backend, route fiber.Router) {
+    route.Get("cert-gen", func (c *fiber.Ctx) error {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "success": false,
+            "message": "WIP.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// POST : api/protected/cert-edit
+func appHandleCertEdit(backend *Backend, route fiber.Router) {
+    route.Post("cert-edit", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        isAdmin := claims["admin"].(float64)
+
+        if isAdmin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            CertTempID int    `json:"id"`
+            NewPath    string `json:"cert_path"`
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        certTemp := table.CertTemplate{}
+        result := backend.db.First(&certTemp, body.CertTempID)
+		if result.Error != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Certificate Template not found with ID: %d", body.CertTempID),
+				"error_code": 4,
+				"data": nil,
+			})
+		}
+
+        if body.NewPath == "" {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Empty path is not allowed.",
+				"error_code": 5,
+				"data": nil,
+			})
+        }
+
+        certTemp.CertTemplate = body.NewPath
+		result = backend.db.Save(&certTemp)
+        if result.Error != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Failed to update certificate template: %v", result.Error),
+				"error_code": 6,
+				"data": nil,
+			})
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Certificate Template edited.",
             "data": nil,
             "error_code": 0,
         })

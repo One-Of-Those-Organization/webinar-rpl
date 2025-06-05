@@ -1,15 +1,14 @@
 package main
 
 import (
+	"fmt"
 	l "log"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
-    // TOOD: Make a user type 0 that will be the admin of admin if the user didnt exist
-    // TOOD: Make secret readed from env and the user 0 password from env too.
-
+    port := 3000
 
     // DO THE DB STUFF
     db, err := open_db("./db/data.db")
@@ -38,7 +37,7 @@ func main() {
     }
 
     appMakeRouteHandler(app)
-    if err := app.app.Listen(":3000"); err != nil {
+    if err := app.app.Listen(fmt.Sprintf(":%d", port)); err != nil {
         l.Fatal("ERR: Server failed to start: ", err)
     }
 }
