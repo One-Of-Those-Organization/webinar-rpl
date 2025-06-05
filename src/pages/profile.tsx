@@ -136,9 +136,12 @@ export default function ProfilPage() {
               ...prev,
               profile: staticUrl,
             }));
+            2;
           }
 
-          const resp = await auth_user.post_update_user_pfp(response.data);
+          const resp = await auth_user.post_update_user_pfp(
+            response.data.filename
+          );
 
           if (!resp.success) {
             toast.error("Failed to update image");
