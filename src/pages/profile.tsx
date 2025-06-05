@@ -163,13 +163,13 @@ export default function ProfilPage() {
       });
 
       if (response.success) {
-        setProfile("/logo_if.png");
         toast.success("Profile picture removed");
 
         if (user_data) {
           const userData = JSON.parse(user_data);
           userData.UserPicture = "/logo_if.png";
           localStorage.setItem("user_data", JSON.stringify(userData));
+          setProfile("/logo_if.png");
         }
       } else {
         toast.error("Failed to remove image");
@@ -190,7 +190,7 @@ export default function ProfilPage() {
 
     setTimeout(() => {
       setIsTogglingEdit(false);
-    }, 5);
+    }, 300);
   };
 
   if (isEdited == false) {
@@ -235,7 +235,7 @@ export default function ProfilPage() {
                 label="Created At"
                 type="text"
                 variant="flat"
-                readOnly
+                readOnly={!isEdited}
                 value={createdAt}
               />
             </div>
@@ -251,7 +251,7 @@ export default function ProfilPage() {
               label="Name"
               type="text"
               variant="flat"
-              readOnly
+              readOnly={!isEdited}
               className="w-full"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -261,7 +261,7 @@ export default function ProfilPage() {
               label="Email"
               type="email"
               variant="flat"
-              readOnly
+              readOnly={!isEdited}
               className="w-full"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -271,7 +271,7 @@ export default function ProfilPage() {
               label="Instance"
               type="text"
               variant="flat"
-              readOnly
+              readOnly={!isEdited}
               className="w-full"
               value={instance}
               onChange={(e) => setInstance(e.target.value)}
@@ -388,7 +388,7 @@ export default function ProfilPage() {
               label="Email"
               type="email"
               variant="flat"
-              readOnly
+              readOnly={!isEdited}
               className="w-full"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
