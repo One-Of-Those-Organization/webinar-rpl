@@ -65,10 +65,15 @@ export function CreateWebinar() {
       !webinarInput.name ||
       !webinarInput.dstart ||
       !webinarInput.dend ||
-      !webinarInput.speaker
+      !webinarInput.speaker ||
+      !webinarInput.image ||
+      !webinarInput.attendance ||
+      !webinarInput.link ||
+      !webinarInput.description ||
+      webinarInput.max <= 0
     ) {
       setError("Please fill all required fields");
-      toast.error("Please fill all required fields");
+      toast.info("Please fill all required fields");
       return;
     }
 
@@ -113,6 +118,10 @@ export function CreateWebinar() {
           setError("Webinar already exists with that name.");
           toast.info("Webinar already exists with that name.");
           break;
+        case 5:
+          setError("Please fill all required fields.");
+          toast.error("Please fill all required fields.");
+          break;
 
         default:
           setError("Add Webinar Failed. Please contact support.");
@@ -143,6 +152,24 @@ export function CreateWebinar() {
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Validasi ukuran file (3MB = 3 * 1024 * 1024 bytes)
+    const maxSizeInBytes = 3 * 1024 * 1024;
+    if (file.size > maxSizeInBytes) {
+      setError("Image size must be less than 3MB");
+      toast.info("Image size must be less than 3MB");
+      event.target.value = "";
+      return;
+    }
+
+    // Validasi tipe file (opsional, tapi recommended)
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Only JPG, JPEG, PNG, and WebP images are allowed");
+      toast.info("Only JPG, JPEG, PNG, and WebP images are allowed");
+      event.target.value = "";
+      return;
+    }
 
     setIsImageLoading(true);
     toast.info("Uploading Webinar Image...");
