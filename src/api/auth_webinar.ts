@@ -1,4 +1,9 @@
-import { BaseResponse, WebinarInput, WebinarImage } from "./interface.ts";
+import {
+  BaseResponse,
+  WebinarInput,
+  WebinarImage,
+  WebinarEdit,
+} from "./interface.ts";
 
 const API_URL = "http://localhost:3000";
 
@@ -30,6 +35,54 @@ export const auth_webinar = {
     }
   },
 
+  // API Edit Webinar
+  edit_webinar: async (data: WebinarEdit): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/protected/event-edit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (result.success && result.token) {
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("user_data", JSON.stringify(result.data));
+      }
+      return result;
+    } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API Delete Webinar By ID
+  delete_webinar: async (data: { id: number }): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/protected/event-del`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      return await response.json();
+    } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
   // API Get All Webinars
   get_all_webinar: async (): Promise<BaseResponse> => {
     try {
@@ -52,6 +105,30 @@ export const auth_webinar = {
       return result;
     } catch (error) {
       console.error("Error fetching webinar data:", error); // Tambahkan log error
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API Get Webinar by ID
+  get_webinar_by_id: async (id: number): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_URL}/api/protected/event-info-of?id=${id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return await response.json();
+    } catch (error) {
       return {
         message: "Failed to connect to server",
         success: false,

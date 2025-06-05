@@ -6,11 +6,13 @@ import { Card, CardHeader, Image } from "@heroui/react";
 import { EditIcon, TrashIcon } from "@/components/icons";
 import { auth_webinar } from "@/api/auth_webinar";
 import { Webinar } from "@/api/interface";
+import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 export default function WebinarPage() {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [webinarList, setWebinarList] = useState<Webinar[]>([]);
   const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>(
@@ -25,7 +27,6 @@ export default function WebinarPage() {
         if (result.success) {
           const WebinarData = result.data.map((item: any) => {
             const webinar = Webinar.fromApiResponse(item);
-            console.log("Webinar Data:", webinar);
             setImageLoading((prev) => ({
               ...prev,
               [webinar.id || item.ID]: true,
@@ -43,28 +44,6 @@ export default function WebinarPage() {
 
     loadWebinarData();
   }, []);
-
-  // Function untuk handling image load
-  const handleImageLoad = (webinarId: string | number) => {
-    setImageLoading((prev) => ({ ...prev, [webinarId]: false }));
-  };
-
-  // Function untuk formatting tanggal
-  const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return "Date not available";
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (e) {
-      return dateStr;
-    }
-  };
 
   // Function untuk render skeleton cards saat loading
   const renderSkeletonCards = () => {
@@ -94,6 +73,28 @@ export default function WebinarPage() {
           </div>
         </Card>
       ));
+  };
+
+  // Function untuk handling image load
+  const handleImageLoad = (webinarId: string | number) => {
+    setImageLoading((prev) => ({ ...prev, [webinarId]: false }));
+  };
+
+  // Function untuk formatting tanggal
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return "Date not available";
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return dateStr;
+    }
   };
 
   return (
