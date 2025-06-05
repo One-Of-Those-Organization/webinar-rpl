@@ -2,7 +2,7 @@ import { Input, Textarea } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
 import { Image } from "@heroui/react";
 import { useState } from "react";
-import { auth } from "@/api/auth";
+import { auth_webinar } from "@/api/auth_webinar";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -101,7 +101,7 @@ export function CreateWebinar() {
       };
 
       // Call API to add webinar
-      const response = await auth.add_webinar(formattedWebinarData);
+      const response = await auth_webinar.add_webinar(formattedWebinarData);
 
       // Server Side Success Handling
       if (response.success) {
@@ -182,7 +182,9 @@ export function CreateWebinar() {
       setPreviewImage(base64Image);
 
       try {
-        const response = await auth.post_webinar_image({ data: base64Image });
+        const response = await auth_webinar.post_webinar_image({
+          data: base64Image,
+        });
 
         if (response.success) {
           let serverPath = response.data?.filename || response.data;

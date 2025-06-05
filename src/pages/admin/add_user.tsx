@@ -13,6 +13,7 @@ import { FaCamera } from "react-icons/fa";
 import { useState, useRef, useCallback } from "react"; // Tambahkan useCallback
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { auth_user } from "@/api/auth_user";
 import { auth } from "@/api/auth";
 import { RegisterAdmin } from "@/api/interface";
 
@@ -26,7 +27,7 @@ export default function AddUserPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
+
   // Ref untuk input file
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,7 +45,12 @@ export default function AddUserPage() {
       }
 
       // Validasi tipe file
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+      ];
       if (!allowedTypes.includes(file.type)) {
         toast.error("Please select a valid image file (JPG, PNG, GIF)");
         // Reset input file
@@ -78,14 +84,14 @@ export default function AddUserPage() {
   const handleRemoveImage = useCallback(() => {
     // Clear profile state
     setProfile("");
-    
+
     // Reset input file value
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
       // Force clear dengan cara lain jika perlu
       fileInputRef.current.files = null;
     }
-    
+
     // Clear any potential cached data
     setTimeout(() => {
       if (fileInputRef.current) {
@@ -93,7 +99,7 @@ export default function AddUserPage() {
         fileInputRef.current.type = "file";
       }
     }, 0);
-    
+
     toast.success("Image removed successfully");
   }, []);
 
@@ -147,7 +153,7 @@ export default function AddUserPage() {
       let result;
       if (userRole === 1) {
         // Register admin
-        result = await auth.register_admin(registerData);
+        result = await auth_user.register_admin(registerData);
       } else {
         // Register regular user
         result = await auth.register({
@@ -156,7 +162,10 @@ export default function AddUserPage() {
       }
 
       if (result.success) {
-        toast.success(result.message || `${userRole === 1 ? 'Admin' : 'Regular'} user added successfully!`);
+        toast.success(
+          result.message ||
+            `${userRole === 1 ? "Admin" : "Regular"} user added successfully!`
+        );
         // Reset form fields
         setName("");
         setEmail("");
@@ -164,13 +173,13 @@ export default function AddUserPage() {
         setPassword("");
         setProfile("");
         setUserRole(0);
-        
+
         // Reset file input
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
           fileInputRef.current.files = null;
         }
-        
+
         // Optional: redirect after success
         setTimeout(() => {
           window.location.href = "/admin/user";
@@ -211,13 +220,13 @@ export default function AddUserPage() {
               height={200}
             />
             {/* Camera Icon */}
-            <div 
+            <div
               className="absolute -bottom-1 -right-[0px] z-10 bg-secondary-500 text-white rounded-full p-2 cursor-pointer hover:bg-secondary-600 transition-colors"
               onClick={handleCameraClick}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   handleCameraClick();
                 }
               }}
@@ -230,7 +239,7 @@ export default function AddUserPage() {
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/gif"
               onChange={handleImageChange}
-              style={{ display: 'none' }} // Gunakan style display none sebagai alternatif
+              style={{ display: "none" }} // Gunakan style display none sebagai alternatif
             />
           </div>
 
@@ -352,7 +361,9 @@ export default function AddUserPage() {
               onClick={handleSubmit}
               disabled={loading}
             >
-              {loading ? "Adding..." : `Add ${userRole === 1 ? 'Admin' : 'Regular'} User`}
+              {loading
+                ? "Adding..."
+                : `Add ${userRole === 1 ? "Admin" : "Regular"} User`}
             </button>
           </div>
         </div>

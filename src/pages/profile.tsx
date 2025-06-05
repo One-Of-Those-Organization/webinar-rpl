@@ -5,7 +5,7 @@ import { Input } from "@heroui/input";
 import { FaCamera } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
-import { auth } from "@/api/auth";
+import { auth_user } from "@/api/auth_user";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -69,10 +69,11 @@ export default function ProfilPage() {
         profile === originalData.profile
       ) {
         toast.info("No changes to save.");
+        setIsEdited(false);
         return;
       }
 
-      const response = await auth.user_edit({
+      const response = await auth_user.user_edit({
         name,
         instance,
         picture: profile,
@@ -115,7 +116,7 @@ export default function ProfilPage() {
       try {
         setProfile(base64Image);
 
-        const response = await auth.user_image({ data: base64Image });
+        const response = await auth_user.user_image({ data: base64Image });
 
         if (response.success) {
           let serverPath = response.data?.filename || "";
@@ -137,7 +138,7 @@ export default function ProfilPage() {
             }));
           }
 
-          const resp = await auth.post_update_user_pfp(response.data)
+          const resp = await auth_user.post_update_user_pfp(response.data);
 
           if (!resp.success) {
             toast.error("Failed to update image");
@@ -156,7 +157,7 @@ export default function ProfilPage() {
 
   const handleRemoveImage = async () => {
     try {
-      const response = await auth.user_edit({
+      const response = await auth_user.user_edit({
         name,
         instance,
         picture: "/logo_if.png",
@@ -187,6 +188,11 @@ export default function ProfilPage() {
 
     setIsTogglingEdit(true);
     setIsEdited(toState);
+    if (isEdited == false) {
+      toast.info("Entering edit mode...");
+    } else {
+      toast.info("Exiting edit mode...");
+    }
 
     setTimeout(() => {
       setIsTogglingEdit(false);
