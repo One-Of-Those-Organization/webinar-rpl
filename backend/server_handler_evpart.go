@@ -226,8 +226,8 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-            EventID int `json:"event_id"`
-            EventPRole string `json"event_role"`
+            EventID    int `json:"event_id"`
+            EventPRole string `json:"event_role"`
         }
 
         err := c.BodyParser(&body)
@@ -262,7 +262,7 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
             })
         }
 
-        if table.UserEventRoleEnum(body.EventPRole) == "comittee" || table.UserEventRoleEnum(body.EventPRole) == "normal" {
+        if body.EventPRole == "comittee" || body.EventPRole == "normal" {
             eventPart.EventPRole = table.UserEventRoleEnum(body.EventPRole)
         } else {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
