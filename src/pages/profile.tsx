@@ -107,6 +107,25 @@ export default function ProfilPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // ✅ Validasi ukuran file (3MB = 3 * 1024 * 1024 bytes)
+    const maxSizeInBytes = 3 * 1024 * 1024;
+    if (file.size > maxSizeInBytes) {
+      setError("Image size must be less than 3MB");
+      toast.error("Image size must be less than 3MB");
+      e.target.value = "";
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Only JPG, JPEG, PNG, and WebP images are allowed");
+      toast.error("Only JPG, JPEG, PNG, and WebP images are allowed");
+      e.target.value = "";
+      return;
+    }
+
+    setError("");
+
     toast.info("Uploading image...");
     const reader = new FileReader();
 
@@ -121,7 +140,7 @@ export default function ProfilPage() {
         if (response.success) {
           let serverPath = response.data?.filename || "";
 
-          const staticUrl = `http://localhost:3000/${serverPath.replace("img", "static")}`;
+          const staticUrl = `http://localhost:3000/${serverPath.replace("img", "static")}?t=${Date.now()}`;
 
           const userData = JSON.parse(
             localStorage.getItem("user_data") || "{}"
@@ -138,17 +157,24 @@ export default function ProfilPage() {
             }));
           }
 
-          const resp = await auth_user.post_update_user_pfp(response.data);
+          const resp = await auth_user.post_update_user_pfp(
+            response.data.filename
+          );
 
           if (!resp.success) {
             toast.error("Failed to update image");
+            setError("Failed to update image");
+          } else {
+            toast.success("Image updated successfully!");
+            setError("");
           }
-          toast.success("Image updated successfully!");
         } else {
           toast.error("Failed to update image");
+          setError("Failed to update image");
         }
       } catch (error) {
         toast.error("Error uploading image");
+        setError("Error uploading image");
       }
     };
 

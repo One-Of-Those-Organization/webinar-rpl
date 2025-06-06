@@ -1,5 +1,4 @@
 import { Input, Textarea } from "@heroui/input";
-import { button as buttonStyles } from "@heroui/theme";
 import { Image } from "@heroui/react";
 import { useState } from "react";
 import { auth_webinar } from "@/api/auth_webinar";
@@ -12,6 +11,7 @@ import {
   DropdownItem,
   Button,
 } from "@heroui/react";
+import { PlusIcon } from "@/components/icons";
 
 // Fungsi untuk memformat tanggal sesuai kebutuhan backend
 const formatDateForBackend = (dateString: string): string => {
@@ -27,7 +27,7 @@ const formatDateForBackend = (dateString: string): string => {
 // Type untuk attendance enum
 type AttTypeEnum = "online" | "offline";
 
-export function CreateWebinar() {
+export default function CreateWebinar() {
   const [webinarInput, setWebinarInput] = useState({
     name: "",
     image: "www.google.com",
@@ -112,12 +112,19 @@ export function CreateWebinar() {
         setIsOpen(false);
         return;
       }
+
       // Server Side Error Handling
       switch (response.error_code) {
+        case 2:
+          setError("You dont have permission to add webinar.");
+          toast.error("You dont have permission to add webinar.");
+          break;
+
         case 4:
           setError("Webinar already exists with that name.");
           toast.info("Webinar already exists with that name.");
           break;
+
         case 5:
           setError("Please fill all required fields.");
           toast.error("Please fill all required fields.");
@@ -220,9 +227,15 @@ export function CreateWebinar() {
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className={buttonStyles()}>
+      {/* ✅ Button dengan styling yang sama seperti User Management */}
+      <Button
+        className="bg-foreground text-background"
+        endContent={<PlusIcon />}
+        size="sm"
+        onPress={() => setIsOpen(true)}
+      >
         Add Webinar
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -461,30 +474,21 @@ export function CreateWebinar() {
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700 p-4">
-              <button
-                onClick={() => setIsOpen(false)}
-                className={buttonStyles({
-                  color: "danger",
-                  radius: "full",
-                  variant: "solid",
-                  size: "md",
-                })}
-                disabled={isLoading || isImageLoading}
+              <Button
+                color="danger"
+                onPress={() => setIsOpen(false)}
+                isDisabled={isLoading || isImageLoading}
               >
                 Cancel
-              </button>
-              <button
-                onClick={AddWebinar}
-                disabled={isLoading || isImageLoading}
-                className={buttonStyles({
-                  color: "primary",
-                  radius: "full",
-                  variant: "solid",
-                  size: "md",
-                })}
+              </Button>
+              <Button
+                color="primary"
+                onPress={AddWebinar}
+                isLoading={isLoading}
+                isDisabled={isLoading || isImageLoading}
               >
                 {isLoading ? "Creating..." : "Create Webinar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

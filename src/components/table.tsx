@@ -114,11 +114,9 @@ export default function UserManagementTable() {
           setUsers(transformedUsers);
         } else {
           toast.error("Failed to fetch users data");
-          console.error("API Error:", response.message);
         }
       } catch (error) {
         toast.error("Network error occurred");
-        console.error("Network Error:", error);
       } finally {
         setIsLoading(false);
       }
@@ -266,7 +264,6 @@ export default function UserManagementTable() {
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu>
-                  <DropdownItem key="view">View</DropdownItem>
                   <DropdownItem key="edit">Edit</DropdownItem>
                   <DropdownItem
                     key="delete"
