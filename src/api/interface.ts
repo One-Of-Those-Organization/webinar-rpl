@@ -59,6 +59,21 @@ export interface WebinarInput {
   max: number;
 }
 
+export interface WebinarEdit {
+  id: number;
+  desc?: string;
+  name?: string;
+  dstart?: string;
+  dend?: string;
+  link?: string;
+  speaker?: string;
+  att?: string;
+  img?: string;
+  max?: number;
+  event_mat_id?: number;
+  cert_template_id?: number;
+}
+
 // Static Webinar Data (GET)
 export class Webinar {
   name: string = "";

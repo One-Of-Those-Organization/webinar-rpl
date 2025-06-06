@@ -1,5 +1,4 @@
 import { Link } from "@heroui/link";
-import { siteConfig } from "@/config/site";
 import { Logo } from "@/components/icons";
 import { Search } from "@/components/search";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -31,7 +30,7 @@ export const Navbar = () => {
   const user_data = localStorage.getItem("user_data");
 
   const isDashboardPage = location.pathname === "/dashboard";
-  const isAdminPage = location.pathname === "/admin";
+  const isAboutPage = location.pathname === "/about";
 
   useEffect(() => {
     try {
@@ -121,6 +120,7 @@ export const Navbar = () => {
             <Link
               href="/dashboard"
               color={isDashboardPage ? "primary" : "foreground"}
+              className="border-b-2 border-transparent hover:border-primary transition-colors"
             >
               Dashboard
             </Link>
@@ -130,7 +130,8 @@ export const Navbar = () => {
         <NavbarItem className="hidden lg:flex">
           <Link
             href="/about"
-            color={location.pathname === "/about" ? "primary" : "foreground"}
+            color={isAboutPage ? "primary" : "foreground"}
+            className="border-b-2 border-transparent hover:border-primary transition-colors"
           >
             About
           </Link>
@@ -170,42 +171,32 @@ export const Navbar = () => {
         {isLoggedIn && isDashboardPage && <Search />}
         <div className="mx-4 mt-2 flex flex-col gap-2">
           <ThemeSwitch />
+
           {isLoggedIn ? (
             <>
-              {/* Menu items untuk user yang login */}
-              {siteConfig.navMenuItems.map((item, index) => (
-                <NavbarMenuItem key={`${item}-${index}`}>
-                  <Link
-                    color={
-                      location.pathname === item.href ? "primary" : "foreground"
-                    }
-                    href={item.href}
-                    size="lg"
-                  >
-                    {item.label}
-                  </Link>
-                </NavbarMenuItem>
-              ))}
-
-              {/* Tambahkan Admin Dashboard ke menu mobile jika user adalah admin */}
-              {isAdmin && (
-                <NavbarMenuItem>
-                  <Link
-                    color={isAdminPage ? "primary" : "foreground"}
-                    href="/admin"
-                    size="lg"
-                  >
-                    Admin Dashboard
-                  </Link>
-                </NavbarMenuItem>
-              )}
+              <NavbarMenuItem>
+                <Link
+                  color={isDashboardPage ? "primary" : "foreground"}
+                  href="/dashboard"
+                  size="lg"
+                >
+                  Dashboard
+                </Link>
+              </NavbarMenuItem>
+              <NavbarMenuItem>
+                <Link
+                  color={isAboutPage ? "primary" : "foreground"}
+                  href="/about"
+                  size="lg"
+                >
+                  About
+                </Link>
+              </NavbarMenuItem>
             </>
           ) : (
             <NavbarMenuItem>
               <Link
-                color={
-                  location.pathname === "/about" ? "primary" : "foreground"
-                }
+                color={isAboutPage ? "primary" : "foreground"}
                 href="/about"
                 size="lg"
               >

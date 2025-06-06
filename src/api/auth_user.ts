@@ -63,7 +63,9 @@ export const auth_user = {
   },
 
   // API update gambar
-  post_update_user_pfp: async (data: string): Promise<BaseResponse> => {
+  post_update_user_pfp: async (data: {
+    filename: string;
+  }): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/api/protected/user-edit`, {
