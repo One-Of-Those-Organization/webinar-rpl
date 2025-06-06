@@ -9,6 +9,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// NOTE : if not supplied with `email` on the json it will presume to use
+//        the current active user on JWT that will participate.
+
 // POST : api/protected/event-participate-register
 func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
     route.Post("event-participate-register", func (c *fiber.Ctx) error {
@@ -35,8 +38,9 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-            EventId int    `json:"id"`
-            Role    string `json:"role"`
+            EventId         int     `json:"id"`
+            Role            string  `json:"role"`
+            CustomUserEmail *string `json:"email"`
         }
 
         err := c.BodyParser(&body)
@@ -78,13 +82,39 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             })
         }
 
+        // TODO: check if the event max is full then dont allow to register.
+        var eventParticipantCount int64
+        res = backend.db.Model(&table.EventParticipant{}).Where("event_id = ?", body.EventId).Count(&eventParticipantCount)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch event count from db.",
+                "error_code": 7,
+                "data": nil,
+            })
+        }
+
+        if event.EventMax <= int(eventParticipantCount) + 1 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Event is already full.",
+                "error_code": 8,
+                "data": nil,
+            })
+        }
+
+        useThisEmail := email
+        if body.CustomUserEmail != nil && *body.CustomUserEmail == "" {
+            useThisEmail = *body.CustomUserEmail
+        }
+
         var currentUser table.User
-        res = backend.db.Where("email = ?", email).First(&currentUser)
+        res = backend.db.Where("email = ?", useThisEmail).First(&currentUser)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch the specified user from db.",
-                "error_code": 7,
+                "error_code": 9,
                 "data": nil,
             })
         }
@@ -104,7 +134,7 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to create new event participant, %v", res.Error),
-                "error_code": 8,
+                "error_code": 10,
                 "data": nil,
             })
         }
@@ -212,7 +242,6 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
 
         claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
-        email := claims["email"].(string)
 
         if isAdmin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -224,7 +253,8 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-            EventID    int `json:"event_id"`
+            EventID    int    `json:"event_id"`
+            UserEmail  string `json:"email"`
         }
 
         err := c.BodyParser(&body)
@@ -238,7 +268,7 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
         }
 
         var currentUser table.User
-        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        res := backend.db.Where("user_email = ?", body.UserEmail).First(&currentUser)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
@@ -248,7 +278,7 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
             })
         }
 
-        res = backend.db.Where("user_email = ?", email).Where("event_id = ?", body.EventID).Delete(&table.EventParticipant{})
+        res = backend.db.Where("user_id = ?", currentUser.ID).Where("event_id = ?", body.EventID).Delete(&table.EventParticipant{})
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
@@ -295,8 +325,9 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-            EventID    int `json:"event_id"`
-            EventPRole string `json:"event_role"`
+            EventID    int     `json:"event_id"`
+            EventPRole string  `json:"event_role"`
+            UserEmail  *string `json:"email"`
         }
 
         err := c.BodyParser(&body)
@@ -309,8 +340,13 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
             })
         }
 
+        useThisEmail := email
+        if body.UserEmail != nil && *body.UserEmail != "" {
+            useThisEmail = *body.UserEmail
+        }
+
         var currentUser table.User
-        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        res := backend.db.Where("user_email = ?", useThisEmail).First(&currentUser)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
