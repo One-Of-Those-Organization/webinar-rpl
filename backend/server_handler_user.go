@@ -192,7 +192,7 @@ func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
             updates["user_picture"] = body.Picture
         }
 
-        if body.Password != nil && *body.Password == "" {
+        if body.Password != nil && *body.Password != "" {
             hashedPassword, err := HashPassword(*body.Password)
             if err != nil {
                 return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

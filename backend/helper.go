@@ -1,14 +1,17 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"math/rand"
 	"net/mail"
-    "math/rand"
 	"os"
 	"webrpl/table"
-    "errors"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/gofiber/fiber/v2"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-    "fmt"
-    "golang.org/x/crypto/bcrypt"
 )
 
 func isEmailValid(e string) bool {
@@ -88,4 +91,13 @@ func RandStringBytes(n int, rand_t *rand.Rand) string {
         b[i] = letterBytes[rand.Intn(len(letterBytes))]
     }
     return string(b)
+}
+
+func GetJWT(c *fiber.Ctx) (jwt.MapClaims, error) {
+    user := c.Locals("user").(*jwt.Token)
+    if user == nil {
+        return nil, errors.New("JWT token not valid")
+    }
+    claims := user.Claims.(jwt.MapClaims)
+    return claims, nil
 }
