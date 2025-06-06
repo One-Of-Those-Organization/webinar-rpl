@@ -59,6 +59,43 @@ export interface WebinarInput {
   max: number;
 }
 
+export class WebinarEdit {
+  id: number = 0;
+  desc?: string = "";
+  name?: string = "";
+  dstart?: string = "";
+  dend?: string = "";
+  link?: string = "";
+  speaker?: string = "";
+  att?: string = "";
+  img?: string = "";
+  max?: number = 0;
+  event_mat_id?: number = 0;
+  cert_template_id?: number = 0;
+
+  constructor(init?: Partial<WebinarEdit>) {
+    Object.assign(this, init);
+  }
+
+  // Static method to transform API response to WebinarEdit class instances
+  static fromApiResponse(apiData: any): WebinarEdit {
+    return new WebinarEdit({
+      id: apiData.ID || 0,
+      desc: apiData.EventDesc || "",
+      name: apiData.EventName || "",
+      dstart: apiData.EventDStart || "",
+      dend: apiData.EventDEnd || "",
+      speaker: apiData.EventSpeaker || "",
+      att: apiData.EventAtt || "",
+      link: apiData.EventLink || "",
+      img: apiData.EventImg || "",
+      max: apiData.EventMax || 0,
+      event_mat_id: apiData.EventMatID || 0,
+      cert_template_id: apiData.CertTemplateID || 0,
+    });
+  }
+}
+
 // Static Webinar Data (GET)
 export class Webinar {
   name: string = "";
