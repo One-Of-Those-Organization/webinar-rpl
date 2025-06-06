@@ -165,7 +165,7 @@ export default function WebinarPage() {
 
   // Function untuk get webinar by ID and navigate to edit page
   const handleEditWebinar = (webinar: Webinar) => {
-    navigate(`/admin/edit_webinar/${webinar.id}`);
+    navigate(`/admin/webinar/edit/${webinar.id}`);
   };
 
   // Function untuk show delete confirmation
