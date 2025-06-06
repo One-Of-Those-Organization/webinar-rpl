@@ -1,5 +1,4 @@
 import { Input, Textarea } from "@heroui/input";
-import { button as buttonStyles } from "@heroui/theme";
 import { Image } from "@heroui/react";
 import { useState } from "react";
 import { auth_webinar } from "@/api/auth_webinar";
@@ -12,6 +11,7 @@ import {
   DropdownItem,
   Button,
 } from "@heroui/react";
+import { PlusIcon } from "@/components/icons"; // ✅ Import PlusIcon
 
 // Fungsi untuk memformat tanggal sesuai kebutuhan backend
 const formatDateForBackend = (dateString: string): string => {
@@ -222,9 +222,15 @@ export function CreateWebinar() {
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className={buttonStyles()}>
+      {/* ✅ Button dengan styling yang sama seperti User Management */}
+      <Button
+        className="bg-foreground text-background"
+        endContent={<PlusIcon />}
+        size="sm"
+        onPress={() => setIsOpen(true)}
+      >
         Add Webinar
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -463,30 +469,21 @@ export function CreateWebinar() {
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700 p-4">
-              <button
-                onClick={() => setIsOpen(false)}
-                className={buttonStyles({
-                  color: "danger",
-                  radius: "full",
-                  variant: "solid",
-                  size: "md",
-                })}
-                disabled={isLoading || isImageLoading}
+              <Button
+                color="danger"
+                onPress={() => setIsOpen(false)}
+                isDisabled={isLoading || isImageLoading}
               >
                 Cancel
-              </button>
-              <button
-                onClick={AddWebinar}
-                disabled={isLoading || isImageLoading}
-                className={buttonStyles({
-                  color: "primary",
-                  radius: "full",
-                  variant: "solid",
-                  size: "md",
-                })}
+              </Button>
+              <Button
+                color="primary"
+                onPress={AddWebinar}
+                isLoading={isLoading}
+                isDisabled={isLoading || isImageLoading}
               >
                 {isLoading ? "Creating..." : "Create Webinar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

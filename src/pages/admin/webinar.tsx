@@ -1,6 +1,6 @@
 import DefaultLayout from "@/layouts/default_admin";
 import { CreateWebinar } from "@/components/add_webinar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Card,
   CardHeader,
@@ -13,21 +13,35 @@ import {
   Button,
   useDisclosure,
   Input,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Pagination,
 } from "@heroui/react";
 import { useNavigate } from "react-router-dom";
-import { EditIcon, TrashIcon, SearchIcon } from "@/components/icons";
+import {
+  EditIcon,
+  TrashIcon,
+  SearchIcon,
+  ChevronDownIcon,
+} from "@/components/icons";
 import { auth_webinar } from "@/api/auth_webinar";
 import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
+const DEFAULT_ROWS_PER_PAGE = 8;
+const WEBINARS_PER_PAGE_OPTIONS = [8, 12, 16, 20];
+
 export default function WebinarPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [webinarList, setWebinarList] = useState<Webinar[]>([]);
-  const [filteredWebinars, setFilteredWebinars] = useState<Webinar[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>(
     {}
   );
@@ -58,7 +72,6 @@ export default function WebinarPage() {
             return webinar;
           });
           setWebinarList(WebinarData);
-          setFilteredWebinars(WebinarData);
         } else {
           toast.error(result.message || "Gagal memuat data webinar");
         }
@@ -72,35 +85,52 @@ export default function WebinarPage() {
     loadWebinarData();
   }, []);
 
-  // useEffect untuk handle search filtering
+  // Reset page when rows per page changes
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredWebinars(webinarList);
-    } else {
-      const filtered = webinarList.filter((webinar) => {
-        const query = searchQuery.toLowerCase();
-        const name = (webinar.name || "").toLowerCase();
-        const speaker = (webinar.speaker || "").toLowerCase();
-        const description = (webinar.description || "").toLowerCase();
+    setCurrentPage(1);
+  }, [rowsPerPage]);
 
-        return (
-          name.includes(query) ||
-          speaker.includes(query) ||
-          description.includes(query)
-        );
-      });
-      setFilteredWebinars(filtered);
-    }
-  }, [searchQuery, webinarList]);
+  // Filtered webinars based on search
+  const filteredWebinars = useMemo(() => {
+    if (!searchValue) return webinarList;
+    return webinarList.filter((webinar) => {
+      const query = searchValue.toLowerCase();
+      const name = (webinar.name || "").toLowerCase();
+      const speaker = (webinar.speaker || "").toLowerCase();
+      const description = (webinar.description || "").toLowerCase();
 
-  // Function untuk handle search input change
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-  };
+      return (
+        name.includes(query) ||
+        speaker.includes(query) ||
+        description.includes(query)
+      );
+    });
+  }, [webinarList, searchValue]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredWebinars.length / rowsPerPage);
+
+  const paginatedWebinars = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filteredWebinars.slice(startIndex, endIndex);
+  }, [currentPage, filteredWebinars, rowsPerPage]);
+
+  // Search handler
+  const handleSearchChange = useCallback((value?: string) => {
+    setSearchValue(value || "");
+    setCurrentPage(1);
+  }, []);
+
+  // Rows per page handler
+  const handleRowsPerPageChange = useCallback((newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1);
+  }, []);
 
   // Function untuk render skeleton cards saat loading
   const renderSkeletonCards = () => {
-    return Array(8)
+    return Array(rowsPerPage)
       .fill(0)
       .map((_, index) => (
         <Card
@@ -139,10 +169,13 @@ export default function WebinarPage() {
   };
 
   // Function untuk show delete confirmation
-  const handleOpenDeleteModal = (webinar: Webinar) => {
-    setWebinarToDelete(webinar);
-    openDeleteModal();
-  };
+  const handleOpenDeleteModal = useCallback(
+    (webinar: Webinar) => {
+      setWebinarToDelete(webinar);
+      openDeleteModal();
+    },
+    [openDeleteModal]
+  );
 
   // Function untuk close modal dan reset state
   const handleCloseDeleteModal = () => {
@@ -165,13 +198,31 @@ export default function WebinarPage() {
       if (result.success) {
         toast.success("Webinar successfully deleted");
 
-        // Update list tanpa reload - remove deleted webinar
-        setWebinarList((prev) =>
-          prev.filter((item) => item.id !== webinarToDelete.id)
+        // Update local state
+        const updatedWebinars = webinarList.filter(
+          (webinar) => webinar.id !== webinarToDelete.id
         );
-        setFilteredWebinars((prev) =>
-          prev.filter((item) => item.id !== webinarToDelete.id)
+        setWebinarList(updatedWebinars);
+
+        // Handle pagination after deletion
+        const newFilteredWebinars = updatedWebinars.filter((webinar) =>
+          searchValue
+            ? webinar.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
+              webinar.speaker
+                ?.toLowerCase()
+                .includes(searchValue.toLowerCase()) ||
+              webinar.description
+                ?.toLowerCase()
+                .includes(searchValue.toLowerCase())
+            : true
         );
+        const newTotalPages = Math.ceil(
+          newFilteredWebinars.length / rowsPerPage
+        );
+
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(1);
+        }
 
         handleCloseDeleteModal();
       } else {
@@ -201,41 +252,112 @@ export default function WebinarPage() {
     }
   };
 
-  return (
-    <DefaultLayout>
-      <section>
-        <div className="flex flex-col gap-4 mb-4">
-          <div className="flex justify-between items-center gap-4 mb-4">
-            {/* Search Component - Integrated */}
-            <Input
-              className="w-full sm:max-w-[44%]"
-              placeholder="Search webinars by name, speaker, or description..."
-              startContent={<SearchIcon />}
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              isClearable
-              onClear={() => setSearchQuery("")}
-            />
+  // Top content - sama seperti User Management Table
+  const topContent = useMemo(
+    () => (
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between gap-3 items-end">
+          <Input
+            isClearable
+            classNames={{
+              base: "w-full sm:max-w-[44%]",
+              inputWrapper: "border-1",
+            }}
+            placeholder="Search webinars by name, speaker, or description..."
+            size="sm"
+            startContent={<SearchIcon className="text-default-300" />}
+            value={searchValue}
+            variant="bordered"
+            onClear={() => setSearchValue("")}
+            onValueChange={handleSearchChange}
+            isDisabled={isLoading}
+          />
+
+          <div className="flex gap-3">
+            <Dropdown>
+              <DropdownTrigger className="hidden sm:flex">
+                <Button
+                  endContent={<ChevronDownIcon className="text-small" />}
+                  size="sm"
+                  variant="flat"
+                  isDisabled={isLoading}
+                >
+                  Columns
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Webinars per page"
+                onAction={(key) => handleRowsPerPageChange(Number(key))}
+              >
+                {WEBINARS_PER_PAGE_OPTIONS.map((option) => (
+                  <DropdownItem key={option}>{option} per page</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
+
             <CreateWebinar />
           </div>
         </div>
 
-        {/* Search Results Info */}
-        {searchQuery && !isLoading && (
-          <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            {filteredWebinars.length > 0
-              ? `Found ${filteredWebinars.length} webinar(s) matching "${searchQuery}"`
-              : `No webinars found matching "${searchQuery}"`}
-          </div>
-        )}
+        <div className="flex justify-between items-center">
+          <span className="text-default-400 text-small">
+            Total {isLoading ? "..." : filteredWebinars.length} webinars
+            {searchValue && !isLoading && (
+              <span className="ml-1">(filtered from {webinarList.length})</span>
+            )}
+          </span>
 
+          <span className="text-default-400 text-small">
+            Showing {isLoading ? "..." : paginatedWebinars.length} of{" "}
+            {isLoading ? "..." : filteredWebinars.length}
+          </span>
+        </div>
+      </div>
+    ),
+    [
+      searchValue,
+      handleSearchChange,
+      handleRowsPerPageChange,
+      filteredWebinars.length,
+      webinarList.length,
+      paginatedWebinars.length,
+      isLoading,
+    ]
+  );
+
+  // Bottom content - pagination
+  const bottomContent = useMemo(
+    () => (
+      <div className="py-2 px-2 flex justify-center items-center">
+        <Pagination
+          showControls
+          classNames={{ cursor: "bg-foreground text-background" }}
+          color="default"
+          isDisabled={isLoading}
+          page={currentPage}
+          total={totalPages}
+          variant="light"
+          onChange={setCurrentPage}
+        />
+      </div>
+    ),
+    [currentPage, totalPages, isLoading]
+  );
+
+  return (
+    <DefaultLayout>
+      <section>
+        {/* Top Content */}
+        <div className="mb-6">{topContent}</div>
+
+        {/* Webinar Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {renderSkeletonCards()}
           </div>
-        ) : filteredWebinars && filteredWebinars.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
-            {filteredWebinars.map((webinar, index) => (
+        ) : paginatedWebinars && paginatedWebinars.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {paginatedWebinars.map((webinar, index) => (
               <Card
                 key={webinar.id || index}
                 className="h-full flex flex-col relative pb-14"
@@ -305,10 +427,15 @@ export default function WebinarPage() {
           </div>
         ) : (
           <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-            {searchQuery
-              ? `No webinars found matching "${searchQuery}"`
+            {searchValue
+              ? `No webinars found matching "${searchValue}"`
               : "Tidak ada webinar yang tersedia."}
           </div>
+        )}
+
+        {/* Bottom Content - Pagination */}
+        {!isLoading && totalPages > 1 && (
+          <div className="mt-6">{bottomContent}</div>
         )}
 
         {/* Delete Confirmation Modal */}

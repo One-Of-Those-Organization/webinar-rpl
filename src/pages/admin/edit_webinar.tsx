@@ -36,7 +36,7 @@ export default function EditWebinarPage() {
     "https://heroui.com/images/hero-card-complete.jpeg"
   );
 
-  // States untuk form editing - FIXED field names
+  // States untuk form editing
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
@@ -48,8 +48,8 @@ export default function EditWebinarPage() {
     link: "",
     imageUrl: "",
     max: 0,
-    eventmId: 0, // ✅ BENAR - sesuai database
-    certId: 0, // ✅ BENAR - sesuai database
+    eventmId: 0,
+    certId: 0,
   });
 
   // Load data webinar saat component mount
@@ -74,7 +74,7 @@ export default function EditWebinarPage() {
             webinar.img || "https://heroui.com/images/hero-card-complete.jpeg"
           );
 
-          // Set form data - FIXED field mapping
+          // Set form data
           setEditForm({
             name: webinar.name || "",
             description: webinar.desc || "",
@@ -86,15 +86,14 @@ export default function EditWebinarPage() {
             link: webinar.link || "",
             imageUrl: webinar.img || "",
             max: webinar.max || 0,
-            eventmId: webinar.event_mat_id || 0, // ✅ MAPPING BENAR
-            certId: webinar.cert_template_id || 0, // ✅ MAPPING BENAR
+            eventmId: webinar.event_mat_id || 0,
+            certId: webinar.cert_template_id || 0,
           });
         } else {
           toast.error("Failed to load webinar data");
           navigate("/admin/webinar");
         }
       } catch (error) {
-        console.error("Error loading webinar:", error);
         toast.error("There was an error loading the webinar data");
         navigate("/admin/webinar");
       } finally {
@@ -115,7 +114,6 @@ export default function EditWebinarPage() {
       const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     } catch (e) {
-      console.error("Error extracting date:", e);
       return "";
     }
   };
@@ -129,7 +127,6 @@ export default function EditWebinarPage() {
       const minutes = String(date.getMinutes()).padStart(2, "0");
       return `${hours}:${minutes}`;
     } catch (e) {
-      console.error("Error extracting time:", e);
       return "";
     }
   };
@@ -325,7 +322,7 @@ export default function EditWebinarPage() {
     try {
       setIsEditing(true);
 
-      // Buat object sesuai dengan WebinarEdit class - FIXED field mapping
+      // Buat object sesuai dengan WebinarEdit class
       const editData = {
         id: webinarData.id || 0,
         name: editForm.name.trim(),
@@ -337,11 +334,9 @@ export default function EditWebinarPage() {
         img: editForm.imageUrl.trim(),
         max: editForm.max,
         att: webinarData.att || "",
-        event_mat_id: editForm.eventmId, // ✅ BENAR - eventmId ke event_mat_id
-        cert_template_id: editForm.certId, // ✅ BENAR - certId ke cert_template_id
+        event_mat_id: editForm.eventmId,
+        cert_template_id: editForm.certId,
       };
-
-      console.log("Sending edit data:", editData);
 
       const response = await auth_webinar.edit_webinar(editData);
 
@@ -370,7 +365,6 @@ export default function EditWebinarPage() {
         toast.error(response.message || "Failed to update webinar");
       }
     } catch (error) {
-      console.error("Error updating webinar:", error);
       toast.error("Failed to save changes. Please try again.");
     } finally {
       setIsEditing(false);
@@ -381,7 +375,7 @@ export default function EditWebinarPage() {
   const handleCancelEdit = () => {
     if (!webinarData) return;
 
-    // Reset form ke data original - FIXED field mapping
+    // Reset form ke data original
     setEditForm({
       name: webinarData.name || "",
       description: webinarData.desc || "",
@@ -393,8 +387,8 @@ export default function EditWebinarPage() {
       link: webinarData.link || "",
       imageUrl: webinarData.img || "",
       max: webinarData.max || 0,
-      eventmId: webinarData.event_mat_id || 0, // ✅ BENAR
-      certId: webinarData.cert_template_id || 0, // ✅ BENAR
+      eventmId: webinarData.event_mat_id || 0,
+      certId: webinarData.cert_template_id || 0,
     });
 
     // Reset preview image juga
@@ -702,7 +696,6 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
-                {/* Date End - Pisah date dan time seperti AddWebinar */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -732,7 +725,6 @@ export default function EditWebinarPage() {
                   onChange={(e) => handleInputChange("link", e.target.value)}
                 />
 
-                {/* Image upload input - sama seperti AddWebinar */}
                 <Input
                   color="secondary"
                   label="Image"
@@ -758,7 +750,7 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Event Material ID dan Certificate Template ID - FIXED onChange handlers */}
+                {/* Event Material ID dan Certificate Template ID */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -773,7 +765,7 @@ export default function EditWebinarPage() {
                     onChange={(e) => {
                       const value = e.target.value;
                       handleInputChange(
-                        "eventmId", // ✅ FIXED - sesuai dengan state field name
+                        "eventmId",
                         value === "" ? 0 : parseInt(value) || 0
                       );
                     }}
@@ -790,7 +782,7 @@ export default function EditWebinarPage() {
                     onChange={(e) => {
                       const value = e.target.value;
                       handleInputChange(
-                        "certId", // ✅ FIXED - sesuai dengan state field name
+                        "certId",
                         value === "" ? 0 : parseInt(value) || 0
                       );
                     }}
