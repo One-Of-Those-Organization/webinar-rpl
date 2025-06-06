@@ -11,7 +11,7 @@ import {
   DropdownItem,
   Button,
 } from "@heroui/react";
-import { PlusIcon } from "@/components/icons"; // ✅ Import PlusIcon
+import { PlusIcon } from "@/components/icons";
 
 // Fungsi untuk memformat tanggal sesuai kebutuhan backend
 const formatDateForBackend = (dateString: string): string => {
@@ -27,7 +27,7 @@ const formatDateForBackend = (dateString: string): string => {
 // Type untuk attendance enum
 type AttTypeEnum = "online" | "offline";
 
-export function CreateWebinar() {
+export default function CreateWebinar() {
   const [webinarInput, setWebinarInput] = useState({
     name: "",
     image: "www.google.com",
@@ -115,6 +115,11 @@ export function CreateWebinar() {
 
       // Server Side Error Handling
       switch (response.error_code) {
+        case 2:
+          setError("You dont have permission to add webinar.");
+          toast.error("You dont have permission to add webinar.");
+          break;
+
         case 4:
           setError("Webinar already exists with that name.");
           toast.info("Webinar already exists with that name.");

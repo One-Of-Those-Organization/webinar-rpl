@@ -1,5 +1,5 @@
 import DefaultLayout from "@/layouts/default_admin";
-import { CreateWebinar } from "@/components/add_webinar";
+import CreateWebinar from "@/pages/admin/add_webinar";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Card,

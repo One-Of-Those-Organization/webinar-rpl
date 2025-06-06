@@ -1,3 +1,11 @@
+// API Usage list :
+// 1. Add Webinar
+// 2. Edit Webinar
+// 3. Delete Webinar By ID
+// 4. Get All Webinars
+// 5. Get Webinar by ID
+// 6. Post Webinar Image
+
 import {
   BaseResponse,
   WebinarInput,
@@ -26,6 +34,32 @@ export const auth_webinar = {
       if (result.success && result.token) {
         localStorage.setItem("token", result.token);
       }
+      return result;
+    } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API Post Webinar Image
+  post_webinar_image: async (data: WebinarImage): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_URL}/api/protected/event-upload-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ data: data.data }),
+        }
+      );
+
+      const result = await response.json();
       return result;
     } catch (error) {
       return {
@@ -128,32 +162,6 @@ export const auth_webinar = {
       );
 
       return await response.json();
-    } catch (error) {
-      return {
-        message: "Failed to connect to server",
-        success: false,
-      };
-    }
-  },
-
-  // API Post Webinar Image
-  post_webinar_image: async (data: WebinarImage): Promise<BaseResponse> => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${API_URL}/api/protected/event-upload-image`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ data: data.data }),
-        }
-      );
-
-      const result = await response.json();
-      return result;
     } catch (error) {
       return {
         message: "Failed to connect to server",

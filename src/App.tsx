@@ -23,12 +23,13 @@ import AdminOnlyRoute from "@/components/firewall/adminonlyroute";
 import DasboardAdminPage from "@/pages/admin/index";
 import ManageUserPage from "@/pages/admin/manageuser";
 import WebinarPage from "@/pages/admin/webinar";
+import CreateWebinar from "@/pages/admin/add_webinar";
 import DetailAdminPage from "@/pages/admin/detail";
+import EditWebinarPage from "@/pages/admin/edit_webinar";
 import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
 import EditAdminPage from "@/pages/admin/edit_user";
 import AddUserPage from "@/pages/admin/add_user";
-import EditWebinarPage from "@/pages/admin/edit_webinar";
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
       <Route path="/" element={<IndexPage />} />
       <Route path="/about" element={<AboutPage />} />
 
+      {/* Guest Only Routes */}
       <Route
         path="/login"
         element={
@@ -82,18 +84,9 @@ export default function App() {
         }
       />
 
-      <Route
-        path="/about"
-        element={
-          <GuestOnlyRoute>
-            <DetailPage />
-          </GuestOnlyRoute>
-        }
-      />
-
       {/* BATAS Akses untuk Tamu / Pengguna */}
 
-      {/* Hanya untuk user login */}
+      {/* Protected Routes - User Only */}
       <Route
         path="/dashboard"
         element={
@@ -102,6 +95,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/detail"
         element={
@@ -129,7 +123,10 @@ export default function App() {
         }
       />
 
-      {/* Hanya untuk admin */}
+      {/* BATAS Akses untuk User / Admin */}
+
+      {/* ==================== ADMIN ROUTES ==================== */}
+
       {/* Dashboard Admin */}
       <Route
         path="/admin"
@@ -140,7 +137,8 @@ export default function App() {
         }
       />
 
-      {/* View User Admin*/}
+      {/* =============== USER MANAGEMENT =============== */}
+      {/* View All Users */}
       <Route
         path="/admin/user"
         element={
@@ -150,7 +148,7 @@ export default function App() {
         }
       />
 
-      {/* Add User Admin*/}
+      {/* Add New User */}
       <Route
         path="/admin/user/add"
         element={
@@ -160,9 +158,9 @@ export default function App() {
         }
       />
 
-      {/* Editing User Admin*/}
+      {/* Edit User */}
       <Route
-        path="/admin/user/edit"
+        path="/admin/user/edit/:email"
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <EditAdminPage />
@@ -170,7 +168,8 @@ export default function App() {
         }
       />
 
-      {/* View Webinar Admin*/}
+      {/* =============== WEBINAR MANAGEMENT =============== */}
+      {/* View All Webinars */}
       <Route
         path="/admin/webinar"
         element={
@@ -180,7 +179,17 @@ export default function App() {
         }
       />
 
-      {/* Detail Webinar Admin*/}
+      {/* Add New Webinar */}
+      <Route
+        path="/admin/webinar/add"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <CreateWebinar />
+          </AdminOnlyRoute>
+        }
+      />
+
+      {/* View Webinar Detail */}
       <Route
         path="/admin/webinar/detail/:id"
         element={
@@ -190,9 +199,9 @@ export default function App() {
         }
       />
 
-      {/* Edit Webinar Admin*/}
+      {/* Edit Webinar */}
       <Route
-        path="/admin/edit_webinar/:id"
+        path="/admin/webinar/edit/:id"
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <EditWebinarPage />
@@ -200,7 +209,8 @@ export default function App() {
         }
       />
 
-      {/* Sertifikat Admin */}
+      {/* =============== SERTIFIKAT MANAGEMENT =============== */}
+      {/* View All Sertifikat */}
       <Route
         path="/admin/sertifikat"
         element={
@@ -210,7 +220,7 @@ export default function App() {
         }
       />
 
-      {/* Create Sertifikat Admin */}
+      {/* Create New Sertifikat */}
       <Route
         path="/admin/sertifikat/create"
         element={
