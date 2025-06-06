@@ -103,6 +103,28 @@ export const auth_user = {
     }
   },
 
+  // POST: /api/protected/user-edit-admin (admin only)
+  user_edit_admin: async (data: UserEditData): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/protected/user-edit-admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
+      };
+    }
+  },
+
   // API User Image
   user_image: async (data: UserImage): Promise<BaseResponse> => {
     try {
@@ -186,6 +208,26 @@ export const auth_user = {
           },
         }
       );
+
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
+      };
+    }
+  },
+
+  // API Get User Count
+  get_user_count: async (): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/protected/user-count`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       return await response.json();
     } catch (error) {
