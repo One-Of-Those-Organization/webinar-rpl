@@ -285,9 +285,6 @@ func appHandleEventDel(backend *Backend, route fiber.Router) {
     })
 }
 
-// NOTE: Event if the stuff not edited please send the old data because its too painfull to
-//       do if, if check on every entry.
-
 // POST : api/protected/event-edit
 func appHandleEventEdit(backend *Backend, route fiber.Router) {
 	route.Post("event-edit", func (c *fiber.Ctx) error {
@@ -498,7 +495,6 @@ func appHandleEventUploadImage(_ *Backend, route fiber.Router) {
             })
         }
 
-        // TODO: block if its too big and not image format
         var fileExt string
         if strings.Contains(body.Data, "image/png") {
             fileExt = ".png"

@@ -535,7 +535,6 @@ func appHandleUserUploadImage(_ *Backend, route fiber.Router) {
             })
         }
 
-        // TODO: block if its too big and not image format
         var fileExt string
         if strings.Contains(body.Data, "image/png") {
             fileExt = ".png"

@@ -9,9 +9,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// TODO: Maybe make it unique so if this event already have material registered then
-//       its not allowed to add more.
-
 // POST : api/protected/material-register
 func appHandleMaterialNew(backend *Backend, route fiber.Router) {
     route.Post("material-register", func (c *fiber.Ctx) error {
