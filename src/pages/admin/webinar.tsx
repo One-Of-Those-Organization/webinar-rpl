@@ -1,5 +1,4 @@
 import DefaultLayout from "@/layouts/default_admin";
-import { Search } from "@/components/search";
 import { CreateWebinar } from "@/components/add_webinar";
 import { useState, useEffect } from "react";
 import {
@@ -13,11 +12,12 @@ import {
   ModalFooter,
   Button,
   useDisclosure,
+  Input,
 } from "@heroui/react";
-import { EditIcon, TrashIcon } from "@/components/icons";
+import { useNavigate } from "react-router-dom";
+import { EditIcon, TrashIcon, SearchIcon } from "@/components/icons";
 import { auth_webinar } from "@/api/auth_webinar";
 import { Webinar } from "@/api/interface";
-import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -26,11 +26,13 @@ export default function WebinarPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [webinarList, setWebinarList] = useState<Webinar[]>([]);
+  const [filteredWebinars, setFilteredWebinars] = useState<Webinar[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>(
     {}
   );
 
-  // State untuk delete confirmation - simplified
+  // State untuk delete confirmation
   const [webinarToDelete, setWebinarToDelete] = useState<Webinar | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -56,6 +58,7 @@ export default function WebinarPage() {
             return webinar;
           });
           setWebinarList(WebinarData);
+          setFilteredWebinars(WebinarData);
         } else {
           toast.error(result.message || "Gagal memuat data webinar");
         }
@@ -68,6 +71,32 @@ export default function WebinarPage() {
 
     loadWebinarData();
   }, []);
+
+  // useEffect untuk handle search filtering
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredWebinars(webinarList);
+    } else {
+      const filtered = webinarList.filter((webinar) => {
+        const query = searchQuery.toLowerCase();
+        const name = (webinar.name || "").toLowerCase();
+        const speaker = (webinar.speaker || "").toLowerCase();
+        const description = (webinar.description || "").toLowerCase();
+
+        return (
+          name.includes(query) ||
+          speaker.includes(query) ||
+          description.includes(query)
+        );
+      });
+      setFilteredWebinars(filtered);
+    }
+  }, [searchQuery, webinarList]);
+
+  // Function untuk handle search input change
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+  };
 
   // Function untuk render skeleton cards saat loading
   const renderSkeletonCards = () => {
@@ -104,15 +133,12 @@ export default function WebinarPage() {
     setImageLoading((prev) => ({ ...prev, [webinarId]: false }));
   };
 
-  // Function untuk edit webinar
+  // Function untuk get webinar by ID and navigate to edit page
   const handleEditWebinar = (webinar: Webinar) => {
-    // Navigate dengan state data
-    navigate(`/admin/webinar/edit/${webinar.id}`, {
-      state: { webinar },
-    });
+    navigate(`/admin/edit_webinar/${webinar.id}`);
   };
 
-  // Function untuk show delete confirmation - HeroUI style
+  // Function untuk show delete confirmation
   const handleOpenDeleteModal = (webinar: Webinar) => {
     setWebinarToDelete(webinar);
     openDeleteModal();
@@ -126,7 +152,7 @@ export default function WebinarPage() {
     }
   };
 
-  // Function untuk delete webinar - HeroUI style
+  // Function untuk delete webinar
   const handleDeleteWebinar = async () => {
     if (!webinarToDelete || isDeleting) return;
 
@@ -137,19 +163,22 @@ export default function WebinarPage() {
       });
 
       if (result.success) {
-        toast.success("Webinar berhasil dihapus!");
+        toast.success("Webinar successfully deleted");
 
         // Update list tanpa reload - remove deleted webinar
         setWebinarList((prev) =>
           prev.filter((item) => item.id !== webinarToDelete.id)
         );
+        setFilteredWebinars((prev) =>
+          prev.filter((item) => item.id !== webinarToDelete.id)
+        );
 
         handleCloseDeleteModal();
       } else {
-        toast.error(result.message || "Gagal menghapus webinar");
+        toast.error(result.message || "Failed to delete webinar");
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan saat menghapus webinar");
+      toast.error("There was an error deleting the webinar. Please try again.");
     } finally {
       setIsDeleting(false);
     }
@@ -177,18 +206,36 @@ export default function WebinarPage() {
       <section>
         <div className="flex flex-col gap-4 mb-4">
           <div className="flex justify-between items-center gap-4 mb-4">
-            <Search />
+            {/* Search Component - Integrated */}
+            <Input
+              className="w-full sm:max-w-[44%]"
+              placeholder="Search webinars by name, speaker, or description..."
+              startContent={<SearchIcon />}
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              isClearable
+              onClear={() => setSearchQuery("")}
+            />
             <CreateWebinar />
           </div>
         </div>
+
+        {/* Search Results Info */}
+        {searchQuery && !isLoading && (
+          <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            {filteredWebinars.length > 0
+              ? `Found ${filteredWebinars.length} webinar(s) matching "${searchQuery}"`
+              : `No webinars found matching "${searchQuery}"`}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
             {renderSkeletonCards()}
           </div>
-        ) : webinarList && webinarList.length > 0 ? (
+        ) : filteredWebinars && filteredWebinars.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
-            {webinarList.map((webinar, index) => (
+            {filteredWebinars.map((webinar, index) => (
               <Card
                 key={webinar.id || index}
                 className="h-full flex flex-col relative pb-14"
@@ -220,15 +267,15 @@ export default function WebinarPage() {
                   >
                     {webinar.name || "Judul tidak tersedia"}
                   </h4>
-                  <p className="text-xs uppercase font-bold text-gray-700 truncate">
+                  <p className="text-xs uppercase font-bold text-gray-700 dark:text-gray-300 truncate">
                     {webinar.speaker || "Pembicara tidak tersedia"}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {formatDate(webinar.dstart)}
                   </p>
                   {webinar.description && (
                     <p
-                      className="text-xs text-gray-600 mt-2 line-clamp-2"
+                      className="text-xs text-gray-600 dark:text-gray-400 mt-2 line-clamp-2"
                       title={webinar.description}
                     >
                       {webinar.description}
@@ -242,7 +289,7 @@ export default function WebinarPage() {
                       onClick={() => handleEditWebinar(webinar)}
                     >
                       <EditIcon size={14} className="mr-1" />
-                      <span>Edit</span>
+                      <span>View</span>
                     </button>
                     <button
                       className="flex-1 flex justify-center items-center bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600 transition-colors"
@@ -257,12 +304,14 @@ export default function WebinarPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 text-gray-500">
-            Tidak ada webinar yang tersedia.
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+            {searchQuery
+              ? `No webinars found matching "${searchQuery}"`
+              : "Tidak ada webinar yang tersedia."}
           </div>
         )}
 
-        {/* HeroUI Delete Confirmation Modal */}
+        {/* Delete Confirmation Modal */}
         <Modal isOpen={isDeleteModalOpen} onClose={handleCloseDeleteModal}>
           <ModalContent>
             <ModalHeader className="flex flex-col text-center">

@@ -112,12 +112,14 @@ export function CreateWebinar() {
         setIsOpen(false);
         return;
       }
+
       // Server Side Error Handling
       switch (response.error_code) {
         case 4:
           setError("Webinar already exists with that name.");
           toast.info("Webinar already exists with that name.");
           break;
+
         case 5:
           setError("Please fill all required fields.");
           toast.error("Please fill all required fields.");

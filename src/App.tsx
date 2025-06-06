@@ -182,7 +182,7 @@ export default function App() {
 
       {/* Detail Webinar Admin*/}
       <Route
-        path="/admin/webinar/detail"
+        path="/admin/webinar/detail/:id"
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <DetailAdminPage />
@@ -192,7 +192,7 @@ export default function App() {
 
       {/* Edit Webinar Admin*/}
       <Route
-        path="/admin/edit_webinar"
+        path="/admin/edit_webinar/:id"
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <EditWebinarPage />
