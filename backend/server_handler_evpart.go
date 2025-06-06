@@ -82,7 +82,6 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        // TODO: check if the event max is full then dont allow to register.
         var eventParticipantCount int64
         res = backend.db.Model(&table.EventParticipant{}).Where("event_id = ?", body.EventId).Count(&eventParticipantCount)
         if res.Error != nil {
@@ -172,6 +171,7 @@ func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
             })
         }
 
+        emailQuery := c.Query("email")
         idQuery := c.Query("event_id")
         if idQuery == "" {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -191,8 +191,13 @@ func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
             })
         }
 
+        useThisEmail := email
+        if emailQuery != "" {
+            useThisEmail = emailQuery
+        }
+
         var currentUser table.User
-        res := backend.db.Where("email = ?", email).First(&currentUser)
+        res := backend.db.Where("email = ?", useThisEmail).First(&currentUser)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
@@ -397,3 +402,7 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
     })
 }
 
+// GET : api/protected/event-participate-of-event
+func appHandleEventParticipateOfEvent(backend *Backend, route fiber.Router) {}
+// GET : api/protected/event-participate-of-user
+func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {}
