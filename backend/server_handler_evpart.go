@@ -118,7 +118,6 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
     })
 }
 
-// WIP
 // GET : api/protected/event-participate-info-of
 func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
     route.Get("event-participate-info-of", func (c *fiber.Ctx) error {
@@ -196,7 +195,77 @@ func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
         })
     })
 }
-// MAYBE WILL NOT BE IMPLEMENTED: POST api/protected/event-participate-del
+
+// NOTE: Maybe will not be used
+// POST : api/protected/event-participate-del
+func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
+    route.Post("event-participate-del", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        isAdmin := claims["admin"].(float64)
+        email := claims["email"].(string)
+
+        if isAdmin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            EventID    int `json:"event_id"`
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.User
+        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch the current user from the db, %v", res.Error),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        res = backend.db.Where("user_email = ?", email).Where("event_id = ?", body.EventID).Delete(&table.EventParticipant{})
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to delete the event participant with that id from the db, %v", res.Error),
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "event participant deleted.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
 
 // NOTE: Only allowed to change EventPRole only
 // POST : api/protected/event-participate-edit
