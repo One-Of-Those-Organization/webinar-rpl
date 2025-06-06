@@ -103,7 +103,7 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
         }
 
         useThisEmail := email
-        if body.CustomUserEmail != nil && *body.CustomUserEmail == "" {
+        if admin == 1 && body.CustomUserEmail != nil && *body.CustomUserEmail == "" {
             useThisEmail = *body.CustomUserEmail
         }
 
@@ -161,6 +161,7 @@ func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
         }
         claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
+        admin := claims["admin"].(float64)
 
         if email == "" {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -192,7 +193,7 @@ func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
         }
 
         useThisEmail := email
-        if emailQuery != "" {
+        if admin == 1 && emailQuery != "" {
             useThisEmail = emailQuery
         }
 
@@ -317,17 +318,8 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
         }
 
         claims := user.Claims.(jwt.MapClaims)
-        isAdmin := claims["admin"].(float64)
+        admin := claims["admin"].(float64)
         email := claims["email"].(string)
-
-        if isAdmin != 1 {
-            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid credentials for this function",
-                "error_code": 2,
-                "data": nil,
-            })
-        }
 
         var body struct {
             EventID    int     `json:"event_id"`
@@ -340,13 +332,13 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Invalid body request, %v", err),
-                "error_code": 3,
+                "error_code": 2,
                 "data": nil,
             })
         }
 
         useThisEmail := email
-        if body.UserEmail != nil && *body.UserEmail != "" {
+        if admin == 1 && body.UserEmail != nil && *body.UserEmail != "" {
             useThisEmail = *body.UserEmail
         }
 
@@ -356,7 +348,7 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to fetch the current user from the db, %v", res.Error),
-                "error_code": 4,
+                "error_code": 3,
                 "data": nil,
             })
         }
@@ -367,7 +359,7 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to get the event participant from the db, %v", res.Error),
-                "error_code": 5,
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -378,7 +370,7 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid Role.",
-                "error_code": 6,
+                "error_code": 5,
                 "data": nil,
             })
         }
@@ -388,7 +380,7 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to update the event participant from the db, %v", res.Error),
-                "error_code": 7,
+                "error_code": 6,
                 "data": nil,
             })
         }
