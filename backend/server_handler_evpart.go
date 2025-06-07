@@ -460,14 +460,69 @@ func appHandleEventParticipateOfEvent(backend *Backend, route fiber.Router) {
     })
 }
 
+// NOTE: return then event that participated by the selected user.
 // GET : api/protected/event-participate-of-user
 func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
     route.Get("event-participate-of-user", func (c *fiber.Ctx) error {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "success": false,
-            "message": "Failed to claim JWT Token.",
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        admin := claims["admin"].(float64)
+        email := claims["email"].(string)
+
+        var body struct {
+            UserEmail *string `json:"email"`
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid request body.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        useThisEmail := email
+        if admin == 1 && body.UserEmail != nil && *body.UserEmail != "" {
+            useThisEmail = *body.UserEmail
+        }
+
+		var selectedUser table.User
+		res := backend.db.Where("user_email = ?", useThisEmail).First(&selectedUser)
+		if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("There is no user with that id on the db, %v", res.Error),
+                "error_code": 3,
+                "data": nil,
+            })
+		}
+
+		var eventList[] table.Event
+		res = backend.db.Preload("Event").Where("user_id = ?", selectedUser.ID).Find(&eventList)
+		if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "This user didnt participate in any event.",
+                "error_code": 3,
+                "data": nil,
+            })
+		}
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data.",
             "error_code": 1,
-            "data": nil,
+            "data": eventList,
         })
     })
 }
