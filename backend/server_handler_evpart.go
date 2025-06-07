@@ -394,7 +394,80 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
     })
 }
 
+// NOTE: just return the participant of the specified event id
 // GET : api/protected/event-participate-of-event
-func appHandleEventParticipateOfEvent(backend *Backend, route fiber.Router) {}
+func appHandleEventParticipateOfEvent(backend *Backend, route fiber.Router) {
+    route.Get("event-participate-of-event", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        admin := claims["admin"].(float64)
+        if admin != 1 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Credentials.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        queryEventID := c.Query("event_id")
+        queryEventIDInt, err := strconv.Atoi(queryEventID)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "event_id need to be integer.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var selectedEvent table.Event
+        res := backend.db.Where("id = ?", queryEventIDInt).First(&selectedEvent)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "The specified event ID didnt exist.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        var participants []table.EventParticipant
+        res = backend.db.Preload("User").Where("event_id = ?", selectedEvent.ID).Find(&participants)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "There is no event participant for that event.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data.",
+            "error_code": 0,
+            "data": participants,
+        })
+    })
+}
+
 // GET : api/protected/event-participate-of-user
-func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {}
+func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
+    route.Get("event-participate-of-user", func (c *fiber.Ctx) error {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "success": false,
+            "message": "Failed to claim JWT Token.",
+            "error_code": 1,
+            "data": nil,
+        })
+    })
+}
