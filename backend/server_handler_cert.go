@@ -405,3 +405,10 @@ func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
         })
     })
 }
+
+// GET : api/certificate/:base64
+func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
+    route.Get("certificate/:base64", func (c *fiber.Ctx) error {
+        base64Param := c.Params("base64")
+    })
+}

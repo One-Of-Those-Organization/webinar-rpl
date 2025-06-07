@@ -1,0 +1,12 @@
+<html>
+    <head>
+        <title>Certificate of {{ .Name }}</title>
+    </head>
+    <body>
+        <div class="container">
+            <div id="name">{{ .Name }}</div> <!-- Populate this with the Certificate owner name -->
+            <div id="event">{{ .EventName }}</div> <!-- Populate this with the event name -->
+            <div id="uniqe-id">{{ .UniqID }}</div> <!-- Populate this with the base64 uniqe id (not the cert number) -->
+        </div>
+    </body>
+</html>

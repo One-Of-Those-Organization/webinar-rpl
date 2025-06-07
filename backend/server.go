@@ -6,6 +6,7 @@ import (
 
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
+    "github.com/gofiber/template/html/v2"
 	"gorm.io/gorm"
 )
 
@@ -18,8 +19,10 @@ type Backend struct {
 
 func appCreateNewServer(db *gorm.DB, secret string) *Backend {
     rand_t := rand.New(rand.NewSource(time.Now().UnixNano()))
+    engine := html.New("./cert_temp/", ".html")
     app := fiber.New(fiber.Config{
         AppName: "Webinar-RPL Backend",
+        Views: engine,
     })
 
     return &Backend{
