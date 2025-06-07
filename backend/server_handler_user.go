@@ -163,7 +163,6 @@ func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
         }
         claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
-        email := claims["email"].(string)
         if admin != 1 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -174,11 +173,32 @@ func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
         }
 
         var body struct {
+            Email    string `json:"email"`
             FullName string `json:"name"`
             Instance string `json:"instance"`
             Picture  string `json:"picture"`
             Password *string `json:"password"`
         }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid request body, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        if body.Email == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Target user email is required.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
         updates := make(map[string]any)
         if body.FullName != "" {
             updates["user_full_name"] = body.FullName
@@ -198,22 +218,32 @@ func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
                 return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                     "success": false,
                     "message": "Failed to hash the password.",
-                    "error_code": 3,
+                    "error_code": 5,
                     "data": nil,
                 })
             }
-            updates["password"] = hashedPassword
+            updates["user_password"] = hashedPassword
         }
 
-        result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
+        result := backend.db.Model(&table.User{}).Where("user_email = ?", body.Email).Updates(updates)
         if result.Error != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
-                "error_code": 4,
+                "error_code": 6,
                 "data": nil,
             })
         }
+
+        if result.RowsAffected == 0 {
+            return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+                "success": false,
+                "message": "User not found or no changes made.",
+                "error_code": 7,
+                "data": nil,
+            })
+        }
+        
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "Data Saved.",

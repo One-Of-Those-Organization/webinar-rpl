@@ -138,7 +138,7 @@ export default function App() {
       />
 
       {/* =============== USER MANAGEMENT =============== */}
-      {/* View All Users */}
+      {/* View All Users Admin */}
       <Route
         path="/admin/user"
         element={
@@ -148,7 +148,7 @@ export default function App() {
         }
       />
 
-      {/* Add New User */}
+      {/* Add New User Admin*/}
       <Route
         path="/admin/user/add"
         element={
@@ -158,7 +158,7 @@ export default function App() {
         }
       />
 
-      {/* Edit User */}
+      {/* Edit User Admin */}
       <Route
         path="/admin/user/edit/:email"
         element={

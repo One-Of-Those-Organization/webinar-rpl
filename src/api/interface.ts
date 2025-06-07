@@ -36,9 +36,11 @@ export interface LoginData {
 
 // User Edit Data (POST)
 export interface UserEditData {
+  email?: string;
   name: string;
   instance: string;
   picture: string;
+  password?: string;
 }
 
 // User Image Data (POST)

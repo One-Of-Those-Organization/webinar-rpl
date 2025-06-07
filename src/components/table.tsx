@@ -42,6 +42,7 @@ import { auth_user } from "@/api/auth_user";
 import { Users } from "@/api/interface";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 // ===== CONSTANTS =====
 const USER_ROLES = {
@@ -74,6 +75,7 @@ const DEFAULT_ROWS_PER_PAGE = 5;
 const DEFAULT_AVATAR = "/logo_if.png";
 
 export default function UserManagementTable() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<Users[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -162,6 +164,10 @@ export default function UserManagementTable() {
         : comparison;
     });
   }, [sortDescriptor, paginatedUsers]);
+
+  const handleEditUser = (user: Users) => {
+    navigate(`/admin/user/edit/${encodeURIComponent(user.email)}`);
+  };
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
@@ -264,7 +270,9 @@ export default function UserManagementTable() {
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu>
-                  <DropdownItem key="edit">Edit</DropdownItem>
+                  <DropdownItem key="edit" onClick={() => handleEditUser(user)}>
+                    Edit
+                  </DropdownItem>
                   <DropdownItem
                     key="delete"
                     onClick={() => handleOpenDeleteModal(user)}
