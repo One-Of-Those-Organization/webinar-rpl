@@ -1,8 +1,11 @@
 package main
 
 import (
+    "os"
+    "strings"
     "strconv"
     "fmt"
+    "encoding/base64"
 
     "webrpl/table"
 	"github.com/gofiber/fiber/v2"
@@ -210,7 +213,7 @@ func appHandleCertDel(backend *Backend, route fiber.Router) {
 
 // TODO : After done implementing webinar participant
 // GET : api/protected/cert-gen
-func appHandleCertGen(_ *Backend, route fiber.Router) {
+func appHandleCertGen(backend *Backend, route fiber.Router) {
     route.Get("cert-gen", func (c *fiber.Ctx) error {
         return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
             "success": false,
@@ -297,6 +300,108 @@ func appHandleCertEdit(backend *Backend, route fiber.Router) {
             "message": "Certificate Template edited.",
             "data": nil,
             "error_code": 0,
+        })
+    })
+}
+
+// POST : api/protected/cert-upload-template
+func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
+    route.Post("cert-upload-template", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        admin := claims["admin"].(float64)
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            FileName  string `json:"event_name"`
+            Data      string `json:"data"`
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Body Request",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        if body.Data == "" || body.FileName == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "No data provided",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        certDir := "cert_temp"
+        if err := os.MkdirAll(certDir, 0755); err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to create certificate template directory",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        base64Data := body.Data
+        if i := strings.Index(base64Data, ","); i != -1 {
+            base64Data = base64Data[i+1:]
+        }
+
+        htmlData, err := base64.StdEncoding.DecodeString(base64Data)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid base64 data",
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
+        if !strings.Contains(string(htmlData), "text/html") {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid base64 data",
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
+        filename := fmt.Sprintf("%s/%s.html", certDir, htmlData)
+        err = os.WriteFile(filename, htmlData, 0644)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to save data.",
+                "error_code": 7,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Certificate Template uploaded.",
+            "error_code": 0,
+            "data": fiber.Map{
+                "filename": filename,
+            },
         })
     })
 }

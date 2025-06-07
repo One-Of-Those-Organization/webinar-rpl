@@ -73,6 +73,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertTempInfoOf(backend, protected)
     appHandleCertDel(backend, protected)
     appHandleCertEdit(backend, protected)
+    appHandleCertUploadTemplate(backend, protected)
     appHandleCertGen(backend, protected) // WIP
 
     // EVENT PARTICIPANT STUFF
