@@ -86,8 +86,8 @@ export default function EditWebinarPage() {
             link: webinar.link || "",
             imageUrl: webinar.img || "",
             max: webinar.max || 0,
-            eventmId: webinar.event_mat_id || 0,
-            certId: webinar.cert_template_id || 0,
+            eventmId: webinar.event_mat_id || 1,
+            certId: webinar.cert_template_id || 1,
           });
         } else {
           toast.error("Failed to load webinar data");
@@ -262,42 +262,42 @@ export default function EditWebinarPage() {
 
     // Validasi form
     if (!editForm.name.trim()) {
-      toast.error("Webinar name cannot be empty");
+      toast.info("Webinar name cannot be empty");
       return;
     }
 
     if (!editForm.speaker.trim()) {
-      toast.error("Speaker name cannot be empty");
+      toast.info("Speaker name cannot be empty");
       return;
     }
 
     if (!editForm.dateStart) {
-      toast.error("Start date cannot be empty");
+      toast.info("Start date cannot be empty");
       return;
     }
 
     if (!editForm.timeStart) {
-      toast.error("Start time cannot be empty");
+      toast.info("Start time cannot be empty");
       return;
     }
 
     if (!editForm.dateEnd) {
-      toast.error("End date cannot be empty");
+      toast.info("End date cannot be empty");
       return;
     }
 
     if (!editForm.timeEnd) {
-      toast.error("End time cannot be empty");
+      toast.info("End time cannot be empty");
       return;
     }
 
     if (!editForm.description.trim()) {
-      toast.error("Description cannot be empty");
+      toast.info("Description cannot be empty");
       return;
     }
 
     if (editForm.max <= 0) {
-      toast.error("Maximum participants must be greater than 0");
+      toast.info("Maximum participants must be greater than 0");
       return;
     }
 
@@ -315,7 +315,7 @@ export default function EditWebinarPage() {
     const endDate = new Date(fullEndDateTime);
 
     if (startDate >= endDate) {
-      toast.error("End date must be after start date");
+      toast.info("End date must be after start date");
       return;
     }
 
@@ -338,11 +338,27 @@ export default function EditWebinarPage() {
         cert_template_id: editForm.certId,
       };
 
+      if (
+        editData.name == webinarData.name &&
+        editData.speaker == webinarData.speaker &&
+        editData.img == webinarData.img &&
+        editData.link == webinarData.link &&
+        editData.max == webinarData.max &&
+        editData.dstart == webinarData.dstart &&
+        editData.dend == webinarData.dend &&
+        editData.desc == webinarData.desc &&
+        editData.event_mat_id == webinarData.event_mat_id &&
+        editData.cert_template_id == webinarData.cert_template_id
+      ) {
+        toast.info("No changes detected, no update made");
+        setIsEditing(false);
+        return;
+      }
+
       const response = await auth_webinar.edit_webinar(editData);
 
       if (response.success) {
-        toast.success("Webinar berhasil diupdate!");
-
+        toast.success("Webinar updated successfully!");
         // Update local data menggunakan WebinarEdit constructor
         const updatedWebinar = new WebinarEdit({
           ...webinarData,
@@ -360,9 +376,9 @@ export default function EditWebinarPage() {
 
         setWebinarData(updatedWebinar);
         setIsEditMode(false);
-        setError(""); // Clear error
+        setError("");
       } else {
-        toast.error(response.message || "Failed to update webinar");
+        toast.error("Failed to update webinar");
       }
     } catch (error) {
       toast.error("Failed to save changes. Please try again.");
@@ -387,15 +403,16 @@ export default function EditWebinarPage() {
       link: webinarData.link || "",
       imageUrl: webinarData.img || "",
       max: webinarData.max || 0,
-      eventmId: webinarData.event_mat_id || 0,
-      certId: webinarData.cert_template_id || 0,
+      eventmId: webinarData.event_mat_id || 1,
+      certId: webinarData.cert_template_id || 1,
     });
 
     // Reset preview image juga
     setPreviewImage(
       webinarData.img || "https://heroui.com/images/hero-card-complete.jpeg"
     );
-    setError(""); // Clear error
+    toast.info("Edit cancelled, changes reverted");
+    setError("");
     setIsEditMode(false);
   };
 
@@ -756,7 +773,8 @@ export default function EditWebinarPage() {
                     color="secondary"
                     label="Event Material ID"
                     type="number"
-                    placeholder="0"
+                    placeholder="1"
+                    min="1"
                     value={
                       editForm.eventmId === 0
                         ? ""
@@ -766,7 +784,7 @@ export default function EditWebinarPage() {
                       const value = e.target.value;
                       handleInputChange(
                         "eventmId",
-                        value === "" ? 0 : parseInt(value) || 0
+                        value === "" ? 1 : parseInt(value) || 1
                       );
                     }}
                   />
@@ -775,7 +793,8 @@ export default function EditWebinarPage() {
                     color="secondary"
                     label="Certificate Template ID"
                     type="number"
-                    placeholder="0"
+                    placeholder="1"
+                    min="1"
                     value={
                       editForm.certId === 0 ? "" : editForm.certId.toString()
                     }
@@ -783,7 +802,7 @@ export default function EditWebinarPage() {
                       const value = e.target.value;
                       handleInputChange(
                         "certId",
-                        value === "" ? 0 : parseInt(value) || 0
+                        value === "" ? 1 : parseInt(value) || 1
                       );
                     }}
                   />
