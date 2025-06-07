@@ -499,7 +499,7 @@ func appHandleUserUploadImage(_ *Backend, route fiber.Router) {
             })
         }
 
-        imgDir := "img"
+        imgDir := "static"
         if err := os.MkdirAll(imgDir, 0755); err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
@@ -546,7 +546,7 @@ func appHandleUserUploadImage(_ *Backend, route fiber.Router) {
             fileExt = ".webp"
         }
 
-        filename := fmt.Sprintf("%s/%s_%s", imgDir, username, fileExt)
+        filename := fmt.Sprintf("%s/%s%s", imgDir, username, fileExt)
 
         err = os.WriteFile(filename, imageData, 0644)
         if err != nil {

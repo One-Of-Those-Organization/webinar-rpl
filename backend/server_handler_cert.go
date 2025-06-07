@@ -406,6 +406,7 @@ func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
     })
 }
 
+// NOTE: if need image for the bg please consult static (new api)
 // GET : api/certificate/:base64
 func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
     route.Get("certificate/:base64", func (c *fiber.Ctx) error {

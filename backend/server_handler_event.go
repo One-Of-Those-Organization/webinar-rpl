@@ -470,7 +470,7 @@ func appHandleEventUploadImage(_ *Backend, route fiber.Router) {
             })
         }
 
-        imgDir := "img"
+        imgDir := "static"
         if err := os.MkdirAll(imgDir, 0755); err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
