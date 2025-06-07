@@ -1,11 +1,13 @@
 import DefaultLayout from "@/layouts/default_admin";
 import { auth_user } from "@/api/auth_user";
+import { auth_webinar } from "@/api/auth_webinar";
 import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function DashboardAdminPage() {
   const [totalUser, setTotalUser] = useState(0);
+  const [totalWebinar, setTotalWebinar] = useState(0);
 
   const handleCountUser = async () => {
     try {
@@ -18,21 +20,70 @@ export default function DashboardAdminPage() {
     }
   };
 
+  const handleCountWebinar = async () => {
+    try {
+      const response = await auth_webinar.get_total_webinar();
+      if (response.success) {
+        setTotalWebinar(response.data);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch webinar count");
+    }
+  };
+
   useEffect(() => {
     handleCountUser();
+    handleCountWebinar();
   }, []);
 
   return (
     <DefaultLayout>
       <section>
-        <div className="flex flex-row gap-4 mb-4">
-          <div className="bg-red-500 rounded-2xl p-4 w-full">
-            <h1 className="pb-4">Total User</h1>
-            <small className="flex flex-col text-left">{totalUser}</small>
+        <div className="flex flex-col md:flex-row gap-6 mb-6">
+          {/* Total User Card */}
+          <div className="flex-1 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border-l-4 border-blue-500 hover:shadow-lg transition-shadow duration-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-blue-700 text-sm font-semibold uppercase tracking-wide">
+                  Total Users
+                </h3>
+                <p className="text-3xl font-bold text-blue-900 mt-2">
+                  {totalUser || 0}
+                </p>
+              </div>
+              <div className="bg-blue-500 rounded-full p-3">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                </svg>
+              </div>
+            </div>
           </div>
-          <div className="bg-blue-500 rounded-2xl p-4 w-full">
-            <h1 className="pb-4">Total Webinar</h1>
-            <small className="flex flex-col text-left">0</small>
+
+          {/* Total Webinar Card */}
+          <div className="flex-1 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 border-l-4 border-purple-500 hover:shadow-lg transition-shadow duration-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-purple-700 text-sm font-semibold uppercase tracking-wide">
+                  Total Webinars
+                </h3>
+                <p className="text-3xl font-bold text-purple-900 mt-2">
+                  {totalWebinar || 0}
+                </p>
+              </div>
+              <div className="bg-purple-500 rounded-full p-3">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </section>

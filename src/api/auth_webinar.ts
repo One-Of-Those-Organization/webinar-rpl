@@ -5,6 +5,7 @@
 // 4. Get All Webinars
 // 5. Get Webinar by ID
 // 6. Post Webinar Image
+// 7. Get Total Webinar
 
 import {
   BaseResponse,
@@ -160,6 +161,26 @@ export const auth_webinar = {
           },
         }
       );
+
+      return await response.json();
+    } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API Get Total Webinar
+  get_total_webinar: async (): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/protected/event-count`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       return await response.json();
     } catch (error) {

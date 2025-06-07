@@ -1,12 +1,13 @@
 package main
+
 // NOTE: Maybe need to change it to not check the jwt so not logged in people can get the webinar?
 
 import (
 	"encoding/base64"
-    "strings"
-    "os"
-    "strconv"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 	"webrpl/table"
 
@@ -525,6 +526,50 @@ func appHandleEventUploadImage(_ *Backend, route fiber.Router) {
             "data": fiber.Map{
                 "filename": filename,
             },
+        })
+    })
+}
+
+// GET : api/protected/event-count
+func appHandleEventCount(backend *Backend, route fiber.Router) {
+    route.Get("event-count", func (c *fiber.Ctx) error {
+        user := c.Locals("user").(*jwt.Token)
+        if user == nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        claims := user.Claims.(jwt.MapClaims)
+        email := claims["email"].(string)
+        if email == "" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Not logged in.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var count int64
+        res := backend.db.Model(&table.Event{}).Count(&count)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to count events from db.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Event count fetched successfully.",
+            "error_code": 0,
+            "data": count,
         })
     })
 }

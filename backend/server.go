@@ -1,12 +1,12 @@
 package main
 
 import (
-    "time"
-    "math/rand"
+	"math/rand"
+	"time"
 
-    jwtware "github.com/gofiber/contrib/jwt"
-    "github.com/gofiber/fiber/v2"
-    "gorm.io/gorm"
+	jwtware "github.com/gofiber/contrib/jwt"
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type Backend struct {
@@ -61,6 +61,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventDel(backend, protected)
     appHandleEventEdit(backend, protected)
     appHandleEventUploadImage(backend, protected)
+    appHandleEventCount(backend, protected)
 
     // MATERIAL STUFF
     appHandleMaterialNew(backend, protected)
