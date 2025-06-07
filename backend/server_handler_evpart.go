@@ -305,6 +305,7 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
 }
 
 // NOTE: Only allowed to change EventPRole only
+// TODO: Enable comittee to update this for absence.
 // POST : api/protected/event-participate-edit
 func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
     route.Post("event-participate-edit", func (c *fiber.Ctx) error {
@@ -321,6 +322,15 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
         claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
         email := claims["email"].(string)
+
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Credentials.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
 
         var body struct {
             EventID    int     `json:"event_id"`
@@ -339,7 +349,7 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
         }
 
         useThisEmail := email
-        if admin == 1 && body.UserEmail != nil && *body.UserEmail != "" {
+        if body.UserEmail != nil && *body.UserEmail != "" {
             useThisEmail = *body.UserEmail
         }
 
