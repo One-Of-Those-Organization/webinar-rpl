@@ -3,10 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/mail"
 	"os"
 	"webrpl/table"
+    "encoding/base64"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gofiber/fiber/v2"
@@ -84,13 +84,9 @@ func CheckPassword(hashedPassword, plainPassword string) bool {
     return err == nil
 }
 
-func RandStringBytes(n int, rand_t *rand.Rand) string {
-    const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    b := make([]byte, n)
-    for i := range b {
-        b[i] = letterBytes[rand.Intn(len(letterBytes))]
-    }
-    return string(b)
+func RandStringBytes(backend *Backend, value string) string {
+    str := base64.StdEncoding.EncodeToString([]byte(value))
+    return str
 }
 
 func GetJWT(c *fiber.Ctx) (jwt.MapClaims, error) {
