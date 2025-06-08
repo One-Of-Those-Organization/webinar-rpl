@@ -294,6 +294,7 @@ func appHandleCertEdit(backend *Backend, route fiber.Router) {
     })
 }
 
+// TOOD: the file that have the symbol @@ will be replaced by the server stuff.
 // POST : api/protected/cert-upload-template
 func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
 	route.Post("cert-upload-template", func (c *fiber.Ctx) error {
@@ -501,12 +502,18 @@ func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
 func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 	route.Get("certificate/:base64", func (c *fiber.Ctx) error {
 		base64Param := c.Params("base64")
-		// return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-		// 	"success": true,
-		// 	"message": "WIP. Please be patient.",
-		// 	"error_code": 0,
-		// 	"data": base64Param,
-		// })
+
+        var evPart table.EventParticipant
+        res := backend.db.Preload("User").Where("eventp_code = ? AND eventp_come = ?", base64Param, true).First(&evPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": true,
+                "message": "Failed to fetch event participant for this code.",
+                "error_code": 0,
+                "data": nil,
+            })
+        }
+
         backend.engine.ClearCache()
 		return c.Render("test/index", fiber.Map{
 			"UniqID": base64Param,
