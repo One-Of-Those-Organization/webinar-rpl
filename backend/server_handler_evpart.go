@@ -4,7 +4,9 @@ import (
     "strconv"
 	"fmt"
 	"webrpl/table"
+	"errors"
 
+    "gorm.io/gorm"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
