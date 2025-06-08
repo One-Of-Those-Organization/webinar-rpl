@@ -243,10 +243,10 @@ func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
                 "data": nil,
             })
         }
-        
+
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
-            "message": "Data Saved.",
+            "message": "Data modified.",
             "error_code": 0,
             "data": nil,
         })
@@ -360,7 +360,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                         "data": nil,
                     })
                 }
-                updates["password"] = hashedPassword
+                updates["user_password"] = hashedPassword
             }
 
             result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
@@ -374,7 +374,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
             }
             return c.Status(fiber.StatusOK).JSON(fiber.Map{
                 "success": true,
-                "message": "Data Saved.",
+                "message": "Data modified.",
                 "error_code": 0,
                 "data": nil,
             })
