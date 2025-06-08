@@ -217,7 +217,6 @@ export default function EditUserPage() {
           </div>
         </div>
       </section>
-
       <ToastContainer />
     </DefaultLayout>
   );

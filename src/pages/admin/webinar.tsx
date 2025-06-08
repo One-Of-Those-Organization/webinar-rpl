@@ -426,10 +426,10 @@ export default function WebinarPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-10 text-foreground-400 dark:text-gray-400">
             {searchValue
               ? `No webinars found matching "${searchValue}"`
-              : "Tidak ada webinar yang tersedia."}
+              : "No webinars available."}
           </div>
         )}
 
