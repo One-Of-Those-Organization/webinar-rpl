@@ -496,8 +496,9 @@ func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
 	})
 }
 
+// WIP: Finish this.
 // GET : api/certificate/:base64
-func appHandleCertificateRoom(_ *Backend, route fiber.Router) {
+func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 	route.Get("certificate/:base64", func (c *fiber.Ctx) error {
 		base64Param := c.Params("base64")
 		// return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -506,6 +507,7 @@ func appHandleCertificateRoom(_ *Backend, route fiber.Router) {
 		// 	"error_code": 0,
 		// 	"data": base64Param,
 		// })
+        backend.engine.ClearCache()
 		return c.Render("test/index", fiber.Map{
 			"UniqID": base64Param,
 			"Name": "budi hari",
