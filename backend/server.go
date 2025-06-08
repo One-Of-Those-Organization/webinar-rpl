@@ -6,20 +6,20 @@ import (
 
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-    "github.com/gofiber/template/html/v2"
 	"gorm.io/gorm"
 )
 
 type Backend struct {
-    app   *fiber.App
-    db    *gorm.DB
-    pass  string
-    rand  *rand.Rand
+    app    *fiber.App
+    db     *gorm.DB
+    pass   string
+    rand   *rand.Rand
+    engine *DynamicEngine
 }
 
 func appCreateNewServer(db *gorm.DB, secret string) *Backend {
     rand_t := rand.New(rand.NewSource(time.Now().UnixNano()))
-    engine := html.New("./cert_temp/", ".html")
+    engine := NewDynamicEngine("./static/", ".html")
     app := fiber.New(fiber.Config{
         AppName: "Webinar-RPL Backend",
         Views: engine,
@@ -30,6 +30,7 @@ func appCreateNewServer(db *gorm.DB, secret string) *Backend {
         db:    db,
         pass: secret,
         rand: rand_t,
+        engine: engine,
     }
 }
 
@@ -73,6 +74,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleMaterialEdit(backend, protected)
 
     // CERTIFICATE TEMPLATE STUFF
+    appHandleCertificateRoom(backend, api)
     appHandleCertTempNew(backend, protected)
     appHandleCertTempInfoOf(backend, protected)
     appHandleCertDel(backend, protected)

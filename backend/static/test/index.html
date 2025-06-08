@@ -1,0 +1,55 @@
+<html>
+    <head>
+        <title>Certificate of {{ .Name }}</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            html, body {
+                width: 100%;
+                height: 100%;
+                overflow: auto; /* Show scrollbars if needed */
+            }
+
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .container {
+                width: 600px;
+                height: 400px;
+                background-image: url("http://localhost:3000/static/test/image.jpg");
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                position: relative;
+                flex-shrink: 0; /* Prevent shrinking in flexbox */
+            }
+
+            #name {
+                position: absolute;
+                top: 47%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 24px; /* Fixed size relative to container */
+                font-weight: bold;
+                color: black;
+                background: red;
+                width: 300px;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <p id="name">{{ .Name }}</p>
+            <p style="display: none;">{{ .Event }}</p>
+            <p style="display: none;">{{ .UniqID }}</p>
+        </div>
+    </body>
+</html>

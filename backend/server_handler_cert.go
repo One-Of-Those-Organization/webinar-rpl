@@ -340,7 +340,7 @@ func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
 			})
 		}
 
-		certDir := "cert_temp"
+		certDir := "static"
 		if err := os.MkdirAll(certDir, 0755); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
@@ -499,13 +499,16 @@ func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
 // GET : api/certificate/:base64
 func appHandleCertificateRoom(_ *Backend, route fiber.Router) {
 	route.Get("certificate/:base64", func (c *fiber.Ctx) error {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": true,
-			"message": "WIP. Please be patient.",
-			"error_code": 0,
-			"data": nil,
+		base64Param := c.Params("base64")
+		// return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 	"success": true,
+		// 	"message": "WIP. Please be patient.",
+		// 	"error_code": 0,
+		// 	"data": base64Param,
+		// })
+		return c.Render("test/index", fiber.Map{
+			"UniqID": base64Param,
+			"Name": "budi hari",
 		})
-		// base64Param := c.Params("base64")
-		// c.Render()
 	})
 }
