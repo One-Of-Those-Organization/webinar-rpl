@@ -8,7 +8,10 @@ import (
 )
 
 func main() {
+    ip := "0.0.0.0"
     port := 3000
+
+    add := fmt.Sprintf("%s:%d", ip, port)
 
     // DO THE DB STUFF
     db, err := open_db("./db/data.db")
@@ -24,7 +27,7 @@ func main() {
     l.Println("INFO: DB init task completed successfully.")
     password := getCredentialFromEnv()
 
-    app := appCreateNewServer(db, password)
+    app := appCreateNewServer(db, password, add)
     app.app.Use(cors.New(cors.Config{
         AllowOrigins: "*",
         AllowHeaders: "Origin, Content-Type, Accept, Authorization",
@@ -35,9 +38,8 @@ func main() {
     if !checkOrMakeAdmin(app, password) {
         l.Panic("ERR: There is a problem when making user 0 (SUPER ADMIN)")
     }
-
     appMakeRouteHandler(app)
-    if err := app.app.Listen(fmt.Sprintf(":%d", port)); err != nil {
+    if err := app.app.Listen(add); err != nil {
         l.Fatal("ERR: Server failed to start: ", err)
     }
 }

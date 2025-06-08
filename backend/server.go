@@ -10,16 +10,21 @@ import (
 )
 
 type Backend struct {
-    app   *fiber.App
-    db    *gorm.DB
-    pass  string
-    rand  *rand.Rand
+    app     *fiber.App
+    db      *gorm.DB
+    pass    string
+    rand    *rand.Rand
+    engine  *DynamicEngine
+    address string
+    mode    string
 }
 
-func appCreateNewServer(db *gorm.DB, secret string) *Backend {
+func appCreateNewServer(db *gorm.DB, secret string, address string) *Backend {
     rand_t := rand.New(rand.NewSource(time.Now().UnixNano()))
+    engine := NewDynamicEngine("./static/", ".html")
     app := fiber.New(fiber.Config{
         AppName: "Webinar-RPL Backend",
+        Views: engine,
     })
 
     return &Backend{
@@ -27,6 +32,9 @@ func appCreateNewServer(db *gorm.DB, secret string) *Backend {
         db:    db,
         pass: secret,
         rand: rand_t,
+        engine: engine,
+        address: address,
+        mode: "http",
     }
 }
 
@@ -38,7 +46,7 @@ func appMakeRouteHandler(backend *Backend) {
         SigningKey: jwtware.SigningKey{Key: []byte(backend.pass)},
     }))
 
-    app.Static("/static", "./img")
+    app.Static("/static", "./static")
 
     // USER STUFF
     appHandleLogin(backend, api)
@@ -70,11 +78,12 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleMaterialEdit(backend, protected)
 
     // CERTIFICATE TEMPLATE STUFF
+    appHandleCertificateRoom(backend, api)
     appHandleCertTempNew(backend, protected)
     appHandleCertTempInfoOf(backend, protected)
     appHandleCertDel(backend, protected)
     appHandleCertEdit(backend, protected)
-    appHandleCertGen(backend, protected) // WIP
+    appHandleCertUploadTemplate(backend, protected)
 
     // EVENT PARTICIPANT STUFF
     appHandleEventParticipateRegister(backend, protected)
@@ -83,6 +92,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventParticipateDel(backend, protected)
     appHandleEventParticipateOfEvent(backend, protected)
     appHandleEventParticipateOfUser(backend, protected)
+    appHandleEventParticipateAbsence(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")
