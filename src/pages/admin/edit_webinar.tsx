@@ -221,7 +221,7 @@ export default function EditWebinarPage() {
         if (response.success) {
           let serverPath = response.data?.filename || response.data;
 
-          const staticUrl = `http://localhost:3000/${serverPath.replace("img", "static")}`;
+          const staticUrl = serverPath;
 
           // Simpan URL gambar ke editForm.imageUrl (sesuai EditWebinarPage)
           setEditForm((prev) => ({
