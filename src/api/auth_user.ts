@@ -162,7 +162,7 @@ export const auth_user = {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          picture: "http://localhost:3000/" + data.replace("img", "static"),
+          picture: data,
         }),
       });
       const result = await response.json();

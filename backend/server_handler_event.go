@@ -423,7 +423,7 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
 }
 
 // POST: api/protected/event-upload-image
-func appHandleEventUploadImage(_ *Backend, route fiber.Router) {
+func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
     route.Post("event-upload-image", func(c *fiber.Ctx) error {
         var body struct {
             Data    string `json:"data"`
@@ -470,7 +470,7 @@ func appHandleEventUploadImage(_ *Backend, route fiber.Router) {
             })
         }
 
-        imgDir := "img"
+        imgDir := "static"
         if err := os.MkdirAll(imgDir, 0755); err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
@@ -507,7 +507,7 @@ func appHandleEventUploadImage(_ *Backend, route fiber.Router) {
             fileExt = ".webp"
         }
 
-        filename := fmt.Sprintf("%s/%d_%s", imgDir, time.Now().Unix(), fileExt)
+        filename := fmt.Sprintf("%s/%d%s", imgDir, time.Now().Unix(), fileExt)
 
         err = os.WriteFile(filename, imageData, 0644)
         if err != nil {
@@ -524,7 +524,7 @@ func appHandleEventUploadImage(_ *Backend, route fiber.Router) {
             "message": "Image uploaded successfully",
             "error_code": 0,
             "data": fiber.Map{
-                "filename": filename,
+                "filename": fmt.Sprintf("%s://%s/%s", backend.mode, backend.address, filename),
             },
         })
     })

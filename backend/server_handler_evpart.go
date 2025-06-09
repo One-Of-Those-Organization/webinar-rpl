@@ -4,7 +4,9 @@ import (
     "strconv"
 	"fmt"
 	"webrpl/table"
+	"errors"
 
+    "gorm.io/gorm"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -53,7 +55,7 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        if admin != 1 && body.Role == "comittee" {
+        if admin != 1 && body.Role == "committee" {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid Credentials.",
@@ -62,10 +64,10 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        if body.Role != "normal" && body.Role != "comittee" {
+        if body.Role != "normal" && body.Role != "committee" {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
-                "message": "Invalid Role, the only valid strings are : `normal` and `comittee`",
+                "message": "Invalid Role, the only valid strings are : `normal` and `committee`",
                 "error_code": 5,
                 "data": nil,
             })
@@ -118,7 +120,8 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        random_strings := RandStringBytes(10, backend.rand)
+        // NOTE: Make it as complicated as possible
+        random_strings := RandStringBytes(backend, fmt.Sprintf("%s-%d-%d-%d", currentUser.UserEmail, body.EventId, backend.rand.Int(), backend.rand.Int()))
 
         NewEventParticipate := table.EventParticipant{
             EventId: body.EventId,
@@ -306,92 +309,159 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
 // NOTE: Only allowed to change EventPRole only
 // POST : api/protected/event-participate-edit
 func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
-    route.Post("event-participate-edit", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Failed to claim JWT Token.",
-                "error_code": 1,
-                "data": nil,
-            })
-        }
+	route.Post("event-participate-edit", func (c *fiber.Ctx) error {
+		user := c.Locals("user").(*jwt.Token)
+		if user == nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to claim JWT Token.",
+				"error_code": 1,
+				"data": nil,
+			})
+		}
 
-        claims := user.Claims.(jwt.MapClaims)
-        admin := claims["admin"].(float64)
-        email := claims["email"].(string)
+		claims := user.Claims.(jwt.MapClaims)
+		admin := claims["admin"].(float64)
+		currentUserEmail := claims["email"].(string)
 
-        var body struct {
-            EventID    int     `json:"event_id"`
-            EventPRole string  `json:"event_role"`
-            UserEmail  *string `json:"email"`
-        }
+		var body struct {
+			EventID    int     `json:"event_id"`
+			EventPRole string  `json:"event_role"`
+			UserEmail  *string `json:"email"`
+		}
 
-        err := c.BodyParser(&body)
-        if err != nil {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Invalid body request, %v", err),
-                "error_code": 2,
-                "data": nil,
-            })
-        }
+		err := c.BodyParser(&body)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Invalid body request, %v", err),
+				"error_code": 2,
+				"data": nil,
+			})
+		}
 
-        useThisEmail := email
-        if admin == 1 && body.UserEmail != nil && *body.UserEmail != "" {
-            useThisEmail = *body.UserEmail
-        }
+		// Validate the role value
+		if body.EventPRole != "committee" && body.EventPRole != "normal" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Invalid Role. Must be 'committee' or 'normal'.",
+				"error_code": 5,
+				"data": nil,
+			})
+		}
 
-        var currentUser table.User
-        res := backend.db.Where("user_email = ?", useThisEmail).First(&currentUser)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to fetch the current user from the db, %v", res.Error),
-                "error_code": 3,
-                "data": nil,
-            })
-        }
+		// Determine target user email
+		targetUserEmail := currentUserEmail
+		if body.UserEmail != nil && *body.UserEmail != "" {
+			targetUserEmail = *body.UserEmail
+		}
 
-        eventPart := table.EventParticipant{}
-        res = backend.db.Where("event_id = ?", body.EventID).Where("user_id = ?", currentUser.ID).First(&eventPart)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to get the event participant from the db, %v", res.Error),
-                "error_code": 4,
-                "data": nil,
-            })
-        }
+		// Check authorization: Only admins or committee members can edit roles
+		if admin != 1 {
+			// Check if current user is committee for this event
+			var currentEventParticipant table.EventParticipant
+			res := backend.db.Where("user_email = ? AND event_id = ?", currentUserEmail, body.EventID).First(&currentEventParticipant)
+			if res.Error != nil {
+				if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+					return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+						"success": false,
+						"message": "You are not a participant of this event.",
+						"error_code": 4,
+						"data": nil,
+					})
+				}
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"success": false,
+					"message": fmt.Sprintf("Failed to fetch current user participation, %v", res.Error),
+					"error_code": 3,
+					"data": nil,
+				})
+			}
 
-        if body.EventPRole == "comittee" || body.EventPRole == "normal" {
-            eventPart.EventPRole = table.UserEventRoleEnum(body.EventPRole)
-        } else {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid Role.",
-                "error_code": 5,
-                "data": nil,
-            })
-        }
+			if currentEventParticipant.EventPRole != "committee" {
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+					"success": false,
+					"message": "Only committee members and admins can edit participant roles.",
+					"error_code": 4,
+					"data": nil,
+				})
+			}
 
-		res = backend.db.Save(&eventPart)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to update the event participant from the db, %v", res.Error),
-                "error_code": 6,
-                "data": nil,
-            })
-        }
+			// Prevent committee members from editing their own role (security measure)
+			if targetUserEmail == currentUserEmail {
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+					"success": false,
+					"message": "Committee members cannot modify their own role.",
+					"error_code": 7,
+					"data": nil,
+				})
+			}
+		}
 
-        return c.Status(fiber.StatusOK).JSON(fiber.Map{
-            "success": true,
-            "message": "Data changed.",
-            "error_code": 0,
-            "data": nil,
-        })
-    })
+		// Find target user
+		var targetUser table.User
+		res := backend.db.Where("user_email = ?", targetUserEmail).First(&targetUser)
+		if res.Error != nil {
+			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"success": false,
+					"message": "Target user not found.",
+					"error_code": 8,
+					"data": nil,
+				})
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Failed to fetch target user, %v", res.Error),
+				"error_code": 3,
+				"data": nil,
+			})
+		}
+
+		// Find and update event participant
+		var eventParticipant table.EventParticipant
+		res = backend.db.Where("event_id = ? AND user_id = ?", body.EventID, targetUser.ID).First(&eventParticipant)
+		if res.Error != nil {
+			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"success": false,
+					"message": "Event participant not found.",
+					"error_code": 9,
+					"data": nil,
+				})
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Failed to fetch event participant, %v", res.Error),
+				"error_code": 3,
+				"data": nil,
+			})
+		}
+
+		// Update the role
+		eventParticipant.EventPRole = table.UserEventRoleEnum(body.EventPRole)
+
+		res = backend.db.Save(&eventParticipant)
+		if res.Error != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Failed to update event participant, %v", res.Error),
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+			"message": "Participant role updated successfully.",
+			"error_code": 0,
+			"data": fiber.Map{
+				"event_id": body.EventID,
+				"user_email": targetUserEmail,
+				"new_role": body.EventPRole,
+			},
+		})
+	})
 }
 
 // NOTE: just return the participant of the specified event id
@@ -523,6 +593,95 @@ func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
             "message": "Check data.",
             "error_code": 1,
             "data": eventList,
+        })
+    })
+}
+
+// POST : api/protected/event-participate-absence
+func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
+    route.Post("event-participate-absence", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        email := claims["email"].(string)
+        admin := claims["admin"].(float64)
+
+        var body struct  {
+            EventId   int    `json:"event_id"`
+            Secret    string `json:"secret"`
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var userEventPart table.EventParticipant
+        res := backend.db.Preload("User").Where("user_email = ? AND event_id = ", email, body.EventId).First(&userEventPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch user from the db, %v", res.Error),
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        // Check if the requestee is a committee
+        if userEventPart.EventPRole != "committee" || admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        res = backend.db.Where("eventp_code = ?", body.Secret).First(&userEventPart)
+        if res.Error != nil {
+            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Invalid secret code.",
+                    "error_code": 4,
+                    "data": nil,
+                })
+            }
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch event participant with that secret.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        userEventPart.EventPCome = true
+        res = backend.db.Save(&userEventPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to save event participant.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "User absence.",
+            "error_code": 0,
+            "data": nil,
         })
     })
 }

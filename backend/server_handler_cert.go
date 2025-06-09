@@ -1,8 +1,14 @@
 package main
 
 import (
+    "os"
+    "strings"
     "strconv"
     "fmt"
+    "encoding/base64"
+	"archive/zip"
+	"path/filepath"
+	"io"
 
     "webrpl/table"
 	"github.com/gofiber/fiber/v2"
@@ -208,19 +214,6 @@ func appHandleCertDel(backend *Backend, route fiber.Router) {
     })
 }
 
-// TODO : After done implementing webinar participant
-// GET : api/protected/cert-gen
-func appHandleCertGen(_ *Backend, route fiber.Router) {
-    route.Get("cert-gen", func (c *fiber.Ctx) error {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "success": false,
-            "message": "WIP.",
-            "error_code": 0,
-            "data": nil,
-        })
-    })
-}
-
 // POST : api/protected/cert-edit
 func appHandleCertEdit(backend *Backend, route fiber.Router) {
     route.Post("cert-edit", func (c *fiber.Ctx) error {
@@ -299,4 +292,232 @@ func appHandleCertEdit(backend *Backend, route fiber.Router) {
             "error_code": 0,
         })
     })
+}
+
+// TOOD: the file that have the symbol @@ will be replaced by the server stuff.
+// POST : api/protected/cert-upload-template
+func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
+	route.Post("cert-upload-template", func (c *fiber.Ctx) error {
+		claims, err := GetJWT(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to claim JWT Token.",
+				"error_code": 1,
+				"data": nil,
+			})
+		}
+		admin := claims["admin"].(float64)
+		if admin != 1 {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"success": false,
+				"message": "Invalid credentials for this function",
+				"error_code": 2,
+				"data": nil,
+			})
+		}
+
+		var body struct {
+			FileName  string `json:"event_name"`
+			Data      string `json:"data"`
+		}
+
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Invalid Body Request",
+				"error_code": 3,
+				"data": nil,
+			})
+		}
+
+		if body.Data == "" || body.FileName == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "No data provided",
+				"error_code": 4,
+				"data": nil,
+			})
+		}
+
+		certDir := "static"
+		if err := os.MkdirAll(certDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to create certificate template directory",
+				"error_code": 5,
+				"data": nil,
+			})
+		}
+
+		base64Data := body.Data
+		if i := strings.Index(base64Data, ","); i != -1 {
+			base64Data = base64Data[i+1:]
+		}
+
+		zipData, err := base64.StdEncoding.DecodeString(base64Data)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Invalid base64 data",
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+		if !strings.Contains(string(zipData), "application/zip") {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Invalid base64 data",
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+		certTempDir := fmt.Sprintf("%s/%s", certDir, body.FileName)
+		if err := os.MkdirAll(certTempDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to create certificate template directory",
+				"error_code": 5,
+				"data": nil,
+			})
+		}
+
+		filename := fmt.Sprintf("%s/%s.zip", certTempDir, body.FileName)
+		err = os.WriteFile(filename, zipData, 0644)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to save data.",
+				"error_code": 7,
+				"data": nil,
+			})
+		}
+
+		archive, err := zip.OpenReader(filename)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to process zip data.",
+				"error_code": 8,
+				"data": nil,
+			})
+		}
+
+		defer archive.Close()
+
+		var extractedFiles []string
+		for _, f := range archive.File {
+			if strings.Contains(f.Name, "..") {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"success": false,
+					"message": "Invalid file path in archive",
+					"error_code": 9,
+					"data": nil,
+				})
+			}
+
+			newFilePath := fmt.Sprintf("%s/%s", certTempDir, f.Name)
+
+			// Create directory if file is in subdirectory
+			if f.FileInfo().IsDir() {
+				if err := os.MkdirAll(newFilePath, f.FileInfo().Mode()); err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"success": false,
+						"message": "Failed to create directory from archive",
+						"error_code": 10,
+						"data": nil,
+					})
+				}
+				continue
+			}
+
+			if err := os.MkdirAll(filepath.Dir(newFilePath), 0755); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"success": false,
+					"message": "Failed to create parent directory",
+					"error_code": 11,
+					"data": nil,
+				})
+			}
+
+			// Open file in archive
+			rc, err := f.Open()
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"success": false,
+					"message": "Failed to open file in archive",
+					"error_code": 12,
+					"data": nil,
+				})
+			}
+
+			outFile, err := os.OpenFile(newFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.FileInfo().Mode())
+			if err != nil {
+				rc.Close()
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"success": false,
+					"message": "Failed to create extracted file",
+					"error_code": 13,
+					"data": nil,
+				})
+			}
+
+			_, err = io.Copy(outFile, rc)
+			if err != nil {
+				rc.Close()
+				outFile.Close()
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"success": false,
+					"message": "Failed to extract file contents",
+					"error_code": 14,
+					"data": nil,
+				})
+			}
+
+			outFile.Close()
+			rc.Close()
+			extractedFiles = append(extractedFiles, f.Name)
+		}
+
+		// NOTE: Maybe log this in the future.
+		if err := os.Remove(filename); err != nil {}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+			"message": "Certificate Template uploaded and extracted.",
+			"error_code": 0,
+			"data": fiber.Map{
+				"extracted_files": extractedFiles,
+				"extraction_path": certTempDir,
+			},
+		})
+	})
+}
+
+// WIP: Finish this.
+// GET : api/certificate/:base64
+func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
+	route.Get("certificate/:base64", func (c *fiber.Ctx) error {
+		base64Param := c.Params("base64")
+
+        var evPart table.EventParticipant
+        res := backend.db.Preload("User").Where("eventp_code = ? AND eventp_come = ?", base64Param, true).First(&evPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": true,
+                "message": "Failed to fetch event participant for this code.",
+                "error_code": 0,
+                "data": nil,
+            })
+        }
+
+        backend.engine.ClearCache()
+		return c.Render("test/index", fiber.Map{
+			"UniqID": base64Param,
+			"Name": "budi hari",
+		})
+	})
 }
