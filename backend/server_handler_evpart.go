@@ -78,7 +78,7 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to fetch event from db.",
+                "message": fmt.Sprintf("Failed to fetch event from db, %v", res.Error),
                 "error_code": 6,
                 "data": nil,
             })
@@ -110,11 +110,11 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
         }
 
         var currentUser table.User
-        res = backend.db.Where("email = ?", useThisEmail).First(&currentUser)
+        res = backend.db.Where("user_email = ?", useThisEmail).First(&currentUser)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to fetch the specified user from db.",
+                "message": fmt.Sprintf("Failed to fetch the specified user from db, %v", res.Error),
                 "error_code": 9,
                 "data": nil,
             })
@@ -613,8 +613,8 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
         admin := claims["admin"].(float64)
 
         var body struct  {
-            EventId   int    `json:"event_id"`
-            Secret    string `json:"secret"`
+            EventId   int    `json:"id"`
+            Secret    string `json:"code"`
         }
 
         err = c.BodyParser(&body)
@@ -627,8 +627,8 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
             })
         }
 
-        var userEventPart table.EventParticipant
-        res := backend.db.Preload("User").Where("user_email = ? AND event_id = ", email, body.EventId).First(&userEventPart)
+        var userSender table.User
+        res := backend.db.Where("user_email = ?", email).First(&userSender)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
@@ -638,12 +638,23 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
             })
         }
 
+        var userEventPart table.EventParticipant
+        res = backend.db.Preload("User").Where("user_id = ? AND event_id = ?", userSender.ID, body.EventId).First(&userEventPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch event participant from the db, %v", res.Error),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
         // Check if the requestee is a committee
-        if userEventPart.EventPRole != "committee" || admin != 1 {
+        if userEventPart.EventPRole != "committee" && admin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
-                "message": "Invalid credentials for this function.",
-                "error_code": 3,
+                "message": fmt.Sprintf("Invalid credentials for this function. DEBUG: %s, %f", userEventPart.EventPRole, admin),
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -654,14 +665,14 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
                 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                     "success": false,
                     "message": "Invalid secret code.",
-                    "error_code": 4,
+                    "error_code": 5,
                     "data": nil,
                 })
             }
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch event participant with that secret.",
-                "error_code": 5,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -672,7 +683,7 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to save event participant.",
-                "error_code": 5,
+                "error_code": 7,
                 "data": nil,
             })
         }

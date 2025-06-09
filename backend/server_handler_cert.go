@@ -504,11 +504,12 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 		base64Param := c.Params("base64")
 
         var evPart table.EventParticipant
-        res := backend.db.Preload("User").Where("eventp_code = ? AND eventp_come = ?", base64Param, true).First(&evPart)
+        res := backend.db.Preload("User").Where(&table.EventParticipant{EventPCode: base64Param, EventPCome: true}).First(&evPart)
+
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": true,
-                "message": "Failed to fetch event participant for this code.",
+                "message": fmt.Sprintf("Failed to fetch event participant for this code, %v", res.Error),
                 "error_code": 0,
                 "data": nil,
             })
@@ -517,7 +518,8 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
         backend.engine.ClearCache()
 		return c.Render("test/index", fiber.Map{
 			"UniqID": base64Param,
-			"Name": "budi hari",
+			"Name": evPart.User.UserFullName,
+            "Event": evPart.Event.EventName,
 		})
 	})
 }
