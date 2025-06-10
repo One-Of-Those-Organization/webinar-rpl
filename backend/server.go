@@ -93,6 +93,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventParticipateOfEvent(backend, protected)
     appHandleEventParticipateOfUser(backend, protected)
     appHandleEventParticipateAbsence(backend, protected)
+    appHandleEventParticipateOfEventCount(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")

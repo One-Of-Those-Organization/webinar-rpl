@@ -696,3 +696,56 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
         })
     })
 }
+
+// GET : api/protected/event-participate-of-event-count
+func appHandleEventParticipateOfEventCount(backend *Backend, route fiber.Router) {
+    route.Get("event-participate-of-event-count", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        admin := claims["admin"].(float64)
+
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to acces this api.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        queryEventID := c.Query("id")
+        if queryEventID == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid Query : %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var eventParticipantCount int64
+        res := backend.db.Model(&table.EventParticipant{}).Where("event_id = ?", queryEventID).Count(&eventParticipantCount)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch event count from db.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data.",
+            "error_code": 0,
+            "data": eventParticipantCount,
+        })
+    })
+}
