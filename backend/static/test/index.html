@@ -8,27 +8,16 @@
                 box-sizing: border-box;
             }
 
-            html, body {
-                width: 100%;
-                height: 100%;
-                overflow: auto; /* Show scrollbars if needed */
-            }
-
-            body {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-
             .container {
-                width: 600px;
-                height: 400px;
+                width: 700px;
+                height: 500px;
                 background-image: url("http://localhost:3000/static/test/image.jpg");
                 background-size: contain;
                 background-repeat: no-repeat;
                 background-position: center;
                 position: relative;
-                flex-shrink: 0; /* Prevent shrinking in flexbox */
+                flex-shrink: 0;
+                overflow: auto;
             }
 
             #name {
@@ -43,13 +32,37 @@
                 width: 300px;
                 text-align: center;
             }
+
+            #event {
+                position: absolute;
+                color: black;
+                font-size: 14px;
+                background: white;
+                top: 19%;
+                left: 50%;
+                font-weight: bold;
+                width: 300px;
+                text-align: center;
+                transform: translate(-50%, -50%);
+            }
+
+            #uniqid {
+                position: absolute;
+                color: black;
+                font-size: 2pt;
+                background: white;
+                top: 96%;
+                left: 0.1%;
+                overflow: hidden;
+                max-width: 550px;
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <p id="name">{{ .Name }}</p>
-            <p style="display: none;">{{ .Event }}</p>
-            <p style="display: none;">{{ .UniqID }}</p>
+            <p id="event">{{ .Event }}</p>
+            <p id="uniqid">{{ .UniqID }}</p>
         </div>
     </body>
 </html>

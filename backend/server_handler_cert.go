@@ -42,7 +42,9 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
 
         var body struct {
             EventId       int    `json:"id"`
+            // NOTE:
             // CertTemplate is a html+css that will be autofilled. (this is path btw.)
+            // So give it the html name (without the .html)
             CertTemplate  string `json:"cert_temp"`
         }
 
@@ -296,7 +298,7 @@ func appHandleCertEdit(backend *Backend, route fiber.Router) {
 
 // TOOD: the file that have the symbol @@ will be replaced by the server stuff.
 // POST : api/protected/cert-upload-template
-func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
+func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 	route.Post("cert-upload-template", func (c *fiber.Ctx) error {
 		claims, err := GetJWT(c)
 		if err != nil {
@@ -490,8 +492,8 @@ func appHandleCertUploadTemplate(_ *Backend, route fiber.Router) {
 			"message": "Certificate Template uploaded and extracted.",
 			"error_code": 0,
 			"data": fiber.Map{
-				"extracted_files": extractedFiles,
-				"extraction_path": certTempDir,
+                "extracted_files": extractedFiles,
+				"extraction_path": strings.TrimLeft(certTempDir, "static/"),
 			},
 		})
 	})
@@ -504,22 +506,39 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 		base64Param := c.Params("base64")
 
         var evPart table.EventParticipant
-        res := backend.db.Preload("User").Where(&table.EventParticipant{EventPCode: base64Param, EventPCome: true}).First(&evPart)
+        res := backend.db.Preload("User").Preload("Event").Where(&table.EventParticipant{EventPCode: base64Param, EventPCome: true}).First(&evPart)
 
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": true,
                 "message": fmt.Sprintf("Failed to fetch event participant for this code, %v", res.Error),
-                "error_code": 0,
+                "error_code": 1,
                 "data": nil,
             })
         }
 
+        var cerTemp table.CertTemplate
+        res = backend.db.Where("event_id = ?", evPart.EventId).First(&cerTemp)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": true,
+                "message": fmt.Sprintf("Failed to fetch certificate template from the db, %v", res.Error),
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        // Presume that certemp is correct path that look
+        // something like this : {folder}/{file}.html
+
+        // Strip the .html from the cerTemp
+        stripped := strings.TrimSuffix(cerTemp.CertTemplate, ".html")
+
         backend.engine.ClearCache()
-		return c.Render("test/index", fiber.Map{
+		return c.Render(stripped, fiber.Map{
 			"UniqID": base64Param,
-			"Name": evPart.User.UserFullName,
             "Event": evPart.Event.EventName,
+			"Name": evPart.User.UserFullName,
 		})
 	})
 }

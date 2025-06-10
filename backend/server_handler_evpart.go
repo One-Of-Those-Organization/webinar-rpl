@@ -120,7 +120,6 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        // NOTE: Make it as complicated as possible
         random_strings := RandStringBytes(backend, fmt.Sprintf("%s-%d-%d-%d", currentUser.UserEmail, body.EventId, backend.rand.Int(), backend.rand.Int()))
 
         NewEventParticipate := table.EventParticipant{
