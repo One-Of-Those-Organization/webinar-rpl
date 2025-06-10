@@ -114,6 +114,8 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
     })
 }
 
+// NOTE: Will not auto join and give you the foreign obj.
+//       if need the count please call event-participate-of-event-count
 // GET : api/protected/event-info-all
 func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
     route.Get("event-info-all", func (c *fiber.Ctx) error {
@@ -177,6 +179,7 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
     })
 }
 
+// NOTE: Will not auto join and give you the foreign obj.
 // GET : api/protected/event-info-of
 func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
     route.Get("event-info-of", func (c *fiber.Ctx) error {
