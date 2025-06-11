@@ -74,6 +74,7 @@ export class WebinarEdit {
   max?: number = 0;
   event_mat_id?: number = 0;
   cert_template_id?: number = 0;
+  panitia?: string = "";
 
   constructor(init?: Partial<WebinarEdit>) {
     Object.assign(this, init);
@@ -94,6 +95,7 @@ export class WebinarEdit {
       max: apiData.EventMax || 0,
       event_mat_id: apiData.EventMatID || 0,
       cert_template_id: apiData.CertTemplateID || 0,
+      panitia: apiData.Panitia || "",
     });
   }
 }
