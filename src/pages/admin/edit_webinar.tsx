@@ -9,6 +9,8 @@ import {
   Card,
   CardBody,
   Skeleton,
+  Select,
+  SelectItem,
 } from "@heroui/react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -41,6 +43,7 @@ export default function EditWebinarPage() {
     name: "",
     description: "",
     speaker: "",
+    organizers: [] as string[], // New field for organizers/panitia
     dateStart: "",
     timeStart: "",
     dateEnd: "",
@@ -52,11 +55,20 @@ export default function EditWebinarPage() {
     certId: 0,
   });
 
+  // Mock data untuk organizers - ini bisa diganti dengan API call
+  const availableOrganizers = [
+    { id: "1", name: "John Doe", role: "Admin" },
+    { id: "2", name: "Jane Smith", role: "Coordinator" },
+    { id: "3", name: "Bob Wilson", role: "Moderator" },
+    { id: "4", name: "Alice Johnson", role: "Technical Support" },
+    { id: "5", name: "Mike Brown", role: "Content Manager" },
+  ];
+
   // Load data webinar saat component mount
   useEffect(() => {
     const loadWebinarData = async () => {
       if (!id) {
-        toast.error("ID Webinar not found");
+        toast.error("Webinar ID not found");
         navigate("/admin/webinar");
         return;
       }
@@ -79,6 +91,7 @@ export default function EditWebinarPage() {
             name: webinar.name || "",
             description: webinar.desc || "",
             speaker: webinar.speaker || "",
+            organizers: [], // Load from API if available
             dateStart: webinar.dstart ? extractDate(webinar.dstart) : "",
             timeStart: webinar.dstart ? extractTime(webinar.dstart) : "",
             dateEnd: webinar.dend ? extractDate(webinar.dend) : "",
@@ -136,13 +149,14 @@ export default function EditWebinarPage() {
     if (!dateStr) return "Date not available";
     try {
       const date = new Date(dateStr);
-      return date.toLocaleDateString("id-ID", {
+      return date.toLocaleDateString("en-US", {
         weekday: "long",
         day: "numeric",
         month: "long",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: true,
       });
     } catch (e) {
       return dateStr;
@@ -150,7 +164,10 @@ export default function EditWebinarPage() {
   };
 
   // Function untuk handle form input changes
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (
+    field: string,
+    value: string | number | string[]
+  ) => {
     setEditForm((prev) => ({
       ...prev,
       [field]: value,
@@ -336,6 +353,7 @@ export default function EditWebinarPage() {
         att: webinarData.att || "",
         event_mat_id: editForm.eventmId,
         cert_template_id: editForm.certId,
+        // organizers: editForm.organizers, // Add to API call if supported
       };
 
       if (
@@ -396,6 +414,7 @@ export default function EditWebinarPage() {
       name: webinarData.name || "",
       description: webinarData.desc || "",
       speaker: webinarData.speaker || "",
+      organizers: [], // Reset organizers
       dateStart: webinarData.dstart ? extractDate(webinarData.dstart) : "",
       timeStart: webinarData.dstart ? extractTime(webinarData.dstart) : "",
       dateEnd: webinarData.dend ? extractDate(webinarData.dend) : "",
@@ -455,17 +474,17 @@ export default function EditWebinarPage() {
           <Card>
             <CardBody className="text-center py-10">
               <h3 className="text-lg font-semibold text-danger">
-                Webinar tidak ditemukan
+                Webinar Not Found
               </h3>
               <p className="text-gray-500 mt-2">
-                Data webinar dengan ID {id} tidak dapat ditemukan.
+                Webinar data with ID {id} could not be found.
               </p>
               <Button
                 color="primary"
                 className="mt-4"
                 onPress={() => navigate("/admin/webinar")}
               >
-                Kembali ke Dashboard
+                Back to Dashboard
               </Button>
             </CardBody>
           </Card>
@@ -507,7 +526,7 @@ export default function EditWebinarPage() {
                   })}
                   href="#"
                 >
-                  Materi
+                  Materials
                 </Link>
                 <Link
                   className={buttonStyles({
@@ -530,7 +549,7 @@ export default function EditWebinarPage() {
                   })}
                   href="#"
                 >
-                  Attend
+                  Attendees
                 </Link>
                 <Link
                   className={buttonStyles({
@@ -562,7 +581,7 @@ export default function EditWebinarPage() {
                   isLoading={isEditing}
                   isDisabled={isEditing || isImageLoading}
                 >
-                  {isEditing ? "Menyimpan..." : "Simpan Perubahan"}
+                  {isEditing ? "Saving..." : "Save Changes"}
                 </Button>
                 <Button
                   color="default"
@@ -572,7 +591,7 @@ export default function EditWebinarPage() {
                   onPress={handleCancelEdit}
                   isDisabled={isEditing || isImageLoading}
                 >
-                  Batal
+                  Cancel
                 </Button>
               </>
             )}
@@ -592,35 +611,35 @@ export default function EditWebinarPage() {
 
               <div className="space-y-3 mb-6">
                 <div className="font-bold text-xl">
-                  Pembicara :{" "}
+                  Speaker :{" "}
                   <span className="text-[#B6A3E8] font-bold">
-                    {webinarData.speaker || "Pembicara tidak tersedia"}
+                    {webinarData.speaker || "Speaker not available"}
                   </span>
                 </div>
 
                 <div className="font-bold text-xl">
-                  Mulai :{" "}
+                  Start Time :{" "}
                   <span className="text-[#B6A3E8] font-bold">
                     {formatDateDisplay(webinarData.dstart)}
                   </span>
                 </div>
 
                 <div className="font-bold text-xl">
-                  Selesai :{" "}
+                  End Time :{" "}
                   <span className="text-[#B6A3E8] font-bold">
                     {formatDateDisplay(webinarData.dend)}
                   </span>
                 </div>
 
                 <div className="font-bold text-xl">
-                  Max Peserta :{" "}
+                  Max Participants :{" "}
                   <span className="text-[#B6A3E8] font-bold">
-                    {webinarData.max || "Tidak terbatas"}
+                    {webinarData.max || "Unlimited"}
                   </span>
                 </div>
 
                 <div className="font-bold text-xl">
-                  Attendees :{" "}
+                  Current Attendees :{" "}
                   <span className="text-[#B6A3E8] font-bold">
                     {webinarData.att || "0"}
                   </span>
@@ -642,7 +661,7 @@ export default function EditWebinarPage() {
 
                 {webinarData.link && (
                   <div className="font-bold text-xl">
-                    Link :{" "}
+                    Webinar Link :{" "}
                     <a
                       href={webinarData.link}
                       target="_blank"
@@ -656,9 +675,9 @@ export default function EditWebinarPage() {
               </div>
 
               <div>
-                <h2 className="font-bold text-xl mb-2">Deskripsi :</h2>
+                <h2 className="font-bold text-xl mb-2">Description :</h2>
                 <p className="text-justify text-lg leading-relaxed">
-                  {webinarData.desc || "Deskripsi tidak tersedia"}
+                  {webinarData.desc || "Description not available"}
                 </p>
               </div>
             </>
@@ -675,8 +694,8 @@ export default function EditWebinarPage() {
 
                 <Input
                   color="secondary"
-                  label="Nama Webinar"
-                  placeholder="Masukkan nama webinar"
+                  label="Webinar Name *"
+                  placeholder="Enter webinar name"
                   value={editForm.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   isRequired
@@ -684,18 +703,72 @@ export default function EditWebinarPage() {
 
                 <Input
                   color="secondary"
-                  label="Pembicara"
-                  placeholder="Masukkan nama pembicara"
+                  label="Speaker *"
+                  placeholder="Enter speaker name"
                   value={editForm.speaker}
                   onChange={(e) => handleInputChange("speaker", e.target.value)}
                   isRequired
                 />
 
+                {/* Organizers/Panitia Field - NEW */}
+                <Select
+                  color="secondary"
+                  label="Organizers/Committee"
+                  placeholder="Select organizers"
+                  selectionMode="multiple"
+                  selectedKeys={editForm.organizers}
+                  onSelectionChange={(keys) => {
+                    const selectedArray = Array.from(keys as Set<string>);
+                    handleInputChange("organizers", selectedArray);
+                  }}
+                >
+                  {availableOrganizers.map((organizer) => (
+                    <SelectItem key={organizer.id}>
+                      {organizer.name} ({organizer.role})
+                    </SelectItem>
+                  ))}
+                </Select>
+
+                {/* Selected Organizers Display */}
+                {editForm.organizers.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Selected Organizers:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {editForm.organizers.map((organizerId) => {
+                        const organizer = availableOrganizers.find(
+                          (org) => org.id === organizerId
+                        );
+                        return (
+                          <div
+                            key={organizerId}
+                            className="bg-secondary-100 text-secondary-600 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                          >
+                            {organizer?.name} ({organizer?.role})
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newOrganizers =
+                                  editForm.organizers.filter(
+                                    (id) => id !== organizerId
+                                  );
+                                handleInputChange("organizers", newOrganizers);
+                              }}
+                              className="text-secondary-500 hover:text-secondary-700"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Date Start - Pisah date dan time seperti AddWebinar */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
-                    label="Date Start"
+                    label="Start Date *"
                     type="date"
                     value={editForm.dateStart}
                     onChange={(e) =>
@@ -705,7 +778,7 @@ export default function EditWebinarPage() {
                   />
                   <Input
                     color="secondary"
-                    label="Time Start"
+                    label="Start Time *"
                     type="time"
                     value={editForm.timeStart}
                     onChange={(e) => handleTimeChange("start", e.target.value)}
@@ -716,7 +789,7 @@ export default function EditWebinarPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
-                    label="Date End"
+                    label="End Date *"
                     type="date"
                     value={editForm.dateEnd}
                     onChange={(e) =>
@@ -726,7 +799,7 @@ export default function EditWebinarPage() {
                   />
                   <Input
                     color="secondary"
-                    label="Time End"
+                    label="End Time *"
                     type="time"
                     value={editForm.timeEnd}
                     onChange={(e) => handleTimeChange("end", e.target.value)}
@@ -736,7 +809,7 @@ export default function EditWebinarPage() {
 
                 <Input
                   color="secondary"
-                  label="Link Webinar"
+                  label="Webinar Link"
                   placeholder="https://..."
                   value={editForm.link}
                   onChange={(e) => handleInputChange("link", e.target.value)}
@@ -744,18 +817,19 @@ export default function EditWebinarPage() {
 
                 <Input
                   color="secondary"
-                  label="Image"
+                  label="Webinar Image"
                   type="file"
                   accept="image/*"
                   onChange={handleWebinarImageUpload}
                   disabled={isImageLoading}
+                  description="Maximum file size: 3MB. Supported formats: JPG, PNG, WebP"
                 />
 
                 <Input
                   color="secondary"
-                  label="Maksimal Peserta"
+                  label="Maximum Participants *"
                   type="number"
-                  placeholder="0"
+                  placeholder="Enter maximum number of participants"
                   value={editForm.max === 0 ? "" : editForm.max.toString()}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -810,8 +884,8 @@ export default function EditWebinarPage() {
 
                 <Textarea
                   color="secondary"
-                  label="Deskripsi"
-                  placeholder="Masukkan deskripsi webinar"
+                  label="Description *"
+                  placeholder="Enter webinar description"
                   value={editForm.description}
                   onChange={(e) =>
                     handleInputChange("description", e.target.value)

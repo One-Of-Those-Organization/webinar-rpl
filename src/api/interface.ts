@@ -169,3 +169,11 @@ export interface RegisterAdmin {
   instance: string;
   picture?: string;
 }
+
+// Event Participant Register Data (POST)
+// Might be used for Committee or Participant registration
+export interface EventPartisipantRegister {
+  event_id: number;
+  role: string;
+  email?: string;
+}
