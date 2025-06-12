@@ -1,6 +1,3 @@
-import { Link } from "@heroui/link";
-import { button as buttonStyles } from "@heroui/theme";
-import DefaultLayout from "@/layouts/default_admin";
 import {
   Image,
   Button,
@@ -9,16 +6,44 @@ import {
   Card,
   CardBody,
   Skeleton,
+  Select,
+  SelectItem,
+  Chip,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from "@heroui/react";
+import { Link } from "@heroui/link";
+import { button as buttonStyles } from "@heroui/theme";
+import DefaultLayout from "@/layouts/default_admin";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth_webinar } from "@/api/auth_webinar";
+import { auth_user } from "@/api/auth_user";
+import { auth_participants } from "@/api/auth_participants";
+import { UserData } from "@/api/interface";
 import { WebinarEdit } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Edit Webinar Page
+// Icon component for dropdown
+const VerticalDotsIcon = () => (
+  <svg
+    fill="none"
+    height="24"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 12c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+      fill="currentColor"
+    />
+  </svg>
+);
 
+// Edit Webinar Page
 export default function EditWebinarPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -28,6 +53,12 @@ export default function EditWebinarPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // States untuk menyimpan data Panitia
+  const [panitiaData, setPanitiaData] = useState<any[]>([]);
+  const [existingCommittee, setExistingCommittee] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isLoadingCommittee, setIsLoadingCommittee] = useState(false);
 
   // States tambahan untuk image upload
   const [error, setError] = useState("");
@@ -50,6 +81,7 @@ export default function EditWebinarPage() {
     max: 0,
     eventmId: 0,
     certId: 0,
+    panitia: [] as string[],
   });
 
   // Load data webinar saat component mount
@@ -90,7 +122,11 @@ export default function EditWebinarPage() {
             max: webinar.max || 0,
             eventmId: webinar.event_mat_id || 1,
             certId: webinar.cert_template_id || 1,
+            panitia: webinar.panitia || [],
           });
+
+          // Load existing committee members
+          await loadExistingCommittee(parseInt(id));
         } else {
           toast.error("Failed to load webinar data");
           navigate("/admin/webinar");
@@ -105,6 +141,43 @@ export default function EditWebinarPage() {
 
     loadData();
   }, [id, navigate]);
+
+  // Auto-load users when entering edit mode
+  useEffect(() => {
+    if (isEditMode && panitiaData.length === 0) {
+      handleFetchUser();
+    }
+  }, [isEditMode]);
+
+  // Function untuk load existing committee members
+  const loadExistingCommittee = async (eventId: any) => {
+    try {
+      setIsLoadingCommittee(true);
+      // API call untuk get participants by event ID dengan role committee
+      const response =
+        await auth_participants.get_participants_by_event(eventId);
+
+      if (response.success) {
+        const committeeMembers = response.data.filter(
+          (participant: any) => participant.EventPRole === "committee"
+        );
+        setExistingCommittee(committeeMembers);
+
+        // Update form panitia dengan existing committee emails
+        const existingEmails = committeeMembers.map(
+          (member: any) => member.User.UserEmail
+        );
+        setEditForm((prev) => ({
+          ...prev,
+          panitia: existingEmails,
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to load existing committee:", error);
+    } finally {
+      setIsLoadingCommittee(false);
+    }
+  };
 
   // Function untuk extract date dari datetime string
   const extractDate = (dateTimeStr: string): string => {
@@ -259,7 +332,113 @@ export default function EditWebinarPage() {
     reader.readAsDataURL(file);
   };
 
-  // Function untuk save edit webinar
+  const handleFetchUser = async () => {
+    try {
+      setIsLoadingUsers(true);
+      const response = await auth_user.get_all_users();
+      if (response.success) {
+        const userData = response.data;
+        const formattedUserData = userData.map((user: any) => ({
+          id: user.ID,
+          role: user.UserRole,
+          name: user.UserFullName,
+          email: user.UserEmail,
+        }));
+        setPanitiaData(formattedUserData);
+      } else {
+        toast.error("Failed to fetch user data");
+      }
+    } catch (error) {
+      toast.error("Failed to fetch user data");
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Function untuk register user sebagai committee
+  const registEventParticipant = async (udata: UserData, eid: number) => {
+    try {
+      const requestData = {
+        id: eid,
+        email: udata.UserEmail,
+        role: "committee",
+      };
+
+      const response =
+        await auth_participants.event_participate_register(requestData);
+
+      if (response.success) {
+        return true;
+      } else {
+        toast.error(
+          `Failed to register user ${udata.UserFullName} (${udata.UserEmail}) as committee: ${response.message || "Unknown error"}`
+        );
+        return false;
+      }
+    } catch (error) {
+      toast.error(
+        `An error occurred while registering user ${udata.UserFullName} (${udata.UserEmail}) as committee`
+      );
+      return false;
+    }
+  };
+
+  // Function untuk change role committee ke normal
+  const handleChangeRole = async (userEmail: string, newRole: string) => {
+    if (!webinarData?.id) return;
+
+    try {
+      const response = await auth_participants.event_participate_edit({
+        event_id: webinarData.id,
+        email: userEmail,
+        event_role: newRole,
+      });
+
+      if (response.success) {
+        toast.success(`User role changed to ${newRole}`);
+        await loadExistingCommittee(webinarData.id);
+      } else {
+        toast.error("Failed to change user role");
+      }
+    } catch (error) {
+      toast.error("Error changing user role");
+    }
+  };
+
+  // Function untuk remove participant completely
+  const handleRemoveParticipant = async (userEmail: string) => {
+    if (!webinarData?.id) return;
+
+    try {
+      const response = await auth_participants.event_participate_delete({
+        event_id: webinarData.id,
+        email: userEmail,
+      });
+
+      if (response.success) {
+        toast.success("Participant removed successfully");
+        await loadExistingCommittee(webinarData.id);
+      } else {
+        toast.error("Failed to remove participant");
+      }
+    } catch (error) {
+      toast.error("Error removing participant");
+    }
+  };
+
+  // Function untuk check apakah user sudah terdaftar sebagai committee
+  const isUserAlreadyCommittee = (userEmail: string) => {
+    return existingCommittee.some(
+      (member) => member.User.UserEmail === userEmail
+    );
+  };
+
+  // Function untuk get new committee members (yang belum terdaftar)
+  const getNewCommitteeMembers = () => {
+    return editForm.panitia.filter((email) => !isUserAlreadyCommittee(email));
+  };
+
+  // Function untuk save edit webinar with committee registration
   const handleSaveEdit = async () => {
     if (!webinarData) return;
 
@@ -298,7 +477,58 @@ export default function EditWebinarPage() {
     try {
       setIsEditing(true);
 
-      // Buat object sesuai dengan WebinarEdit class
+      // Step 1: Register new committee members first
+      const newCommitteeMembers = getNewCommitteeMembers();
+      if (newCommitteeMembers.length > 0) {
+        toast.info(
+          `Registering ${newCommitteeMembers.length} new committee members...`
+        );
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const userEmail of newCommitteeMembers) {
+          const user = panitiaData.find((u) => u.email === userEmail);
+
+          if (user) {
+            const userData: UserData = {
+              UserId: user.id,
+              UserEmail: user.email,
+              UserFullName: user.name,
+              UserRole: user.role,
+              UserInstance: "",
+              UserPicture: "",
+              UserCreatedAt: "",
+            };
+
+            const success = await registEventParticipant(
+              userData,
+              webinarData.id
+            );
+            if (success) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } else {
+            failCount++;
+          }
+        }
+
+        // Toast summary for committee registration
+        if (successCount > 0) {
+          toast.success(
+            `${successCount} new committee members registered successfully!`
+          );
+          // Reload existing committee
+          await loadExistingCommittee(webinarData.id);
+        }
+        if (failCount > 0) {
+          toast.error(`${failCount} committee members failed to register`);
+        }
+      }
+
+      // Step 2: Update webinar data
       const editData = {
         id: webinarData.id || 0,
         name: editForm.name.trim(),
@@ -314,8 +544,8 @@ export default function EditWebinarPage() {
         cert_template_id: editForm.certId,
       };
 
-      // Cek apakah ada perubahan data
-      if (
+      // Cek apakah ada perubahan data webinar
+      const hasWebinarChanges = !(
         editData.name == webinarData.name &&
         editData.speaker == webinarData.speaker &&
         editData.img == webinarData.img &&
@@ -326,37 +556,45 @@ export default function EditWebinarPage() {
         editData.desc == webinarData.desc &&
         editData.event_mat_id == webinarData.event_mat_id &&
         editData.cert_template_id == webinarData.cert_template_id
-      ) {
-        toast.info("No changes detected, no update made");
+      );
+
+      if (!hasWebinarChanges && newCommitteeMembers.length === 0) {
+        toast.info("No changes detected");
         setIsEditing(false);
         return;
       }
 
-      const response = await auth_webinar.edit_webinar(editData);
+      if (hasWebinarChanges) {
+        const response = await auth_webinar.edit_webinar(editData);
 
-      if (response.success) {
-        toast.success("Webinar updated successfully!");
-        // Update local data menggunakan WebinarEdit constructor
-        const updatedWebinar = new WebinarEdit({
-          ...webinarData,
-          name: editForm.name.trim(),
-          desc: editForm.description.trim(),
-          speaker: editForm.speaker.trim(),
-          dstart: fullStartDateTime,
-          dend: fullEndDateTime,
-          link: editForm.link.trim(),
-          img: editForm.imageUrl.trim(),
-          max: editForm.max,
-          event_mat_id: editForm.eventmId,
-          cert_template_id: editForm.certId,
-        });
+        if (response.success) {
+          toast.success("Webinar updated successfully!");
 
-        setWebinarData(updatedWebinar);
-        setIsEditMode(false);
-        setError("");
-      } else {
-        toast.error("Failed to update webinar");
+          // Update local data
+          const updatedWebinar = new WebinarEdit({
+            ...webinarData,
+            name: editForm.name.trim(),
+            desc: editForm.description.trim(),
+            speaker: editForm.speaker.trim(),
+            dstart: fullStartDateTime,
+            dend: fullEndDateTime,
+            link: editForm.link.trim(),
+            img: editForm.imageUrl.trim(),
+            max: editForm.max,
+            event_mat_id: editForm.eventmId,
+            cert_template_id: editForm.certId,
+          });
+
+          setWebinarData(updatedWebinar);
+        } else {
+          toast.error("Failed to update webinar");
+          return; // Don't exit edit mode if webinar update failed
+        }
       }
+
+      // Step 3: Success - exit edit mode
+      setIsEditMode(false);
+      setError("");
     } catch (error) {
       toast.error("Failed to save changes. Please try again.");
     } finally {
@@ -382,6 +620,7 @@ export default function EditWebinarPage() {
       max: webinarData.max || 0,
       eventmId: webinarData.event_mat_id || 1,
       certId: webinarData.cert_template_id || 1,
+      panitia: existingCommittee.map((member) => member.User.UserEmail),
     });
 
     // Reset preview image juga
@@ -451,7 +690,7 @@ export default function EditWebinarPage() {
     );
   }
 
-  // Main
+  // Main component render
   return (
     <DefaultLayout>
       <section>
@@ -604,6 +843,31 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
+                {/* Committee Members Display */}
+                <div className="font-bold text-xl">
+                  Committee Members :{" "}
+                  {isLoadingCommittee ? (
+                    <span className="text-gray-500">Loading...</span>
+                  ) : existingCommittee.length > 0 ? (
+                    <div className="mt-2">
+                      <div className="flex flex-wrap gap-2">
+                        {existingCommittee.map((member, index) => (
+                          <Chip
+                            key={index}
+                            color="secondary"
+                            variant="flat"
+                            size="sm"
+                          >
+                            {member.User.UserFullName} ({member.User.UserEmail})
+                          </Chip>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-gray-500">No committee assigned</span>
+                  )}
+                </div>
+
                 <div className="font-bold text-xl">
                   Event Material ID :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -670,6 +934,131 @@ export default function EditWebinarPage() {
                   onChange={(e) => handleInputChange("speaker", e.target.value)}
                   isRequired
                 />
+
+                {/* Committee Members Section */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Committee Members
+                  </label>
+
+                  {/* Existing Committee Display with Dropdown Actions */}
+                  {existingCommittee.length > 0 && (
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-sm font-medium text-gray-700 mb-2">
+                        Current Committee Members:
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {existingCommittee.map((member, index) => {
+                          return (
+                            <div
+                              key={`existing-${member.User.UserEmail}-${member.User.UserId || index}`}
+                              className="flex items-center gap-2"
+                            >
+                              <Chip color="success" variant="flat" size="sm">
+                                {member.User.UserFullName || "Unknown"}
+                                <span className="text-xs ml-1">
+                                  ({member.User.UserEmail || "No Email"})
+                                </span>
+                              </Chip>
+                              <Dropdown>
+                                <DropdownTrigger>
+                                  <Button
+                                    isIconOnly
+                                    radius="full"
+                                    size="sm"
+                                    variant="light"
+                                  >
+                                    <VerticalDotsIcon />
+                                  </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu>
+                                  <DropdownItem
+                                    key="normal"
+                                    onPress={() =>
+                                      handleChangeRole(
+                                        member.User.UserEmail,
+                                        "normal"
+                                      )
+                                    }
+                                  >
+                                    Change to Normal
+                                  </DropdownItem>
+                                  <DropdownItem
+                                    key="remove"
+                                    className="text-danger"
+                                    onPress={() =>
+                                      handleRemoveParticipant(
+                                        member.User.UserEmail
+                                      )
+                                    }
+                                  >
+                                    Remove from Event
+                                  </DropdownItem>
+                                </DropdownMenu>
+                              </Dropdown>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <Select
+                    color="secondary"
+                    label="Select Committee Members"
+                    placeholder={
+                      isLoadingUsers
+                        ? "Loading users..."
+                        : "Choose committee members for this webinar"
+                    }
+                    selectionMode="multiple"
+                    selectedKeys={editForm.panitia}
+                    onSelectionChange={(keys) => {
+                      const selectedEmails = Array.from(keys) as string[];
+                      setEditForm((prev) => ({
+                        ...prev,
+                        panitia: selectedEmails,
+                      }));
+                    }}
+                    className="w-full"
+                    variant="bordered"
+                    isDisabled={isLoadingUsers}
+                  >
+                    {panitiaData.map((user) => (
+                      <SelectItem
+                        key={user.email}
+                        textValue={`${user.name} (${user.role})`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {user.name}
+                            {isUserAlreadyCommittee(user.email) && (
+                              <span className="text-green-600 text-xs ml-1">
+                                (Already assigned)
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {user.role} - {user.email}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </Select>
+
+                  {/* Committee Selection Info */}
+                  {editForm.panitia.length > 0 && (
+                    <div className="text-sm text-gray-600">
+                      Selected: {editForm.panitia.length} member(s)
+                      {getNewCommitteeMembers().length > 0 && (
+                        <span className="text-blue-600 ml-1">
+                          ({getNewCommitteeMembers().length} new will be
+                          registered when saved)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Date Start - Pisah date dan time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
