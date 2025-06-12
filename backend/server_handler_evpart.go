@@ -130,7 +130,7 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Event participant with the event_id : %d, and user_id : %d doesnt exist, %v", body.EventId, currentUser.ID, res.Error),
-                "error_code": 9,
+                "error_code": 11,
                 "data": nil,
             })
         }
