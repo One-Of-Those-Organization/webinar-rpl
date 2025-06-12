@@ -175,7 +175,7 @@ export interface RegisterAdmin {
 // Event Participant Register Data (POST)
 // Might be used for Committee or Participant registration
 export interface EventPartisipantRegister {
-  event_id: number;
+  id: number;
   role: string;
   email?: string;
 }
