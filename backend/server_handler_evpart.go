@@ -134,6 +134,14 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
+        if exists {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to register this user again.",
+                "error_code": 12,
+                "data": nil,
+            })
+        }
 
         random_strings := RandStringBytes(backend, fmt.Sprintf("%s-%d-%d-%d", currentUser.UserEmail, body.EventId, backend.rand.Int(), backend.rand.Int()))
 
