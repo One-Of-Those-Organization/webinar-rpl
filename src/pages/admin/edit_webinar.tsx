@@ -9,14 +9,10 @@ import {
   Card,
   CardBody,
   Skeleton,
-  Select,
-  SelectItem,
-  Chip,
 } from "@heroui/react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth_webinar } from "@/api/auth_webinar";
-import { auth_user } from "@/api/auth_user";
 import { WebinarEdit } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -33,10 +29,6 @@ export default function EditWebinarPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // State untuk panitia
-  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
-  const [isPanitiaLoading, setIsPanitiaLoading] = useState(false);
-
   // States tambahan untuk image upload
   const [error, setError] = useState("");
   const [isImageLoading, setIsImageLoading] = useState(false);
@@ -49,7 +41,6 @@ export default function EditWebinarPage() {
     name: "",
     description: "",
     speaker: "",
-    panitia: [] as string[],
     dateStart: "",
     timeStart: "",
     dateEnd: "",
@@ -61,41 +52,9 @@ export default function EditWebinarPage() {
     certId: 0,
   });
 
-  // Fungsi untuk mengambil data user dari API
-  const fetchUserData = async () => {
-    try {
-      setIsPanitiaLoading(true);
-      const response = await auth_user.get_all_users();
-
-      if (response.success) {
-        const users = response.data || [];
-        const formattedUsers = users.map((user: any) => ({
-          id: user.id || user.ID,
-          role: user.role || user.UserRole,
-          email: user.email || user.UserEmail || "",
-        }));
-
-        setAvailableUsers(formattedUsers);
-        console.log("Available users loaded:", formattedUsers);
-        return formattedUsers;
-      } else {
-        toast.error("Failed to load user data");
-        return [];
-      }
-    } catch (error) {
-      toast.error("Failed to load user data");
-      return [];
-    } finally {
-      setIsPanitiaLoading(false);
-    }
-  };
-
-  // Load data webinar dan user saat component mount
+  // Load data webinar saat component mount
   useEffect(() => {
     const loadData = async () => {
-      // Load user data pertama
-      await fetchUserData();
-
       // Check available Webinar based ID
       if (!id) {
         toast.error("Webinar ID not found");
@@ -117,21 +76,11 @@ export default function EditWebinarPage() {
             webinar.img || "https://heroui.com/images/hero-card-complete.jpeg"
           );
 
-          // Parse panitia dari data webinar
-          let panitiaArray: string[] = [];
-          if (webinar.panitia && Array.isArray(webinar.panitia)) {
-            panitiaArray = webinar.panitia;
-          } else if (webinar.panitia && typeof webinar.panitia === "string") {
-            // Jika panitia disimpan sebagai string, split berdasarkan koma
-            panitiaArray = webinar.panitia.split(",").map((p: any) => p.trim());
-          }
-
           // Set form data
           setEditForm({
             name: webinar.name || "",
             description: webinar.desc || "",
             speaker: webinar.speaker || "",
-            panitia: panitiaArray,
             dateStart: webinar.dstart ? extractDate(webinar.dstart) : "",
             timeStart: webinar.dstart ? extractTime(webinar.dstart) : "",
             dateEnd: webinar.dend ? extractDate(webinar.dend) : "",
@@ -204,10 +153,7 @@ export default function EditWebinarPage() {
   };
 
   // Function untuk handle form input changes
-  const handleInputChange = (
-    field: string,
-    value: string | number | string[]
-  ) => {
+  const handleInputChange = (field: string, value: string | number) => {
     setEditForm((prev) => ({
       ...prev,
       [field]: value,
@@ -317,44 +263,17 @@ export default function EditWebinarPage() {
   const handleSaveEdit = async () => {
     if (!webinarData) return;
 
-    // Validasi form
-    if (!editForm.name.trim()) {
-      toast.info("Webinar name cannot be empty");
-      return;
-    }
-
-    if (!editForm.speaker.trim()) {
-      toast.info("Speaker name cannot be empty");
-      return;
-    }
-
-    if (!editForm.dateStart) {
-      toast.info("Start date cannot be empty");
-      return;
-    }
-
-    if (!editForm.timeStart) {
-      toast.info("Start time cannot be empty");
-      return;
-    }
-
-    if (!editForm.dateEnd) {
-      toast.info("End date cannot be empty");
-      return;
-    }
-
-    if (!editForm.timeEnd) {
-      toast.info("End time cannot be empty");
-      return;
-    }
-
-    if (!editForm.description.trim()) {
-      toast.info("Description cannot be empty");
-      return;
-    }
-
-    if (editForm.max <= 0) {
-      toast.info("Maximum participants must be greater than 0");
+    if (
+      !editForm.name ||
+      !editForm.speaker ||
+      !editForm.dateStart ||
+      !editForm.timeStart ||
+      !editForm.dateEnd ||
+      !editForm.timeEnd ||
+      !editForm.description ||
+      editForm.max <= 0
+    ) {
+      toast.info("Please fill in all required fields");
       return;
     }
 
@@ -393,14 +312,9 @@ export default function EditWebinarPage() {
         att: webinarData.att || "",
         event_mat_id: editForm.eventmId,
         cert_template_id: editForm.certId,
-        panitia: editForm.panitia, // Tambahkan array panitia ke API call
       };
 
       // Cek apakah ada perubahan data
-      const isPanitiaChanged =
-        JSON.stringify(editData.panitia) !==
-        JSON.stringify(webinarData.panitia);
-
       if (
         editData.name == webinarData.name &&
         editData.speaker == webinarData.speaker &&
@@ -411,8 +325,7 @@ export default function EditWebinarPage() {
         editData.dend == webinarData.dend &&
         editData.desc == webinarData.desc &&
         editData.event_mat_id == webinarData.event_mat_id &&
-        editData.cert_template_id == webinarData.cert_template_id &&
-        !isPanitiaChanged
+        editData.cert_template_id == webinarData.cert_template_id
       ) {
         toast.info("No changes detected, no update made");
         setIsEditing(false);
@@ -436,7 +349,6 @@ export default function EditWebinarPage() {
           max: editForm.max,
           event_mat_id: editForm.eventmId,
           cert_template_id: editForm.certId,
-          panitia: editForm.panitia,
         });
 
         setWebinarData(updatedWebinar);
@@ -461,7 +373,6 @@ export default function EditWebinarPage() {
       name: webinarData.name || "",
       description: webinarData.desc || "",
       speaker: webinarData.speaker || "",
-      panitia: webinarData.panitia || [], // Reset panitia ke data asli
       dateStart: webinarData.dstart ? extractDate(webinarData.dstart) : "",
       timeStart: webinarData.dstart ? extractTime(webinarData.dstart) : "",
       dateEnd: webinarData.dend ? extractDate(webinarData.dend) : "",
@@ -540,6 +451,7 @@ export default function EditWebinarPage() {
     );
   }
 
+  // Main
   return (
     <DefaultLayout>
       <section>
@@ -664,21 +576,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Tampilkan panitia jika ada */}
-                {webinarData.panitia && webinarData.panitia.length > 0 && (
-                  <div className="font-bold text-xl">
-                    Committee :{" "}
-                    <span className="text-[#B6A3E8] font-bold">
-                      {webinarData.panitia
-                        .map((id) => {
-                          const user = availableUsers.find((u) => u.id === id);
-                          return user ? user.name : id;
-                        })
-                        .join(", ")}
-                    </span>
-                  </div>
-                )}
-
                 <div className="font-bold text-xl">
                   Start Time :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -754,6 +651,7 @@ export default function EditWebinarPage() {
                   <div className="text-red-500 text-sm mb-4">{error}</div>
                 )}
 
+                {/* Webinar Name Field */}
                 <Input
                   color="secondary"
                   label="Webinar Name *"
@@ -763,6 +661,7 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
+                {/* Speaker Field */}
                 <Input
                   color="secondary"
                   label="Speaker *"
@@ -771,81 +670,6 @@ export default function EditWebinarPage() {
                   onChange={(e) => handleInputChange("speaker", e.target.value)}
                   isRequired
                 />
-
-                {/* Committee Field dengan data dari API */}
-                <div className="space-y-2">
-                  <Select
-                    color="secondary"
-                    label="Committee"
-                    placeholder={
-                      isPanitiaLoading
-                        ? "Loading users..."
-                        : "Select committee members"
-                    }
-                    selectionMode="multiple"
-                    selectedKeys={editForm.panitia}
-                    onSelectionChange={(keys) => {
-                      const selectedArray = Array.from(keys as Set<string>);
-                      handleInputChange("panitia", selectedArray);
-                    }}
-                    isDisabled={isPanitiaLoading}
-                  >
-                    {availableUsers.map((user) => (
-                      <SelectItem key={user.id} textValue={user.name}>
-                        {user.name}
-                        {user.role ? ` (${user.role})` : ""}
-                      </SelectItem>
-                    ))}
-                  </Select>
-
-                  {/* Button untuk refresh user data */}
-                  <Button
-                    color="secondary"
-                    size="sm"
-                    variant="flat"
-                    onPress={fetchUserData}
-                    isLoading={isPanitiaLoading}
-                    isDisabled={isPanitiaLoading}
-                  >
-                    {isPanitiaLoading
-                      ? "Loading Users..."
-                      : "Refresh User List"}
-                  </Button>
-                </div>
-
-                {/* Selected Committee Display */}
-                {editForm.panitia.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">
-                      Selected committee members:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {editForm.panitia.map((userId) => {
-                        const user = availableUsers.find(
-                          (u) => u.id === userId
-                        );
-                        const displayName = user ? user.name : userId;
-
-                        return (
-                          <Chip
-                            key={userId}
-                            onClose={() => {
-                              const newPanitia = editForm.panitia.filter(
-                                (id) => id !== userId
-                              );
-                              handleInputChange("panitia", newPanitia);
-                            }}
-                            color="secondary"
-                            variant="flat"
-                          >
-                            {displayName}
-                            {user && user.role ? ` (${user.role})` : ""}
-                          </Chip>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
 
                 {/* Date Start - Pisah date dan time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -869,6 +693,7 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
+                {/* Date End - Pisah date dan time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -890,6 +715,7 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
+                {/* Webinar Link */}
                 <Input
                   color="secondary"
                   label="Webinar Link"
@@ -898,6 +724,7 @@ export default function EditWebinarPage() {
                   onChange={(e) => handleInputChange("link", e.target.value)}
                 />
 
+                {/* Webinar Image Upload */}
                 <Input
                   color="secondary"
                   label="Webinar Image"
@@ -908,6 +735,7 @@ export default function EditWebinarPage() {
                   description="Maximum file size: 3MB. Supported formats: JPG, PNG, WebP"
                 />
 
+                {/* Maximum Participants */}
                 <Input
                   color="secondary"
                   label="Maximum Participants *"
@@ -924,7 +752,7 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Event Material ID dan Certificate Template ID */}
+                {/* Event Material Field */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -946,6 +774,7 @@ export default function EditWebinarPage() {
                     }}
                   />
 
+                  {/* Certificate Field */}
                   <Input
                     color="secondary"
                     label="Certificate Template ID"
@@ -965,6 +794,7 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
+                {/* Description Field */}
                 <Textarea
                   color="secondary"
                   label="Description *"
