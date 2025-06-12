@@ -105,7 +105,7 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
         }
 
         useThisEmail := email
-        if admin == 1 && body.CustomUserEmail != nil && *body.CustomUserEmail == "" {
+        if admin == 1 && body.CustomUserEmail != nil && *body.CustomUserEmail != "" {
             useThisEmail = *body.CustomUserEmail
         }
 
@@ -115,6 +115,21 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to fetch the specified user from db, %v", res.Error),
+                "error_code": 9,
+                "data": nil,
+            })
+        }
+
+        var exists bool
+        err = backend.db.Model(&table.EventParticipant{}).
+              Select("count(*) > 0").
+              Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventId).
+              Find(&exists).
+              Error
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Event participant with the event_id : %d, and user_id : %d doesnt exist, %v", body.EventId, currentUser.ID, res.Error),
                 "error_code": 9,
                 "data": nil,
             })
