@@ -1,3 +1,15 @@
+// API User Usage List :
+
+// 1. Register Admin ❓
+// 2. Delete User (Admin Only) ✅
+// 3. User Edit (Admin Only) ✅
+// 4. User Edit (User Only) ✅
+// 5. User Image (User Only) ✅
+// 6. Update User Profile Picture (User Only) ✅
+// 7. Get All Users (Admin Only) ✅
+// 8. Get User by Email (Admin Only) ✅
+// 9. Get User Count (Admin Only) ✅
+
 import {
   BaseResponse,
   UserEditData,

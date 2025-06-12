@@ -191,7 +191,10 @@ export default function UserManagementTable() {
         // Handle pagination after deletion
         const newFilteredUsers = updatedUsers.filter((user) =>
           searchValue
-            ? user.name.toLowerCase().includes(searchValue.toLowerCase())
+            ? user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+              user.email.toLowerCase().includes(searchValue.toLowerCase()) ||
+              user.instansi.toLowerCase().includes(searchValue.toLowerCase()) ||
+              user.role.toLowerCase().includes(searchValue.toLowerCase())
             : true
         );
         const newTotalPages = Math.ceil(newFilteredUsers.length / rowsPerPage);

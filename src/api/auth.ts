@@ -1,3 +1,7 @@
+// API Auth Usage List :
+// 1. Register User ✅
+// 2. Login User ✅
+
 import { BaseResponse, RegisterData, LoginData } from "./interface.ts";
 
 const API_URL = "http://localhost:3000";
