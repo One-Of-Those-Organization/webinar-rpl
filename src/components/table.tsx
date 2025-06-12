@@ -142,7 +142,10 @@ export default function UserManagementTable() {
   const filteredUsers = useMemo(() => {
     if (!searchValue) return users;
     return users.filter((user) =>
-      user.name.toLowerCase().includes(searchValue.toLowerCase())
+      user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchValue.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchValue.toLowerCase()) ||
+      user.instansi.toLowerCase().includes(searchValue.toLowerCase())
     );
   }, [users, searchValue]);
 
@@ -302,7 +305,7 @@ export default function UserManagementTable() {
               base: "w-full sm:max-w-[44%]",
               inputWrapper: "border-1",
             }}
-            placeholder="Search by name..."
+            placeholder="Search by name, role, email or instansi..."
             size="sm"
             startContent={<SearchIcon className="text-default-300" />}
             value={searchValue}
