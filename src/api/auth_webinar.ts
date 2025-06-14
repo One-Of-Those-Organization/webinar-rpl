@@ -1,11 +1,12 @@
-// API Usage list :
-// 1. Add Webinar
-// 2. Edit Webinar
-// 3. Delete Webinar By ID
-// 4. Get All Webinars
-// 5. Get Webinar by ID
-// 6. Post Webinar Image
-// 7. Get Total Webinar
+// API Webinar Usage list :
+
+// 1. Add Webinar ✅
+// 2. Edit Webinar ✅
+// 3. Delete Webinar By ID ✅
+// 4. Get All Webinars ✅
+// 5. Get Webinar by ID ✅
+// 6. Post Webinar Image ✅
+// 7. Get Total Webinar ✅
 
 import {
   BaseResponse,
