@@ -14,6 +14,9 @@ import (
 	"gorm.io/gorm"
 )
 
+
+// TODO: Use otp (send email) when changing password
+
 // POST : api/login
 func appHandleLogin(backend *Backend, route fiber.Router) {
     route.Post("login", func (c *fiber.Ctx) error {
