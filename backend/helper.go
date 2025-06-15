@@ -105,7 +105,7 @@ const otpExpiryDuration = 5 * time.Minute
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 func createOTPCode(backend *Backend, n int, userId int) (*table.OTP, error) {
     if n <= 0 {
-        return nil, errors.New("invalid length")
+        return nil, errors.New("invalid OTP len requested.")
     }
 
     b := make([]byte, n)
@@ -150,6 +150,6 @@ func createOTPCode(backend *Backend, n int, userId int) (*table.OTP, error) {
     return &existingOTP, nil
 }
 
-func IsOTPExpired(otp table.OTP) bool {
+func IsOTPExpired(otp *table.OTP) bool {
 	return time.Since(otp.TimeCreated) > otpExpiryDuration
 }

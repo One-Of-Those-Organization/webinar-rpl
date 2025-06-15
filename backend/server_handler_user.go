@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -13,7 +14,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
-
 
 // TODO: Use otp (send email) when changing password
 
@@ -611,6 +611,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             Password string `json:"pass"`
             Instance string `json:"instance"`
             Picture  string `json:"picture"`
+            OTPCode  string `json:"otp_code"` // accept OTP code.
         }
 
         err:= c.BodyParser(&body)
@@ -657,6 +658,35 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
                 "success": false,
                 "message": "User with that email already registered.",
                 "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        // Do the OTP check.
+        var selOTP table.OTP
+        res = backend.db.Where("otp_code = ? AND user_id = ?", body.OTPCode, userData.ID).First(&selOTP)
+        if res.Error != nil {
+            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "The specified OTP doesnt exist.",
+                    "error_code": 10,
+                    "data": nil,
+                })
+            }
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to get the otp table, %v", res.Error),
+                "error_code": 9,
+                "data": nil,
+            })
+        }
+
+        if IsOTPExpired(&selOTP) {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "The specified OTP is expired. Please request new code.",
+                "error_code": 11,
                 "data": nil,
             })
         }
