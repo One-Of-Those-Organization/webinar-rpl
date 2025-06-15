@@ -1,4 +1,7 @@
 // API Auth Usage List :
+
+// 2/2 Completed ✅
+
 // 1. Register User ✅
 // 2. Login User ✅
 
@@ -57,5 +60,5 @@ export const auth = {
         success: false,
       };
     }
-  },
+  }
 };

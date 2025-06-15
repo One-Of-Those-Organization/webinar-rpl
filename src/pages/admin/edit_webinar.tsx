@@ -791,7 +791,6 @@ export default function EditWebinarPage() {
                     size: "lg",
                   })}
                   href={webinarData.link || "#"}
-                  target="_blank"
                 >
                   Link
                 </Link>
