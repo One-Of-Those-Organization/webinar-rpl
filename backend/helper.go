@@ -10,6 +10,7 @@ import (
     "os"
     "time"
     "webrpl/table"
+    "log"
 
     "github.com/gofiber/fiber/v2"
     "github.com/golang-jwt/jwt/v5"
@@ -152,4 +153,14 @@ func createOTPCode(backend *Backend, n int, userId int) (*table.OTP, error) {
 
 func IsOTPExpired(otp *table.OTP) bool {
 	return time.Since(otp.TimeCreated) > otpExpiryDuration
+}
+
+func CleanupOTPTable(backend *Backend) {
+    expiryCutoff := time.Now().Add(-otpExpiryDuration)
+    res := backend.db.Where("created_at < ?", expiryCutoff).Delete(&table.OTP{})
+    if res.Error != nil {
+        log.Printf("Failed to cleanup OTPs: %v", res.Error)
+    } else {
+        log.Printf("Cleaned up %d expired OTP entries", res.RowsAffected)
+    }
 }
