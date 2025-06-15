@@ -1,14 +1,16 @@
 package table
 
 import (
+    "time"
     "gorm.io/gorm"
 )
 
 type OTP struct {
     gorm.Model
-    OtpID   int    `gorm:"column:otp_id;primaryKey"`
-    UserId  int    `gorm:"column:user_id"`
-    OtpCode string `gorm:"column:otp_code"`
+    ID          int       `gorm:"primaryKey"`
+    UserId      int       `gorm:"column:user_id"`
+    OtpCode     string    `gorm:"column:otp_code"`
+    TimeCreated time.Time `gorm:"column:time_created"`
 
     User    User   `gorm:"foreignKey:UserId"`
 }

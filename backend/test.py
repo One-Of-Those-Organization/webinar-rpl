@@ -1,8 +1,9 @@
 import requests
 
 # url = "http://localhost:3000/api/protected/event-participate-register"
-url = "http://localhost:3000/api/protected/event-participate-of-event-count?id=7"
-method = "GET"
+# url = "http://localhost:3000/api/protected/event-participate-of-event-count?id=7"
+url = "http://localhost:3000/api/protected/cert-register"
+method = "POST"
 bearer_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1haWwiOiJhZG1pbkB3b3dhZG1pbi5jb20iLCJleHAiOjE3NDk3MTM1NzF9.cIcq2G2VlQMKHAR_7srCCWaMPI5hJ6jZEIVmgNbD_js"
 
 headers = {
@@ -12,7 +13,8 @@ headers = {
 
 payload = {
     "id": 7,
-    "code": "YWRtaW5Ad293YWRtaW4uY29tLTctMzc4NzM5NzQyNDIzNTcyNDAxOS00MDg2MzA1NDk1OTYyNDUxNzAz",
+    "cert_temp": "test/index.html"
+    # "code": "YWRtaW5Ad293YWRtaW4uY29tLTctMzc4NzM5NzQyNDIzNTcyNDAxOS00MDg2MzA1NDk1OTYyNDUxNzAz",
 }
 
 if method.upper() == "POST":

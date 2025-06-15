@@ -4,4 +4,3 @@ export to csv all the webinar data
 
 TODO:
 - Aksually make JWT expired (see user.Valid)
-- Cert Gen (finish it today or go to jail)

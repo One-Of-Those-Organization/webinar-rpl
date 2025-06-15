@@ -1,17 +1,21 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-	"net/mail"
-	"os"
-	"webrpl/table"
+    "crypto/rand"
     "encoding/base64"
+    "errors"
+    "fmt"
+    "math/big"
+    "net/mail"
+    "os"
+    "time"
+    "webrpl/table"
+    "log"
 
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/gofiber/fiber/v2"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
+    "github.com/gofiber/fiber/v2"
+    "github.com/golang-jwt/jwt/v5"
+    "golang.org/x/crypto/bcrypt"
+    "gorm.io/gorm"
 )
 
 func isEmailValid(e string) bool {
@@ -96,4 +100,67 @@ func GetJWT(c *fiber.Ctx) (jwt.MapClaims, error) {
     }
     claims := user.Claims.(jwt.MapClaims)
     return claims, nil
+}
+
+const otpExpiryDuration = 5 * time.Minute
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+func createOTPCode(backend *Backend, n int, userId int) (*table.OTP, error) {
+    if n <= 0 {
+        return nil, errors.New("invalid OTP len requested.")
+    }
+
+    b := make([]byte, n)
+    for i := range b {
+        num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterBytes))))
+        if err != nil {
+            return nil, err
+        }
+        b[i] = letterBytes[num.Int64()]
+    }
+    result := string(b)
+
+    var existingOTP table.OTP
+    res := backend.db.Where("user_id = ?", userId).First(&existingOTP)
+
+    if res.Error != nil {
+        if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
+            return nil, res.Error
+        }
+
+        newOTP := table.OTP{
+            UserId:      userId,
+            OtpCode:     result,
+            TimeCreated: time.Now(),
+        }
+        if err := backend.db.Create(&newOTP).Error; err != nil {
+            return nil, errors.New("failed to create new OTP")
+        }
+        return &newOTP, nil
+    }
+
+    if time.Since(existingOTP.TimeCreated) < otpExpiryDuration {
+        return &existingOTP, nil
+    }
+
+    existingOTP.OtpCode = result
+    existingOTP.TimeCreated = time.Now()
+
+    if err := backend.db.Save(&existingOTP).Error; err != nil {
+        return nil, errors.New("failed to update existing OTP")
+    }
+    return &existingOTP, nil
+}
+
+func IsOTPExpired(otp *table.OTP) bool {
+	return time.Since(otp.TimeCreated) > otpExpiryDuration
+}
+
+func CleanupOTPTable(backend *Backend) {
+    expiryCutoff := time.Now().Add(-otpExpiryDuration)
+    res := backend.db.Where("created_at < ?", expiryCutoff).Delete(&table.OTP{})
+    if res.Error != nil {
+        log.Printf("Failed to cleanup OTPs: %v", res.Error)
+    } else {
+        log.Printf("Cleaned up %d expired OTP entries", res.RowsAffected)
+    }
 }
