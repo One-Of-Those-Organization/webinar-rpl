@@ -25,9 +25,10 @@ import { auth_participants } from "@/api/auth_participants";
 import { UserData } from "@/api/interface";
 import { WebinarEdit } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
+import { FaExclamationTriangle } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 
-// Icon component for dropdown
+// Dropdown menu icon
 const VerticalDotsIcon = () => (
   <svg
     fill="none"
@@ -43,31 +44,40 @@ const VerticalDotsIcon = () => (
   </svg>
 );
 
-// Edit Webinar Page
 export default function EditWebinarPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // States untuk data webinar
+  // Webinar data states
   const [webinarData, setWebinarData] = useState<WebinarEdit | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [participantCount, setParticipantCount] = useState(0);
 
-  // States untuk menyimpan data Panitia
+  // User and committee states
   const [panitiaData, setPanitiaData] = useState<any[]>([]);
   const [existingCommittee, setExistingCommittee] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingCommittee, setIsLoadingCommittee] = useState(false);
 
-  // States tambahan untuk image upload
+  // Image upload states
   const [error, setError] = useState("");
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string>(
     "https://heroui.com/images/hero-card-complete.jpeg"
   );
 
-  // States untuk form editing
+  // Confirmation modal state
+  const [showConfirmModal, setShowConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    type: "danger" as "danger" | "warning",
+  });
+
+  // Form data state
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
@@ -84,17 +94,15 @@ export default function EditWebinarPage() {
     panitia: [] as string[],
   });
 
-  // Load data webinar saat component mount
+  // Load webinar data on component mount
   useEffect(() => {
     const loadData = async () => {
-      // Check available Webinar based ID
       if (!id) {
         toast.error("Webinar ID not found");
         navigate("/admin/webinar");
         return;
       }
 
-      // API Call for Get Webinar data using ID
       try {
         setIsLoading(true);
         const result = await auth_webinar.get_webinar_by_id(parseInt(id));
@@ -103,12 +111,11 @@ export default function EditWebinarPage() {
           const webinar = WebinarEdit.fromApiResponse(result.data);
           setWebinarData(webinar);
 
-          // Set preview image
           setPreviewImage(
             webinar.img || "https://heroui.com/images/hero-card-complete.jpeg"
           );
 
-          // Set form data
+          // Initialize form with webinar data
           setEditForm({
             name: webinar.name || "",
             description: webinar.desc || "",
@@ -125,8 +132,8 @@ export default function EditWebinarPage() {
             panitia: webinar.panitia || [],
           });
 
-          // Load existing committee members
           await loadExistingCommittee(parseInt(id));
+          await get_webinar_count(parseInt(id));
         } else {
           toast.error("Failed to load webinar data");
           navigate("/admin/webinar");
@@ -142,18 +149,17 @@ export default function EditWebinarPage() {
     loadData();
   }, [id, navigate]);
 
-  // Auto-load users when entering edit mode
+  // Load users when entering edit mode
   useEffect(() => {
     if (isEditMode && panitiaData.length === 0) {
       handleFetchUser();
     }
   }, [isEditMode]);
 
-  // Function untuk load existing committee members
+  // Load existing committee members for webinar
   const loadExistingCommittee = async (eventId: any) => {
     try {
       setIsLoadingCommittee(true);
-      // API call untuk get participants by event ID dengan role committee
       const response =
         await auth_participants.get_participants_by_event(eventId);
 
@@ -163,7 +169,6 @@ export default function EditWebinarPage() {
         );
         setExistingCommittee(committeeMembers);
 
-        // Update form panitia dengan existing committee emails
         const existingEmails = committeeMembers.map(
           (member: any) => member.User.UserEmail
         );
@@ -179,7 +184,7 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Function untuk extract date dari datetime string
+  // Extract date from datetime string
   const extractDate = (dateTimeStr: string): string => {
     if (!dateTimeStr) return "";
     try {
@@ -193,7 +198,7 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Function untuk extract time dari datetime string
+  // Extract time from datetime string
   const extractTime = (dateTimeStr: string): string => {
     if (!dateTimeStr) return "";
     try {
@@ -206,7 +211,7 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Function untuk format tanggal display
+  // Format date for display in UI
   const formatDateDisplay = (dateStr: string | undefined) => {
     if (!dateStr) return "Date not available";
     try {
@@ -225,43 +230,43 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Function untuk handle form input changes
+  // Handle form input changes
   const handleInputChange = (field: string, value: string | number) => {
+    const sanitizedValue = typeof value === "string" ? value.trim() : value;
     setEditForm((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: sanitizedValue,
     }));
   };
 
-  // Function untuk handle time change
+  // Handle time field changes
   const handleTimeChange = (type: "start" | "end", value: string) => {
     if (type === "start") {
-      setEditForm((prev) => ({
-        ...prev,
-        timeStart: value,
-      }));
+      setEditForm((prev) => ({ ...prev, timeStart: value }));
     } else {
-      setEditForm((prev) => ({
-        ...prev,
-        timeEnd: value,
-      }));
+      setEditForm((prev) => ({ ...prev, timeEnd: value }));
     }
   };
 
-  // Function untuk combine date dan time
-  const combineDateAndTime = (date: string, time: string): string => {
+  // Combine date and time into ISO string
+  const combineDateAndTime = (
+    date: string,
+    time: string,
+    timezone = "UTC"
+  ): string => {
     if (!date || !time) return "";
-    return `${date}T${time}:00Z`;
+    const dateTime = new Date(`${date}T${time}:00`);
+    return timezone === "UTC" ? dateTime.toISOString() : dateTime.toString();
   };
 
-  // Function to handle webinar image upload
+  // Handle webinar image upload
   const handleWebinarImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validasi ukuran file (3MB = 3 * 1024 * 1024 bytes)
+    // Validate file size (3MB max)
     const maxSizeInBytes = 3 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       setError("Image size must be less than 3MB");
@@ -270,7 +275,7 @@ export default function EditWebinarPage() {
       return;
     }
 
-    // Validasi tipe file
+    // Validate file type
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       setError("Only JPG, JPEG, PNG, and WebP images are allowed");
@@ -285,8 +290,6 @@ export default function EditWebinarPage() {
 
     reader.onloadend = async () => {
       const base64Image = reader.result as string;
-
-      // Set preview langsung dengan base64 untuk UX yang lebih baik
       setPreviewImage(base64Image);
 
       try {
@@ -296,18 +299,10 @@ export default function EditWebinarPage() {
 
         if (response.success) {
           let serverPath = response.data?.filename || response.data;
-
           const staticUrl = serverPath;
 
-          // Simpan URL gambar ke editForm.imageUrl
-          setEditForm((prev) => ({
-            ...prev,
-            imageUrl: staticUrl,
-          }));
-
-          // Update preview dengan URL final
+          setEditForm((prev) => ({ ...prev, imageUrl: staticUrl }));
           setPreviewImage(staticUrl);
-
           toast.success("Webinar Image Uploaded Successfully!");
         } else {
           setPreviewImage(
@@ -332,6 +327,7 @@ export default function EditWebinarPage() {
     reader.readAsDataURL(file);
   };
 
+  // Fetch all users for committee selection
   const handleFetchUser = async () => {
     try {
       setIsLoadingUsers(true);
@@ -355,7 +351,7 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Function untuk register user sebagai committee
+  // Register user as committee member
   const registEventParticipant = async (udata: UserData, eid: number) => {
     try {
       const requestData = {
@@ -383,65 +379,109 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Function untuk change role committee ke normal
+  // Change user role with confirmation
   const handleChangeRole = async (userEmail: string, newRole: string) => {
     if (!webinarData?.id) return;
 
-    try {
-      const response = await auth_participants.event_participate_edit({
-        event_id: webinarData.id,
-        email: userEmail,
-        event_role: newRole,
-      });
+    if (newRole === "normal") {
+      setShowConfirmModal({
+        isOpen: true,
+        title: "Change Role",
+        message: `Change ${userEmail} from committee to normal participant?`,
+        type: "warning",
+        onConfirm: async () => {
+          setShowConfirmModal((prev) => ({ ...prev, isOpen: false }));
 
-      if (response.success) {
-        toast.success(`User role changed to ${newRole}`);
-        await loadExistingCommittee(webinarData.id);
-      } else {
-        toast.error("Failed to change user role");
+          try {
+            const response = await auth_participants.event_participate_edit({
+              event_id: webinarData.id,
+              email: userEmail,
+              event_role: newRole,
+            });
+
+            if (response.success) {
+              toast.success(`User role changed to ${newRole}`);
+              await loadExistingCommittee(webinarData.id);
+              await get_webinar_count(webinarData.id);
+            } else {
+              toast.error("Failed to change user role");
+            }
+          } catch (error) {
+            toast.error("Error changing user role");
+          }
+        },
+      });
+    } else {
+      // Direct call for other role changes
+      try {
+        const response = await auth_participants.event_participate_edit({
+          event_id: webinarData.id,
+          email: userEmail,
+          event_role: newRole,
+        });
+
+        if (response.success) {
+          toast.success(`User role changed to ${newRole}`);
+          await loadExistingCommittee(webinarData.id);
+          await get_webinar_count(webinarData.id);
+        } else {
+          toast.error("Failed to change user role");
+        }
+      } catch (error) {
+        toast.error("Error changing user role");
       }
-    } catch (error) {
-      toast.error("Error changing user role");
     }
   };
 
-  // Function untuk remove participant completely
+  // Remove participant with confirmation
   const handleRemoveParticipant = async (userEmail: string) => {
     if (!webinarData?.id) return;
 
-    try {
-      const response = await auth_participants.event_participate_delete({
-        event_id: webinarData.id,
-        email: userEmail,
-      });
+    setShowConfirmModal({
+      isOpen: true,
+      title: "Remove Participant",
+      message: `Are you sure you want to remove ${userEmail} from this webinar? This action cannot be undone.`,
+      type: "danger",
+      onConfirm: async () => {
+        setShowConfirmModal((prev) => ({ ...prev, isOpen: false }));
 
-      if (response.success) {
-        toast.success("Participant removed successfully");
-        await loadExistingCommittee(webinarData.id);
-      } else {
-        toast.error("Failed to remove participant");
-      }
-    } catch (error) {
-      toast.error("Error removing participant");
-    }
+        try {
+          const response = await auth_participants.event_participate_delete({
+            event_id: webinarData.id,
+            email: userEmail,
+          });
+
+          if (response.success) {
+            toast.success("Participant removed successfully");
+            await loadExistingCommittee(webinarData.id);
+            await get_webinar_count(webinarData.id);
+          } else {
+            toast.error("Failed to remove participant");
+          }
+        } catch (error) {
+          toast.error("Error removing participant");
+        }
+      },
+    });
   };
 
-  // Function untuk check apakah user sudah terdaftar sebagai committee
+  // Check if user is already a committee member
   const isUserAlreadyCommittee = (userEmail: string) => {
     return existingCommittee.some(
       (member) => member.User.UserEmail === userEmail
     );
   };
 
-  // Function untuk get new committee members (yang belum terdaftar)
+  // Get new committee members that need registration
   const getNewCommitteeMembers = () => {
     return editForm.panitia.filter((email) => !isUserAlreadyCommittee(email));
   };
 
-  // Function untuk save edit webinar with committee registration
+  // Save all webinar changes
   const handleSaveEdit = async () => {
     if (!webinarData) return;
 
+    // Validate required fields
     if (
       !editForm.name ||
       !editForm.speaker ||
@@ -456,7 +496,7 @@ export default function EditWebinarPage() {
       return;
     }
 
-    // Validasi tanggal
+    // Validate date logic
     const fullStartDateTime = combineDateAndTime(
       editForm.dateStart,
       editForm.timeStart
@@ -465,7 +505,6 @@ export default function EditWebinarPage() {
       editForm.dateEnd,
       editForm.timeEnd
     );
-
     const startDate = new Date(fullStartDateTime);
     const endDate = new Date(fullEndDateTime);
 
@@ -477,7 +516,7 @@ export default function EditWebinarPage() {
     try {
       setIsEditing(true);
 
-      // Step 1: Register new committee members first
+      // Register new committee members first
       const newCommitteeMembers = getNewCommitteeMembers();
       if (newCommitteeMembers.length > 0) {
         toast.info(
@@ -515,12 +554,11 @@ export default function EditWebinarPage() {
           }
         }
 
-        // Toast summary for committee registration
+        // Show registration results
         if (successCount > 0) {
           toast.success(
             `${successCount} new committee members registered successfully!`
           );
-          // Reload existing committee
           await loadExistingCommittee(webinarData.id);
         }
         if (failCount > 0) {
@@ -528,7 +566,7 @@ export default function EditWebinarPage() {
         }
       }
 
-      // Step 2: Update webinar data
+      // Update webinar data
       const editData = {
         id: webinarData.id || 0,
         name: editForm.name.trim(),
@@ -544,7 +582,7 @@ export default function EditWebinarPage() {
         cert_template_id: editForm.certId,
       };
 
-      // Cek apakah ada perubahan data webinar
+      // Check if webinar data has changed
       const hasWebinarChanges = !(
         editData.name == webinarData.name &&
         editData.speaker == webinarData.speaker &&
@@ -570,7 +608,7 @@ export default function EditWebinarPage() {
         if (response.success) {
           toast.success("Webinar updated successfully!");
 
-          // Update local data
+          // Update local webinar data
           const updatedWebinar = new WebinarEdit({
             ...webinarData,
             name: editForm.name.trim(),
@@ -588,13 +626,17 @@ export default function EditWebinarPage() {
           setWebinarData(updatedWebinar);
         } else {
           toast.error("Failed to update webinar");
-          return; // Don't exit edit mode if webinar update failed
+          return;
         }
       }
 
-      // Step 3: Success - exit edit mode
+      // Exit edit mode
       setIsEditMode(false);
       setError("");
+
+      if (hasWebinarChanges || newCommitteeMembers.length > 0) {
+        await get_webinar_count(webinarData.id);
+      }
     } catch (error) {
       toast.error("Failed to save changes. Please try again.");
     } finally {
@@ -602,11 +644,11 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Function untuk cancel edit
+  // Cancel editing and revert changes
   const handleCancelEdit = () => {
     if (!webinarData) return;
 
-    // Reset form ke data original
+    // Reset form to original data
     setEditForm({
       name: webinarData.name || "",
       description: webinarData.desc || "",
@@ -623,7 +665,6 @@ export default function EditWebinarPage() {
       panitia: existingCommittee.map((member) => member.User.UserEmail),
     });
 
-    // Reset preview image juga
     setPreviewImage(
       webinarData.img || "https://heroui.com/images/hero-card-complete.jpeg"
     );
@@ -632,12 +673,30 @@ export default function EditWebinarPage() {
     setIsEditMode(false);
   };
 
-  // Function untuk toggle edit mode
+  // Toggle edit mode
   const handleToggleEditMode = () => {
     setIsEditMode(!isEditMode);
   };
 
-  // Loading state
+  // Get participant count for webinar
+  const get_webinar_count = async (eventId: number) => {
+    const response = await auth_participants.event_participate_count(eventId);
+    try {
+      if (response.success) {
+        const count = response.data.count || 0;
+        setParticipantCount(count);
+        return count;
+      } else {
+        toast.error("Failed to fetch participant count");
+        return 0;
+      }
+    } catch (error) {
+      toast.error("Error fetching participant count");
+      return 0;
+    }
+  };
+
+  // Loading skeleton
   if (isLoading) {
     return (
       <DefaultLayout>
@@ -663,7 +722,7 @@ export default function EditWebinarPage() {
     );
   }
 
-  // If no webinar data found
+  // No data found
   if (!webinarData) {
     return (
       <DefaultLayout>
@@ -690,13 +749,11 @@ export default function EditWebinarPage() {
     );
   }
 
-  // Main component render
   return (
     <DefaultLayout>
       <section>
-        {/* Header dengan Image */}
+        {/* Image header section */}
         <div className="mb-6 flex flex-col items-center">
-          {/* Display preview image dengan loading indicator */}
           <div className="relative">
             {isImageLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-xl z-10">
@@ -711,7 +768,7 @@ export default function EditWebinarPage() {
             />
           </div>
 
-          {/* Action Buttons */}
+          {/* Action buttons */}
           <div className="flex flex-row gap-2 px-4 py-4 justify-center">
             {!isEditMode ? (
               <>
@@ -742,17 +799,6 @@ export default function EditWebinarPage() {
                   className={buttonStyles({
                     color: "secondary",
                     radius: "full",
-                    variant: "ghost",
-                    size: "lg",
-                  })}
-                  href="#"
-                >
-                  Attendees
-                </Link>
-                <Link
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
                     variant: "bordered",
                     size: "lg",
                   })}
@@ -761,7 +807,7 @@ export default function EditWebinarPage() {
                   Certificate
                 </Link>
                 <Button
-                  color="warning"
+                  color="secondary"
                   radius="full"
                   size="lg"
                   onPress={handleToggleEditMode}
@@ -796,10 +842,10 @@ export default function EditWebinarPage() {
           </div>
         </div>
 
-        {/* Content */}
+        {/* Main content */}
         <div className="px-4 py-2">
           {!isEditMode ? (
-            /* View Mode */
+            /* View mode display */
             <>
               <div className="mb-4">
                 <h1 className="font-bold text-4xl mb-2">
@@ -831,8 +877,17 @@ export default function EditWebinarPage() {
 
                 <div className="font-bold text-xl">
                   Max Participants :{" "}
-                  <span className="text-[#B6A3E8] font-bold">
-                    {webinarData.max || "Unlimited"}
+                  <span
+                    className={`font-bold ${
+                      participantCount >= (webinarData.max || 0) * 0.9
+                        ? "text-red-500"
+                        : "text-[#B6A3E8]"
+                    }`}
+                  >
+                    {participantCount}/{webinarData.max || "∞"}
+                    {participantCount >= (webinarData.max || 0) && (
+                      <span className="text-red-500 text-sm ml-2">⚠️ Full</span>
+                    )}
                   </span>
                 </div>
 
@@ -843,7 +898,7 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Committee Members Display */}
+                {/* Committee members display */}
                 <div className="font-bold text-xl">
                   Committee Members :{" "}
                   {isLoadingCommittee ? (
@@ -905,17 +960,16 @@ export default function EditWebinarPage() {
               </div>
             </>
           ) : (
-            /* Edit Mode */
+            /* Edit mode form */
             <Card>
               <CardBody className="space-y-4">
                 <h2 className="font-bold text-2xl mb-4">Edit Webinar</h2>
 
-                {/* Error display */}
                 {error && (
                   <div className="text-red-500 text-sm mb-4">{error}</div>
                 )}
 
-                {/* Webinar Name Field */}
+                {/* Basic info fields */}
                 <Input
                   color="secondary"
                   label="Webinar Name *"
@@ -925,7 +979,6 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Speaker Field */}
                 <Input
                   color="secondary"
                   label="Speaker *"
@@ -935,13 +988,13 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Committee Members Section */}
+                {/* Committee management section */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
                     Committee Members
                   </label>
 
-                  {/* Existing Committee Display with Dropdown Actions */}
+                  {/* Current committee display */}
                   {existingCommittee.length > 0 && (
                     <div className="p-3 bg-gray-50 rounded-lg">
                       <div className="text-sm font-medium text-gray-700 mb-2">
@@ -1003,6 +1056,7 @@ export default function EditWebinarPage() {
                     </div>
                   )}
 
+                  {/* Committee selection dropdown */}
                   <Select
                     color="secondary"
                     label="Select Committee Members"
@@ -1046,7 +1100,7 @@ export default function EditWebinarPage() {
                     ))}
                   </Select>
 
-                  {/* Committee Selection Info */}
+                  {/* Selection info */}
                   {editForm.panitia.length > 0 && (
                     <div className="text-sm text-gray-600">
                       Selected: {editForm.panitia.length} member(s)
@@ -1060,7 +1114,7 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
-                {/* Date Start - Pisah date dan time */}
+                {/* Date and time fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -1082,7 +1136,6 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
-                {/* Date End - Pisah date dan time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -1104,7 +1157,7 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
-                {/* Webinar Link */}
+                {/* Additional fields */}
                 <Input
                   color="secondary"
                   label="Webinar Link"
@@ -1113,7 +1166,6 @@ export default function EditWebinarPage() {
                   onChange={(e) => handleInputChange("link", e.target.value)}
                 />
 
-                {/* Webinar Image Upload */}
                 <Input
                   color="secondary"
                   label="Webinar Image"
@@ -1124,7 +1176,6 @@ export default function EditWebinarPage() {
                   description="Maximum file size: 3MB. Supported formats: JPG, PNG, WebP"
                 />
 
-                {/* Maximum Participants */}
                 <Input
                   color="secondary"
                   label="Maximum Participants *"
@@ -1141,7 +1192,7 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Event Material Field */}
+                {/* ID fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -1163,7 +1214,6 @@ export default function EditWebinarPage() {
                     }}
                   />
 
-                  {/* Certificate Field */}
                   <Input
                     color="secondary"
                     label="Certificate Template ID"
@@ -1183,7 +1233,7 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
-                {/* Description Field */}
+                {/* Description field */}
                 <Textarea
                   color="secondary"
                   label="Description *"
@@ -1199,6 +1249,53 @@ export default function EditWebinarPage() {
             </Card>
           )}
         </div>
+
+        {/* Confirmation modal */}
+        {showConfirmModal.isOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+              <div className="flex items-center gap-3 mb-4">
+                <FaExclamationTriangle
+                  className={`text-xl ${
+                    showConfirmModal.type === "danger"
+                      ? "text-red-500"
+                      : "text-yellow-500"
+                  }`}
+                />
+                <h3 className="text-lg font-semibold">
+                  {showConfirmModal.title}
+                </h3>
+              </div>
+              <p className="text-gray-600 mb-6">{showConfirmModal.message}</p>
+              <div className="flex gap-3 justify-end">
+                <Button
+                  color="default"
+                  radius="full"
+                  variant="bordered"
+                  size="sm"
+                  onPress={() =>
+                    setShowConfirmModal((prev) => ({ ...prev, isOpen: false }))
+                  }
+                >
+                  Cancel
+                </Button>
+                <Button
+                  color={
+                    showConfirmModal.type === "danger" ? "danger" : "warning"
+                  }
+                  radius="full"
+                  variant="solid"
+                  size="sm"
+                  onPress={showConfirmModal.onConfirm}
+                >
+                  {showConfirmModal.type === "danger"
+                    ? "Remove"
+                    : "Change Role"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
       <ToastContainer />
     </DefaultLayout>
