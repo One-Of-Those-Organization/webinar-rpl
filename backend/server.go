@@ -95,6 +95,9 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventParticipateAbsence(backend, protected)
     appHandleEventParticipateOfEventCount(backend, protected)
 
+    // OTP STUFF
+    appHandleGenOTP(backend, api)
+
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")
     })
