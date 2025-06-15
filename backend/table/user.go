@@ -18,5 +18,4 @@ type User struct {
     UserCreatedAt  time.Time `gorm:"column:user_created_at;type:datetime"`
 
     EventParticipants []EventParticipant `gorm:"foreignKey:UserId"`
-    OTPs              []OTP              `gorm:"foreignKey:UserId"`
 }

@@ -111,7 +111,7 @@ func GetJWT(c *fiber.Ctx) (jwt.MapClaims, error) {
 
 const otpExpiryDuration = 5 * time.Minute
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-func createOTPCode(backend *Backend, n int, userId int) (*table.OTP, error) {
+func createOTPCode(backend *Backend, n int, userEmail string) (*table.OTP, error) {
     if n <= 0 {
         return nil, errors.New("invalid OTP len requested.")
     }
@@ -127,7 +127,7 @@ func createOTPCode(backend *Backend, n int, userId int) (*table.OTP, error) {
     result := string(b)
 
     var existingOTP table.OTP
-    res := backend.db.Where("user_id = ?", userId).First(&existingOTP)
+    res := backend.db.Where("user_email = ?", userEmail).First(&existingOTP)
 
     if res.Error != nil {
         if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
@@ -135,7 +135,7 @@ func createOTPCode(backend *Backend, n int, userId int) (*table.OTP, error) {
         }
 
         newOTP := table.OTP{
-            UserId:      userId,
+            UserEmail:   userEmail,
             OtpCode:     result,
             TimeCreated: time.Now(),
         }

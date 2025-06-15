@@ -664,7 +664,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
 
         // Do the OTP check.
         var selOTP table.OTP
-        res = backend.db.Where("otp_code = ? AND user_id = ?", body.OTPCode, userData.ID).First(&selOTP)
+        res = backend.db.Where("otp_code = ? AND user_email = ?", body.OTPCode, body.Email).First(&selOTP)
         if res.Error != nil {
             if errors.Is(res.Error, gorm.ErrRecordNotFound) {
                 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{

@@ -5,12 +5,11 @@ import (
     "gorm.io/gorm"
 )
 
+// CHange userid to useremail so it work...
 type OTP struct {
     gorm.Model
     ID          int       `gorm:"primaryKey"`
-    UserId      int       `gorm:"column:user_id"`
+    UserEmail   string    `gorm:"column:user_email"`
     OtpCode     string    `gorm:"column:otp_code"`
     TimeCreated time.Time `gorm:"column:time_created"`
-
-    User    User   `gorm:"foreignKey:UserId"`
 }

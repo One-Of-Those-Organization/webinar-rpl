@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO: set the email doods
 // NOTE: Gen otp for the inserted email
 // GET : api/gen-otp-for-register
 func appHandleGenOTP(backend *Backend, route fiber.Router) {
@@ -24,20 +25,19 @@ func appHandleGenOTP(backend *Backend, route fiber.Router) {
         }
 
         // Check if the user with that email exist
-        var userObj table.User
-        res := backend.db.Where("user_email = ?", email).First(&userObj)
-        if res.Error != nil {
-            if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
+        sqlError := backend.db.Where("user_email = ?", email).First(&table.User{}).Error
+        if sqlError != nil {
+            if !errors.Is(sqlError, gorm.ErrRecordNotFound) {
                 return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                     "success": false,
-                    "message": fmt.Sprintf("Something wrong when trying to fetch from the db, %v", res.Error),
+                    "message": fmt.Sprintf("Something wrong when trying to fetch from the db, %v", sqlError),
                     "error_code": 2,
                     "data": nil,
                 })
             }
         }
 
-        newOTP, err := createOTPCode(backend, 4, userObj.ID)
+        newOTP, err := createOTPCode(backend, 4, email)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
