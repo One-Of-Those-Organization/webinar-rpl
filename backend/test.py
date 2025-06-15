@@ -2,7 +2,7 @@ import requests
 
 # url = "http://localhost:3000/api/protected/event-participate-register"
 # url = "http://localhost:3000/api/protected/event-participate-of-event-count?id=7"
-url = "http://localhost:3000/api/gen-otp-for-register?email=\"fernandoperry1234@gmail.com\""
+url = "http://localhost:3000/api/gen-otp-for-register?email=fernandoperry1234@gmail.com"
 method = "GET"
 bearer_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1haWwiOiJhZG1pbkB3b3dhZG1pbi5jb20iLCJleHAiOjE3NDk3MTM1NzF9.cIcq2G2VlQMKHAR_7srCCWaMPI5hJ6jZEIVmgNbD_js"
 
