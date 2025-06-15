@@ -65,12 +65,19 @@ func checkOrMakeAdmin(backend *Backend, secret string) bool {
     return true
 }
 
-func getCredentialFromEnv() string {
-    password := os.Getenv("SECRET_KEY")
+func getCredentialFromEnv() SecretHolder {
+    password := os.Getenv("WRPL_SECRET")
+    email := os.Getenv("WRPL_EMAIL")
+    emailAppPass := os.Getenv("WRPL_EMAPPPASS")
     if password == "" {
         password = "secret"
     }
-    return password
+    sec := SecretHolder{
+        Password: password,
+        Email: email,
+        EmailAppPassword: emailAppPass,
+    }
+    return sec
 }
 
 func HashPassword(password string) (string, error) {
