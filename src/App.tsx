@@ -10,7 +10,6 @@ import InputOTP from "@/pages/auth/input_otp";
 
 // Authorize Page
 import DashboardPage from "@/pages/dashboard";
-import DetailPage from "@/pages/detail";
 import ProfilePage from "@/pages/profile";
 import SertifikatUserPage from "@/pages/sertifikat";
 
@@ -24,7 +23,6 @@ import DasboardAdminPage from "@/pages/admin/index";
 import ManageUserPage from "@/pages/admin/manageuser";
 import WebinarPage from "@/pages/admin/webinar";
 import CreateWebinar from "@/pages/admin/add_webinar";
-import DetailAdminPage from "@/pages/admin/detail";
 import EditWebinarPage from "@/pages/admin/edit_webinar";
 import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
@@ -92,15 +90,6 @@ export default function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/detail"
-        element={
-          <ProtectedRoute>
-            <DetailPage />
           </ProtectedRoute>
         }
       />
@@ -185,16 +174,6 @@ export default function App() {
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <CreateWebinar />
-          </AdminOnlyRoute>
-        }
-      />
-
-      {/* View Webinar Detail */}
-      <Route
-        path="/admin/webinar/detail/:id"
-        element={
-          <AdminOnlyRoute requireAdmin={true}>
-            <DetailAdminPage />
           </AdminOnlyRoute>
         }
       />

@@ -24,6 +24,15 @@ const formatDateForBackend = (dateString: string): string => {
   return `${dateString}T00:00:00Z`;
 };
 
+// Fungsi untuk mendapatkan tanggal hari ini dalam format YYYY-MM-DD
+const getTodayDate = (): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 // Type untuk attendance enum
 type AttTypeEnum = "online" | "offline";
 
@@ -49,6 +58,9 @@ export default function CreateWebinar() {
   const [previewImage, setPreviewImage] = useState<string>(
     "https://heroui.com/images/hero-card-complete.jpeg"
   );
+
+  // Get today's date for min attribute
+  const todayDate = getTodayDate();
 
   // Function to handle attendance type change, cause backend expects "online" or "offline"
   const handleAttendanceChange = (value: AttTypeEnum) => {
@@ -80,11 +92,28 @@ export default function CreateWebinar() {
     // Validasi tanggal
     const startDate = new Date(webinarInput.dstart);
     const endDate = new Date(webinarInput.dend);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time untuk perbandingan tanggal saja
+
+    // Validasi tanggal tidak boleh sebelum hari ini
+    if (startDate < today) {
+      setError("Start date cannot be before today");
+      toast.error("Start date cannot be before today");
+      return;
+    }
+
+    if (endDate < today) {
+      setError("End date cannot be before today");
+      toast.error("End date cannot be before today");
+      return;
+    }
+
     if (startDate >= endDate) {
       setError("End date must be after start date");
       toast.error("End date must be after start date");
       return;
     }
+
     setIsLoading(true);
     try {
       // Get Webinar Data
@@ -289,6 +318,7 @@ export default function CreateWebinar() {
                     color="secondary"
                     label="Max Attendees"
                     type="number"
+                    min={1}
                     variant="flat"
                     value={
                       webinarInput.max === 0 ? "" : webinarInput.max.toString()
@@ -304,13 +334,14 @@ export default function CreateWebinar() {
                     required
                   />
 
-                  {/* Date Inputs - Now with separate date and time inputs */}
+                  {/* Date Inputs - Now with min attribute to disable past dates */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
                       color="secondary"
                       label="Date Start"
                       type="date"
                       variant="flat"
+                      min={todayDate} // ✅ Disable tanggal sebelum hari ini
                       value={webinarInput.dstart.split("T")[0]}
                       className="w-full"
                       onChange={(e) =>
@@ -340,6 +371,7 @@ export default function CreateWebinar() {
                       label="Date End"
                       type="date"
                       variant="flat"
+                      min={webinarInput.dstart.split("T")[0] || todayDate} // ✅ End date minimal sama dengan start date atau hari ini
                       value={webinarInput.dend.split("T")[0]}
                       className="w-full"
                       onChange={(e) =>

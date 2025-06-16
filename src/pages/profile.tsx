@@ -35,12 +35,12 @@ export default function ProfilPage() {
     createdAt: "",
   });
 
-  // Check for unsaved changes
+  // ✅ Check for unsaved changes - termasuk gambar
   useEffect(() => {
     const hasChanges =
       userData.name !== originalData.name ||
       userData.instance !== originalData.instance ||
-      userData.profile !== originalData.profile;
+      userData.profile !== originalData.profile; // ✅ Deteksi perubahan gambar
     setHasUnsavedChanges(hasChanges);
   }, [userData, originalData]);
 
@@ -166,8 +166,17 @@ export default function ProfilPage() {
     toast.info("You can now edit your profile");
   };
 
-  // Handle image change
+  // ✅ Handle image change - hanya bisa dijalankan saat editing
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // ✅ Blokir jika tidak dalam mode edit
+    if (!isEditing) {
+      toast.warning(
+        "Please enter edit mode first to change your profile picture"
+      );
+      e.target.value = "";
+      return;
+    }
+
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -185,41 +194,26 @@ export default function ProfilPage() {
       return;
     }
 
-    toast.info("Uploading image...");
+    toast.info("Processing image...");
     const reader = new FileReader();
 
     reader.onloadend = async () => {
       const base64Image = reader.result as string;
 
       try {
-        setUserData((prev) => ({ ...prev, profile: base64Image }));
-
+        // ✅ Upload image to server
         const response = await auth_user.user_image({ data: base64Image });
 
         if (response.success) {
           let serverPath = response.data?.filename || "";
           const staticUrl = serverPath;
 
-          const userData = JSON.parse(
-            localStorage.getItem("user_data") || "{}"
-          );
-          userData.UserPicture = staticUrl;
-          localStorage.setItem("user_data", JSON.stringify(userData));
-
+          // ✅ Update userData state untuk trigger unsaved changes detection
           setUserData((prev) => ({ ...prev, profile: staticUrl }));
-          setOriginalData((prev) => ({ ...prev, profile: staticUrl }));
 
-          const resp = await auth_user.post_update_user_pfp(
-            response.data.filename
-          );
-
-          if (!resp.success) {
-            toast.error("Failed to update image");
-          } else {
-            toast.success("Profile picture updated successfully!");
-          }
+          toast.success("Image uploaded! Remember to save your changes.");
         } else {
-          toast.error("Failed to update image");
+          toast.error("Failed to upload image");
         }
       } catch (error) {
         toast.error("Error uploading image");
@@ -229,31 +223,18 @@ export default function ProfilPage() {
     reader.readAsDataURL(file);
   };
 
-  // Handle image removal
+  // ✅ Handle image removal - hanya bisa dijalankan saat editing
   const handleRemoveImage = async () => {
-    try {
-      const response = await auth_user.user_edit({
-        name: userData.name,
-        instance: userData.instance,
-        picture: "/logo_if.png",
-      });
-
-      if (response.success) {
-        toast.success("Profile picture removed");
-
-        if (user_data) {
-          const userDataObj = JSON.parse(user_data);
-          userDataObj.UserPicture = "/logo_if.png";
-          localStorage.setItem("user_data", JSON.stringify(userDataObj));
-          setUserData((prev) => ({ ...prev, profile: "/logo_if.png" }));
-          setOriginalData((prev) => ({ ...prev, profile: "/logo_if.png" }));
-        }
-      } else {
-        toast.error("Failed to remove image");
-      }
-    } catch (error) {
-      toast.error("Error removing image");
+    if (!isEditing) {
+      toast.warning(
+        "Please enter edit mode first to remove your profile picture"
+      );
+      return;
     }
+
+    // ✅ Set ke default image dan trigger unsaved changes
+    setUserData((prev) => ({ ...prev, profile: "/logo_if.png" }));
+    toast.success("Profile picture will be removed when you save changes");
   };
 
   const handleChangePassword = () => {
@@ -324,13 +305,26 @@ export default function ProfilPage() {
               width={200}
               height={200}
             />
-            <label className="absolute -bottom-1 -right-[0px] z-10 bg-secondary-500 text-white rounded-full p-2 cursor-pointer">
+            {/* ✅ Camera icon hanya aktif saat editing */}
+            <label
+              className={`absolute -bottom-1 -right-[0px] z-10 rounded-full p-2 ${
+                isEditing
+                  ? "bg-secondary-500 text-white cursor-pointer hover:bg-secondary-600 transition-colors"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              title={
+                isEditing
+                  ? "Change profile picture"
+                  : "Enter edit mode to change picture"
+              }
+            >
               <FaCamera className="w-5 h-5" />
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
+                disabled={!isEditing} // ✅ Disable input saat tidak editing
               />
             </label>
           </div>
@@ -339,10 +333,11 @@ export default function ProfilPage() {
             className={buttonStyles({
               color: "secondary",
               radius: "full",
-              variant: "solid",
+              variant: isEditing ? "solid" : "bordered",
               size: "sm",
             })}
             onClick={handleRemoveImage}
+            disabled={!isEditing} // ✅ Disable saat tidak editing
           >
             Remove
           </Button>
@@ -414,6 +409,17 @@ export default function ProfilPage() {
             {...(!isEditing && { readOnly: true })}
             isRequired
           />
+
+          {/* ✅ Indicator untuk perubahan gambar */}
+          {hasUnsavedChanges &&
+            userData.profile !== originalData.profile &&
+            isEditing && (
+              <div className="w-full">
+                <p className="text-orange-500 text-xs font-medium">
+                  • Profile picture changed - remember to save your changes
+                </p>
+              </div>
+            )}
 
           <div className="flex justify-center lg:justify-start gap-2 pt-4 w-full">
             {isEditing ? (

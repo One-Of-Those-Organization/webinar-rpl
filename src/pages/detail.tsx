@@ -60,7 +60,7 @@ export default function DetailPage() {
               })}
               href="#"
             >
-              Absensi
+              Presensi
             </Link>
             <Link
               className={buttonStyles({
