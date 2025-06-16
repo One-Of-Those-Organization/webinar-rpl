@@ -32,21 +32,6 @@ class TestApi:
         status = "PASSED" if self.send(expected_err_code) else "FAIL"
         print(f"[{status}]: {self.desc}")
 
-if __name__ == "__main__":
-    test1 = TestApi(
-        "gen-otp-for-register?email=fernandoperry1234@gmail.com",
-        method="GET",
-        desc="Test the gen OTP. If given a valid email, it should return error_code 0."
-    )
-    test1.test(0)
-
-    test2 = TestApi(
-        "gen-otp-for-register?email=kuuun",
-        method="GET",
-        desc="Test the gen OTP with invalid email, it should return error_code 1."
-    )
-    test2.test(1)
-
 # bearer_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1haWwiOiJhZG1pbkB3b3dhZG1pbi5jb20iLCJleHAiOjE3NDk3MTM1NzF9.cIcq2G2VlQMKHAR_7srCCWaMPI5hJ6jZEIVmgNbD_js"
 
 # headers = {
