@@ -4,18 +4,21 @@ import (
     "fmt"
     "errors"
 	"webrpl/table"
+    "regexp"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
-// TODO: set the email doods
 // NOTE: Gen otp for the inserted email
 // GET : api/gen-otp-for-register
 func appHandleGenOTP(backend *Backend, route fiber.Router) {
     route.Get("gen-otp-for-register", func (c *fiber.Ctx) error {
         email := c.Query("email")
-        if email == "" {
+        emailRegex := `^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`
+        re := regexp.MustCompile(emailRegex)
+
+        if email == "" || !re.MatchString(email) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid email.",
@@ -60,6 +63,39 @@ func appHandleGenOTP(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "Generated the OTP please check console or email.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// POST : api/protected/cleanup-otp-code
+func appHandleCleanupOTP(backend *Backend, route fiber.Router) {
+    route.Post("cleanup-otp-code", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claim JWT Token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        admin := claims["admin"].(float64)
+        if admin != 1 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid Credentials.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        CleanupOTPTable(backend)
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Unused OTP code cleaned up.",
             "error_code": 0,
             "data": nil,
         })

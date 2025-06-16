@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Canvas Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            padding: 20px;
+        }
+
+        .editor-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .canvas {
+            width: 800px;
+            height: 600px;
+            background: #ff4444;
+            position: relative;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .draggable-object {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            cursor: move;
+            user-select: none;
+            min-width: 100px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .draggable-object:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .draggable-object.selected {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+        }
+
+        .draggable-object.dragging {
+            z-index: 1000;
+            opacity: 0.8;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #007bff;
+            border: 1px solid white;
+            border-radius: 2px;
+        }
+
+        .resize-handle.se {
+            bottom: -5px;
+            right: -5px;
+            cursor: se-resize;
+        }
+
+        .resize-handle.sw {
+            bottom: -5px;
+            left: -5px;
+            cursor: sw-resize;
+        }
+
+        .resize-handle.ne {
+            top: -5px;
+            right: -5px;
+            cursor: ne-resize;
+        }
+
+        .resize-handle.nw {
+            top: -5px;
+            left: -5px;
+            cursor: nw-resize;
+        }
+
+        .toolbar button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .toolbar button:hover {
+            background: #0056b3;
+        }
+
+        .toolbar button.export {
+            background: #28a745;
+        }
+
+        .toolbar button.export:hover {
+            background: #218838;
+        }
+
+        .object-properties {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .property-group {
+            margin-bottom: 15px;
+        }
+
+        .property-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .property-group input, .property-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .property-group input[type="color"] {
+            height: 40px;
+            padding: 4px;
+            cursor: pointer;
+        }
+
+        .property-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .export-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+        }
+
+        .export-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .export-code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar">
+            <button onclick="addObject('UserName')">Add UserName</button>
+            <button onclick="addObject('EventName')">Add EventName</button>
+            <button onclick="addObject('UnikID')">Add UnikID</button>
+            <button onclick="deleteSelected()">Delete Selected</button>
+            <button onclick="clearCanvas()">Clear Canvas</button>
+            <button class="export" onclick="exportCanvas()">Export HTML</button>
+        </div>
+
+        <div class="canvas" id="canvas">
+            <!-- Default objects -->
+            <div class="draggable-object" data-type="UserName" style="left: 50px; top: 50px; width: 150px; height: 50px; color: #000000; font-size: 16px; font-weight: bold; font-style: normal; text-decoration: none;">
+                UserName
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+            <div class="draggable-object" data-type="EventName" style="left: 250px; top: 150px; width: 180px; height: 60px; color: #000000; font-size: 16px; font-weight: bold; font-style: normal; text-decoration: none;">
+                EventName
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+            <div class="draggable-object" data-type="UnikID" style="left: 100px; top: 300px; width: 120px; height: 45px; color: #000000; font-size: 16px; font-weight: bold; font-style: normal; text-decoration: none;">
+                UnikID
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            </div>
+        </div>
+
+        <div class="object-properties">
+            <h3>Object Properties</h3>
+            <div id="properties-content">
+                <p>Select an object to edit its properties</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="export-modal" id="exportModal">
+        <div class="export-modal-content">
+            <h3>Exported HTML Template</h3>
+            <p>Copy the code below and save it as an HTML file. The template uses Go template syntax for dynamic content:</p>
+            <div class="export-code" id="exportCode"></div>
+            <div style="text-align: right; margin-top: 15px;">
+                <button onclick="downloadExport()">Download File</button>
+                <button onclick="copyToClipboard()">Copy to Clipboard</button>
+                <button onclick="closeExportModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isDragging = false;
+        let isResizing = false;
+        let currentElement = null;
+        let selectedElement = null;
+        let startX = 0;
+        let startY = 0;
+        let startWidth = 0;
+        let startHeight = 0;
+        let startLeft = 0;
+        let startTop = 0;
+        let resizeDirection = '';
+        let objectCounter = { UserName: 1, EventName: 1, UnikID: 1 };
+
+        const canvas = document.getElementById('canvas');
+        const propertiesContent = document.getElementById('properties-content');
+
+        // Initialize drag and resize functionality for existing objects
+        document.addEventListener('DOMContentLoaded', function() {
+            const objects = document.querySelectorAll('.draggable-object');
+            objects.forEach(obj => {
+                initializeObject(obj);
+            });
+        });
+
+        function initializeObject(element) {
+            // Click to select
+            element.addEventListener('click', function(e) {
+                e.stopPropagation();
+                selectObject(element);
+            });
+
+            // Drag functionality
+            element.addEventListener('mousedown', function(e) {
+                if (e.target.classList.contains('resize-handle')) return;
+
+                isDragging = true;
+                currentElement = element;
+                element.classList.add('dragging');
+
+                const rect = element.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+
+                startX = e.clientX - rect.left;
+                startY = e.clientY - rect.top;
+
+                selectObject(element);
+                e.preventDefault();
+            });
+
+            // Resize functionality
+            const resizeHandles = element.querySelectorAll('.resize-handle');
+            resizeHandles.forEach(handle => {
+                handle.addEventListener('mousedown', function(e) {
+                    isResizing = true;
+                    currentElement = element;
+                    resizeDirection = handle.classList[1]; // nw, ne, sw, se
+
+                    const rect = element.getBoundingClientRect();
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startWidth = parseInt(getComputedStyle(element).width);
+                    startHeight = parseInt(getComputedStyle(element).height);
+                    startLeft = parseInt(element.style.left);
+                    startTop = parseInt(element.style.top);
+
+                    selectObject(element);
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+            });
+        }
+
+        // Global mouse events
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging && currentElement) {
+                const canvasRect = canvas.getBoundingClientRect();
+                const newLeft = e.clientX - canvasRect.left - startX;
+                const newTop = e.clientY - canvasRect.top - startY;
+
+                // Keep within canvas bounds
+                const maxLeft = canvas.clientWidth - currentElement.offsetWidth;
+                const maxTop = canvas.clientHeight - currentElement.offsetHeight;
+
+                currentElement.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+                currentElement.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+
+                updateProperties();
+            }
+
+            if (isResizing && currentElement) {
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                let newWidth = startWidth;
+                let newHeight = startHeight;
+                let newLeft = startLeft;
+                let newTop = startTop;
+
+                switch(resizeDirection) {
+                    case 'se': // Southeast
+                        newWidth = Math.max(100, startWidth + deltaX);
+                        newHeight = Math.max(40, startHeight + deltaY);
+                        break;
+                    case 'sw': // Southwest
+                        newWidth = Math.max(100, startWidth - deltaX);
+                        newHeight = Math.max(40, startHeight + deltaY);
+                        newLeft = startLeft + deltaX;
+                        break;
+                    case 'ne': // Northeast
+                        newWidth = Math.max(100, startWidth + deltaX);
+                        newHeight = Math.max(40, startHeight - deltaY);
+                        newTop = startTop + deltaY;
+                        break;
+                    case 'nw': // Northwest
+                        newWidth = Math.max(100, startWidth - deltaX);
+                        newHeight = Math.max(40, startHeight - deltaY);
+                        newLeft = startLeft + deltaX;
+                        newTop = startTop + deltaY;
+                        break;
+                }
+
+                // Keep within canvas bounds
+                if (newLeft < 0) {
+                    newWidth += newLeft;
+                    newLeft = 0;
+                }
+                if (newTop < 0) {
+                    newHeight += newTop;
+                    newTop = 0;
+                }
+                if (newLeft + newWidth > canvas.clientWidth) {
+                    newWidth = canvas.clientWidth - newLeft;
+                }
+                if (newTop + newHeight > canvas.clientHeight) {
+                    newHeight = canvas.clientHeight - newTop;
+                }
+
+                currentElement.style.width = newWidth + 'px';
+                currentElement.style.height = newHeight + 'px';
+                currentElement.style.left = newLeft + 'px';
+                currentElement.style.top = newTop + 'px';
+
+                updateProperties();
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (currentElement) {
+                currentElement.classList.remove('dragging');
+            }
+            isDragging = false;
+            isResizing = false;
+            currentElement = null;
+        });
+
+        // Click canvas to deselect
+        canvas.addEventListener('click', function(e) {
+            if (e.target === canvas) {
+                deselectAll();
+            }
+        });
+
+        function selectObject(element) {
+            deselectAll();
+            element.classList.add('selected');
+            selectedElement = element;
+            updateProperties();
+        }
+
+        function deselectAll() {
+            const objects = document.querySelectorAll('.draggable-object');
+            objects.forEach(obj => obj.classList.remove('selected'));
+            selectedElement = null;
+            propertiesContent.innerHTML = '<p>Select an object to edit its properties</p>';
+        }
+
+        function updateProperties() {
+            if (!selectedElement) return;
+
+            const type = selectedElement.dataset.type;
+            const left = parseInt(selectedElement.style.left);
+            const top = parseInt(selectedElement.style.top);
+            const width = parseInt(selectedElement.style.width);
+            const height = parseInt(selectedElement.style.height);
+            const color = selectedElement.style.color || '#000000';
+            const fontSize = parseInt(selectedElement.style.fontSize) || 16;
+            const fontWeight = selectedElement.style.fontWeight || 'bold';
+            const fontStyle = selectedElement.style.fontStyle || 'normal';
+            const textDecoration = selectedElement.style.textDecoration || 'none';
+
+            const isBold = fontWeight === 'bold';
+            const isItalic = fontStyle === 'italic';
+            const isUnderline = textDecoration.includes('underline');
+
+            propertiesContent.innerHTML = `
+                <div class="property-group">
+                    <label>Type:</label>
+                    <input type="text" value="${type}" readonly>
+                </div>
+                <div class="property-group">
+                    <label>Text Color:</label>
+                    <input type="color" value="${color}" onchange="updateColor(this.value)">
+                </div>
+                <div class="property-group">
+                    <label>Font Size:</label>
+                    <input type="number" value="${fontSize}" min="8" max="72" onchange="updateFontSize(this.value)">
+                </div>
+                <div class="property-group">
+                    <label>Font Style:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="bold" ${isBold ? 'checked' : ''} onchange="updateFontWeight(this.checked)">
+                            <label for="bold">Bold</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="italic" ${isItalic ? 'checked' : ''} onchange="updateFontStyle(this.checked)">
+                            <label for="italic">Italic</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="underline" ${isUnderline ? 'checked' : ''} onchange="updateTextDecoration(this.checked)">
+                            <label for="underline">Underline</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="property-group">
+                    <label>X Position:</label>
+                    <input type="number" value="${left}" onchange="updatePosition('left', this.value)">
+                </div>
+                <div class="property-group">
+                    <label>Y Position:</label>
+                    <input type="number" value="${top}" onchange="updatePosition('top', this.value)">
+                </div>
+                <div class="property-group">
+                    <label>Width:</label>
+                    <input type="number" value="${width}" min="100" onchange="updateSize('width', this.value)">
+                </div>
+                <div class="property-group">
+                    <label>Height:</label>
+                    <input type="number" value="${height}" min="40" onchange="updateSize('height', this.value)">
+                </div>
+            `;
+        }
+
+        function updateColor(newColor) {
+            if (selectedElement) {
+                selectedElement.style.color = newColor;
+            }
+        }
+
+        function updateFontSize(newSize) {
+            if (selectedElement) {
+                selectedElement.style.fontSize = newSize + 'px';
+            }
+        }
+
+        function updateFontWeight(isBold) {
+            if (selectedElement) {
+                selectedElement.style.fontWeight = isBold ? 'bold' : 'normal';
+            }
+        }
+
+        function updateFontStyle(isItalic) {
+            if (selectedElement) {
+                selectedElement.style.fontStyle = isItalic ? 'italic' : 'normal';
+            }
+        }
+
+        function updateTextDecoration(isUnderline) {
+            if (selectedElement) {
+                selectedElement.style.textDecoration = isUnderline ? 'underline' : 'none';
+            }
+        }
+
+        function updatePosition(property, value) {
+            if (selectedElement) {
+                selectedElement.style[property] = value + 'px';
+            }
+        }
+
+        function updateSize(property, value) {
+            if (selectedElement) {
+                selectedElement.style[property] = Math.max(property === 'width' ? 100 : 40, value) + 'px';
+            }
+        }
+
+        function addObject(type) {
+            const newObject = document.createElement('div');
+            newObject.className = 'draggable-object';
+            newObject.dataset.type = type;
+            newObject.textContent = type; // Always show the type name, not numbered
+
+            // Random position
+            const left = Math.random() * (canvas.clientWidth - 150);
+            const top = Math.random() * (canvas.clientHeight - 60);
+
+            newObject.style.left = left + 'px';
+            newObject.style.top = top + 'px';
+            newObject.style.width = '150px';
+            newObject.style.height = '50px';
+            newObject.style.color = '#000000'; // Default black color
+            newObject.style.fontSize = '16px'; // Default font size
+            newObject.style.fontWeight = 'bold'; // Default bold
+            newObject.style.fontStyle = 'normal'; // Default not italic
+            newObject.style.textDecoration = 'none'; // Default no underline
+
+            // Add resize handles
+            newObject.innerHTML = `${type}
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            `;
+
+            canvas.appendChild(newObject);
+            initializeObject(newObject);
+            selectObject(newObject);
+        }
+
+        function deleteSelected() {
+            if (selectedElement) {
+                selectedElement.remove();
+                selectedElement = null;
+                propertiesContent.innerHTML = '<p>Select an object to edit its properties</p>';
+            }
+        }
+
+        function clearCanvas() {
+            if (confirm('Are you sure you want to clear the entire canvas?')) {
+                canvas.innerHTML = '';
+                selectedElement = null;
+                propertiesContent.innerHTML = '<p>Select an object to edit its properties</p>';
+                objectCounter = { UserName: 1, EventName: 1, UnikID: 1 };
+            }
+        }
+
+        function exportCanvas() {
+            const objects = document.querySelectorAll('.draggable-object');
+            let objectsHtml = '';
+
+            objects.forEach(obj => {
+                const type = obj.dataset.type;
+                const left = obj.style.left;
+                const top = obj.style.top;
+                const width = obj.style.width;
+                const height = obj.style.height;
+                const color = obj.style.color || '#000000';
+                const fontSize = obj.style.fontSize || '16px';
+                const fontWeight = obj.style.fontWeight || 'bold';
+                const fontStyle = obj.style.fontStyle || 'normal';
+                const textDecoration = obj.style.textDecoration || 'none';
+
+                // Convert type to Go template variable
+                let templateVar = '';
+                switch(type) {
+                    case 'UserName':
+                        templateVar = '{{ .UserName }}';
+                        break;
+                    case 'EventName':
+                        templateVar = '{{ .EventName }}';
+                        break;
+                    case 'UnikID':
+                        templateVar = '{{ .UniqueID }}';
+                        break;
+                    default:
+                        templateVar = type;
+                }
+
+                objectsHtml += `        <div class="template-object" style="left: ${left}; top: ${top}; width: ${width}; height: ${height}; color: ${color}; font-size: ${fontSize}; font-weight: ${fontWeight}; font-style: ${fontStyle}; text-decoration: ${textDecoration};">
+            ${templateVar}
+        </div>\n`;
+            });
+
+            const exportedHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Template</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .template-canvas {
+            width: 800px;
+            height: 600px;
+            background: #ff4444;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .template-object {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            word-wrap: break-word;
+            text-align: center;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .template-canvas {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="template-canvas">
+${objectsHtml}    </div>
+</body>
+</html>`;
+
+            document.getElementById('exportCode').textContent = exportedHtml;
+            document.getElementById('exportModal').style.display = 'block';
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').style.display = 'none';
+        }
+
+        function downloadExport() {
+            const content = document.getElementById('exportCode').textContent;
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'template.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard() {
+            const content = document.getElementById('exportCode').textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                alert('HTML code copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = content;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('HTML code copied to clipboard!');
+            });
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('exportModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeExportModal();
+            }
+        });
+    </script>
+</body>
+</html>
