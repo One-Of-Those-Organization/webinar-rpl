@@ -274,6 +274,7 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
         claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
 
+        // TODO: Make isAdmin and panitia beable to edit.
         if isAdmin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
@@ -309,7 +310,7 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
             })
         }
 
-        res = backend.db.Where("user_id = ?", currentUser.ID).Where("event_id = ?", body.EventID).Delete(&table.EventParticipant{})
+        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).Delete(&table.EventParticipant{})
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,

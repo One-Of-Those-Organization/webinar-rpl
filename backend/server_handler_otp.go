@@ -4,6 +4,7 @@ import (
     "fmt"
     "errors"
 	"webrpl/table"
+    "regexp"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -14,7 +15,10 @@ import (
 func appHandleGenOTP(backend *Backend, route fiber.Router) {
     route.Get("gen-otp-for-register", func (c *fiber.Ctx) error {
         email := c.Query("email")
-        if email == "" {
+        emailRegex := `^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`
+        re := regexp.MustCompile(emailRegex)
+
+        if email == "" || !re.MatchString(email) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid email.",

@@ -73,6 +73,16 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
+        // TODO: Check date older than today
+
+        if body.Max <= 0 {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Event with max of <= 0 is not possible",
+                "error_code": 7,
+                "data": nil,
+            })
+        }
 
         newEvent := table.Event {
             EventDesc: body.Desc,

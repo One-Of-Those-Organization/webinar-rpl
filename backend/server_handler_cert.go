@@ -15,6 +15,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// TODO: Make an editor so dont need to upload as zip anymore.
 // POST : api/protected/cert-register
 func appHandleCertTempNew(backend *Backend, route fiber.Router) {
     route.Post("cert-register", func (c *fiber.Ctx) error {
