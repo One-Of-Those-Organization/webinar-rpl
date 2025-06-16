@@ -5,7 +5,8 @@ import (
     "gorm.io/gorm"
 )
 
-// CHange userid to useremail so it work...
+// Change UserId to UserEmail so it work...
+// Added time TimeCreated
 type OTP struct {
     gorm.Model
     ID          int       `gorm:"primaryKey"`
