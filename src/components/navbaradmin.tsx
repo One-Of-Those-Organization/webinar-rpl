@@ -1,4 +1,4 @@
-import { Link } from "@heroui/link";
+import { Link as RouterLink } from "react-router-dom";
 import { siteConfig } from "@/config/siteAdmin";
 import { Logo } from "@/components/icons";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -100,43 +100,48 @@ export const NavbarAdmin = () => {
 
       <NavbarContent className="mx-auto gap-3 max-w-fit" justify="start">
         <NavbarBrand className="gap-3 max-w-fit">
-          <Link
-            className="flex justify-start items-center gap-1"
-            color="foreground"
-            href="/admin"
+          <RouterLink
+            to="/admin"
+            className="flex justify-start items-center gap-1 text-foreground"
           >
             <Logo />
             <p className="font-bold text-inherit">Webinar UKDC</p>
-          </Link>
+          </RouterLink>
         </NavbarBrand>
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
-            <Link
-              href="/admin"
-              color={isDashboardPage ? "primary" : "foreground"}
+            <RouterLink
+              to="/admin"
+              className={`${
+                isDashboardPage ? "text-primary" : "text-foreground"
+              } hover:opacity-80 transition-opacity`}
             >
               Dashboard
-            </Link>
+            </RouterLink>
           </NavbarItem>
         )}
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
-            <Link
-              href="/admin/user"
-              color={isUserPage ? "primary" : "foreground"}
+            <RouterLink
+              to="/admin/user"
+              className={`${
+                isUserPage ? "text-primary" : "text-foreground"
+              } hover:opacity-80 transition-opacity`}
             >
               User
-            </Link>
+            </RouterLink>
           </NavbarItem>
         )}
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
-            <Link
-              href="/admin/webinar"
-              color={isWebinarPage ? "primary" : "foreground"}
+            <RouterLink
+              to="/admin/webinar"
+              className={`${
+                isWebinarPage ? "text-primary" : "text-foreground"
+              } hover:opacity-80 transition-opacity`}
             >
               Webinar
-            </Link>
+            </RouterLink>
           </NavbarItem>
         )}
       </NavbarContent>
@@ -172,15 +177,16 @@ export const NavbarAdmin = () => {
           {isLoggedIn
             ? siteConfig.navMenuItems.map((item, index) => (
                 <NavbarMenuItem key={`${item}-${index}`}>
-                  <Link
-                    color={
-                      location.pathname === item.href ? "primary" : "foreground"
-                    }
-                    href={item.href}
-                    size="lg"
+                  <RouterLink
+                    to={item.href}
+                    className={`${
+                      location.pathname === item.href
+                        ? "text-primary"
+                        : "text-foreground"
+                    } text-lg hover:opacity-80 transition-opacity`}
                   >
                     {item.label}
-                  </Link>
+                  </RouterLink>
                 </NavbarMenuItem>
               ))
             : null}

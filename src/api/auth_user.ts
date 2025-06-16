@@ -2,7 +2,7 @@
 
 // 8/9 Completed ✅
 
-// 1. Register Admin ❓- IDK What is this used for (Matthew) -> I Decide to SKIP it
+// 1. Register Admin ✅
 // 2. Delete User (Admin Only) ✅
 // 3. User Edit (Admin Only) ✅
 // 4. User Edit (User Only) ✅
@@ -250,5 +250,5 @@ export const auth_user = {
         message: "Failed to connect to server",
       };
     }
-  }
+  },
 };

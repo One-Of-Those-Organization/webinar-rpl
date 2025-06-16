@@ -28,6 +28,15 @@ import { toast, ToastContainer } from "react-toastify";
 import { FaExclamationTriangle } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 
+// Fungsi untuk mendapatkan tanggal hari ini dalam format YYYY-MM-DD
+const getTodayDate = (): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 // Dropdown menu icon
 const VerticalDotsIcon = () => (
   <svg
@@ -93,6 +102,9 @@ export default function EditWebinarPage() {
     certId: 0,
     panitia: [] as string[],
   });
+
+  // ✅ Get today's date for min attribute
+  const todayDate = getTodayDate();
 
   // Load webinar data on component mount
   useEffect(() => {
@@ -496,7 +508,7 @@ export default function EditWebinarPage() {
       return;
     }
 
-    // Validate date logic
+    // ✅ Validasi tanggal
     const fullStartDateTime = combineDateAndTime(
       editForm.dateStart,
       editForm.timeStart
@@ -507,9 +519,24 @@ export default function EditWebinarPage() {
     );
     const startDate = new Date(fullStartDateTime);
     const endDate = new Date(fullEndDateTime);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time untuk perbandingan tanggal saja
+
+    // Validasi tanggal tidak boleh sebelum hari ini
+    if (startDate < today) {
+      setError("Start date cannot be before today");
+      toast.error("Start date cannot be before today");
+      return;
+    }
+
+    if (endDate < today) {
+      setError("End date cannot be before today");
+      toast.error("End date cannot be before today");
+      return;
+    }
 
     if (startDate >= endDate) {
-      toast.info("End date must be after start date");
+      toast.error("End date must be after start date");
       return;
     }
 
@@ -783,17 +810,24 @@ export default function EditWebinarPage() {
                 >
                   Materials
                 </Link>
-                <Link
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
-                    variant: "ghost",
-                    size: "lg",
-                  })}
-                  href={webinarData.link || "#"}
-                >
-                  Link
-                </Link>
+
+                {/* ✅ Button Link hanya tampil jika webinar online */}
+                {webinarData.att === "online" && (
+                  <Link
+                    className={buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: "ghost",
+                      size: "lg",
+                    })}
+                    href={webinarData.link || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Link
+                  </Link>
+                )}
+
                 <Link
                   className={buttonStyles({
                     color: "secondary",
@@ -874,6 +908,14 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
+                {/* ✅ Conditional rendering untuk Tempat/Lokasi berdasarkan attendance type */}
+                <div className="font-bold text-xl">
+                  {webinarData.att === "online" ? "Tempat" : "Lokasi Webinar"} :{" "}
+                  <span className="text-[#B6A3E8] font-bold">
+                    {webinarData.att === "online" ? "Online" : webinarData.link}
+                  </span>
+                </div>
+
                 <div className="font-bold text-xl">
                   Max Participants :{" "}
                   <span
@@ -936,7 +978,8 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {webinarData.link && (
+                {/* ✅ Conditional rendering untuk link webinar */}
+                {webinarData.link && webinarData.att === "online" && (
                   <div className="font-bold text-xl">
                     Webinar Link :{" "}
                     <a
@@ -1113,12 +1156,13 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
-                {/* Date and time fields */}
+                {/* ✅ Date and time fields dengan validasi disabled */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
                     label="Start Date *"
                     type="date"
+                    min={todayDate} // ✅ Disable tanggal sebelum hari ini
                     value={editForm.dateStart}
                     onChange={(e) =>
                       handleInputChange("dateStart", e.target.value)
@@ -1140,6 +1184,7 @@ export default function EditWebinarPage() {
                     color="secondary"
                     label="End Date *"
                     type="date"
+                    min={editForm.dateStart || todayDate} // ✅ End date minimal sama dengan start date atau hari ini
                     value={editForm.dateEnd}
                     onChange={(e) =>
                       handleInputChange("dateEnd", e.target.value)
@@ -1159,8 +1204,14 @@ export default function EditWebinarPage() {
                 {/* Additional fields */}
                 <Input
                   color="secondary"
-                  label="Webinar Link"
-                  placeholder="https://..."
+                  label={
+                    webinarData.att === "online" ? "Webinar Link" : "Location"
+                  }
+                  placeholder={
+                    webinarData.att === "online"
+                      ? "https://..."
+                      : "Enter location"
+                  }
                   value={editForm.link}
                   onChange={(e) => handleInputChange("link", e.target.value)}
                 />
