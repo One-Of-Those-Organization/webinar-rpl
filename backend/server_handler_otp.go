@@ -48,7 +48,14 @@ func appHandleGenOTP(backend *Backend, route fiber.Router) {
         }
 
         fmt.Printf(" -###- The Generated OTP code are : %s -###-\n", newOTP.OtpCode)
-        sendEmailTo(backend, newOTP.UserEmail, "OTP code for webrpl", fmt.Sprintf("Your OTP code are : %s\n(Working for 5 mins)", newOTP.OtpCode))
+        if !sendEmailTo(backend, newOTP.UserEmail, "OTP code for webrpl", fmt.Sprintf("Your OTP code are : %s\n(Working for 5 mins)", newOTP.OtpCode)) {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to send email.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
 
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,

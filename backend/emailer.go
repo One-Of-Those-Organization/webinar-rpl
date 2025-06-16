@@ -1,11 +1,15 @@
 package main
 
+// Thanks to:
+//   https://mailtrap.io/blog/golang-send-email-gmail/
+//   https://www.mailjerry.com/create-gmail-app-password
+
 import (
     "log"
     gomail "gopkg.in/mail.v2"
 )
 
-func sendEmailTo(backend *Backend, to string, subject string, body string) {
+func sendEmailTo(backend *Backend, to string, subject string, body string) bool {
     message := gomail.NewMessage()
 
     message.SetHeader("From", backend.email)
@@ -17,8 +21,9 @@ func sendEmailTo(backend *Backend, to string, subject string, body string) {
 
     if err := dialer.DialAndSend(message); err != nil {
         log.Println("Error:", err)
-        panic(err)
-    } else {
-        log.Println("Email sent successfully!")
+        return false
     }
+
+    log.Println("Email sent successfully!")
+    return true
 }
