@@ -6,7 +6,6 @@ import (
     "strconv"
     "fmt"
     "encoding/base64"
-	"archive/zip"
 	"path/filepath"
 	"io"
 
@@ -296,7 +295,8 @@ func appHandleCertEdit(backend *Backend, route fiber.Router) {
     })
 }
 
-// TOOD: the file that have the symbol @@ will be replaced by the server stuff.
+// NOTE: @@ -> $bg.png.path
+// NOTE: data_html, data_img
 // POST : api/protected/cert-upload-template
 func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 	route.Post("cert-upload-template", func (c *fiber.Ctx) error {
@@ -321,7 +321,8 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 
 		var body struct {
 			FileName  string `json:"event_name"`
-			Data      string `json:"data"`
+			DataHTML  string `json:"data_html"`
+			DataIMG   string `json:"data_img"`
 		}
 
 		err = c.BodyParser(&body)
@@ -334,7 +335,7 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 			})
 		}
 
-		if body.Data == "" || body.FileName == "" {
+		if (body.DataHTML == "" && body.DataIMG == "") || body.FileName == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"message": "No data provided",
@@ -353,12 +354,16 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 			})
 		}
 
-		base64Data := body.Data
-		if i := strings.Index(base64Data, ","); i != -1 {
-			base64Data = base64Data[i+1:]
+		b64HTMLData := body.DataHTML
+        b64IMGData  := body.DataIMG
+		if i := strings.Index(b64HTMLData, ","); i != -1 {
+			b64HTMLData = b64HTMLData[i+1:]
+		}
+		if i := strings.Index(b64IMGData, ","); i != -1 {
+			b64IMGData = b64IMGData[i+1:]
 		}
 
-		zipData, err := base64.StdEncoding.DecodeString(base64Data)
+		htmlData, err := base64.StdEncoding.DecodeString(b64HTMLData)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
@@ -368,7 +373,27 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 			})
 		}
 
-		if !strings.Contains(string(zipData), "application/zip") {
+		imgData, err := base64.StdEncoding.DecodeString(b64IMGData)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Invalid base64 data",
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+		if !strings.Contains(string(htmlData), "text/html") {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Invalid base64 data",
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+        // NOTE: For now only accept png
+		if !strings.Contains(string(imgData), "image/png") {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"message": "Invalid base64 data",
@@ -387,8 +412,21 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 			})
 		}
 
-		filename := fmt.Sprintf("%s/%s.zip", certTempDir, body.FileName)
-		err = os.WriteFile(filename, zipData, 0644)
+		htmlFilename := fmt.Sprintf("%s/index.html", certTempDir)
+
+        strings.ReplaceAll(string(htmlData), "@@", fmt.Sprintf("%s://%s/%s/bg.png", backend.mode, backend.address, certTempDir))
+
+		err = os.WriteFile(htmlFilename, htmlData, 0644)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to save data.",
+				"error_code": 7,
+				"data": nil,
+			})
+		}
+        imgFilename := fmt.Sprintf("%s/bg.png", certTempDir)
+		err = os.WriteFile(imgFilename, htmlData, 0644)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
@@ -398,102 +436,13 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 			})
 		}
 
-		archive, err := zip.OpenReader(filename)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"success": false,
-				"message": "Failed to process zip data.",
-				"error_code": 8,
-				"data": nil,
-			})
-		}
-
-		defer archive.Close()
-
-		var extractedFiles []string
-		for _, f := range archive.File {
-			if strings.Contains(f.Name, "..") {
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"success": false,
-					"message": "Invalid file path in archive",
-					"error_code": 9,
-					"data": nil,
-				})
-			}
-
-			newFilePath := fmt.Sprintf("%s/%s", certTempDir, f.Name)
-
-			// Create directory if file is in subdirectory
-			if f.FileInfo().IsDir() {
-				if err := os.MkdirAll(newFilePath, f.FileInfo().Mode()); err != nil {
-					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-						"success": false,
-						"message": "Failed to create directory from archive",
-						"error_code": 10,
-						"data": nil,
-					})
-				}
-				continue
-			}
-
-			if err := os.MkdirAll(filepath.Dir(newFilePath), 0755); err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"success": false,
-					"message": "Failed to create parent directory",
-					"error_code": 11,
-					"data": nil,
-				})
-			}
-
-			// Open file in archive
-			rc, err := f.Open()
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"success": false,
-					"message": "Failed to open file in archive",
-					"error_code": 12,
-					"data": nil,
-				})
-			}
-
-			outFile, err := os.OpenFile(newFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.FileInfo().Mode())
-			if err != nil {
-				rc.Close()
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"success": false,
-					"message": "Failed to create extracted file",
-					"error_code": 13,
-					"data": nil,
-				})
-			}
-
-			_, err = io.Copy(outFile, rc)
-			if err != nil {
-				rc.Close()
-				outFile.Close()
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"success": false,
-					"message": "Failed to extract file contents",
-					"error_code": 14,
-					"data": nil,
-				})
-			}
-
-			outFile.Close()
-			rc.Close()
-			extractedFiles = append(extractedFiles, f.Name)
-		}
-
-		// NOTE: Maybe log this in the future.
-		if err := os.Remove(filename); err != nil {}
-
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"message": "Certificate Template uploaded and extracted.",
+			"message": "Certificate Template uploaded.",
 			"error_code": 0,
 			"data": fiber.Map{
-                "extracted_files": extractedFiles,
-				"extraction_path": strings.TrimLeft(certTempDir, "static/"),
+                "saved_html": htmlFilename,
+                "saved_image": imgFilename,
 			},
 		})
 	})
