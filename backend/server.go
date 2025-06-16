@@ -10,16 +10,19 @@ import (
 )
 
 type Backend struct {
-    app     *fiber.App
-    db      *gorm.DB
-    pass    string
-    rand    *rand.Rand
-    engine  *DynamicEngine
-    address string
-    mode    string
+    app       *fiber.App
+    db        *gorm.DB
+    pass      string
+    rand      *rand.Rand
+    engine    *DynamicEngine
+    address   string
+    email     string
+    mode      string
+    emailpass string
 }
 
-func appCreateNewServer(db *gorm.DB, secret string, address string) *Backend {
+func appCreateNewServer(db *gorm.DB, sec SecretHolder, address string) *Backend {
+    secret := sec.Password
     rand_t := rand.New(rand.NewSource(time.Now().UnixNano()))
     engine := NewDynamicEngine("./static/", ".html")
     app := fiber.New(fiber.Config{
@@ -35,6 +38,8 @@ func appCreateNewServer(db *gorm.DB, secret string, address string) *Backend {
         engine: engine,
         address: address,
         mode: "http",
+        email: sec.Email,
+        emailpass: sec.EmailAppPassword,
     }
 }
 
@@ -94,6 +99,9 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventParticipateOfUser(backend, protected)
     appHandleEventParticipateAbsence(backend, protected)
     appHandleEventParticipateOfEventCount(backend, protected)
+
+    // OTP STUFF
+    appHandleGenOTP(backend, api)
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")

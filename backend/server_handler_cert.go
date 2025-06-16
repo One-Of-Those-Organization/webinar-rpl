@@ -44,7 +44,6 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
             EventId       int    `json:"id"`
             // NOTE:
             // CertTemplate is a html+css that will be autofilled. (this is path btw.)
-            // So give it the html name (without the .html)
             CertTemplate  string `json:"cert_temp"`
         }
 
@@ -59,11 +58,11 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
         }
 
         var event table.Event
-        res := backend.db.Where("event_id = ?", body.EventId).First(&event)
+        res := backend.db.Where("id = ?", body.EventId).First(&event)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to fetch event from db.",
+                "message": fmt.Sprintf("Failed to fetch event from db, %v", res.Error),
                 "error_code": 4,
                 "data": nil,
             })

@@ -1,5 +1,7 @@
 // API Webinar Usage list :
 
+// 7/7 Completed ✅
+
 // 1. Add Webinar ✅
 // 2. Edit Webinar ✅
 // 3. Delete Webinar By ID ✅
@@ -190,5 +192,5 @@ export const auth_webinar = {
         success: false,
       };
     }
-  },
+  }
 };

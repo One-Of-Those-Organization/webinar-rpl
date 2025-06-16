@@ -25,9 +25,10 @@ func main() {
         return
     }
     l.Println("INFO: DB init task completed successfully.")
-    password := getCredentialFromEnv()
+    sec := getCredentialFromEnv()
+    password := sec.Password
 
-    app := appCreateNewServer(db, password, add)
+    app := appCreateNewServer(db, sec, add)
     app.app.Use(cors.New(cors.Config{
         AllowOrigins: "*",
         AllowHeaders: "Origin, Content-Type, Accept, Authorization",

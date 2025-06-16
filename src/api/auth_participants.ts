@@ -1,12 +1,15 @@
-// API Participants Usage LisT :
+// API Participants Usage List :
+
+// 6/8 Completed ✅
+
 // 1. Participant Register ✅
 // 2. Get Participants by Event ✅
 // 3. Edit Participant from Event ✅
 // 4. Delete Participant from Event ✅
-// 5. Get Event Participation Info ❌
-// 6. Set Participant Absence ❌
-// 7. Get Participant Count by Event ❌
-// 8. Get Event Participation by User ❌
+// 5. Get Event Participation Info by Event ✅
+// 6. Set Participant Absence ❌ - Later for Participant Check In
+// 7. Get Participant Count by Event ✅
+// 8. Get Event Participation by User ❌ - Low Priority, but can implemented it last
 
 import { BaseResponse, EventPartisipantRegister } from "./interface";
 
@@ -224,5 +227,5 @@ export const auth_participants = {
         message: "Failed to connect to server",
       };
     }
-  },
+  }
 };
