@@ -274,16 +274,6 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
         claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
 
-        // TODO: Make isAdmin and panitia beable to edit.
-        if isAdmin != 1 {
-            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid credentials for this function",
-                "error_code": 2,
-                "data": nil,
-            })
-        }
-
         var body struct {
             EventID    int    `json:"event_id"`
             UserEmail  string `json:"email"`
@@ -310,7 +300,27 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
             })
         }
 
-        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).Delete(&table.EventParticipant{})
+        var selEvPart table.EventParticipant
+        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&selEvPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch the event participant with that id from the db, %v", res.Error),
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
+        if isAdmin != 1 || selEvPart.EventPRole != "committee" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        res = backend.db.Delete(&table.EventParticipant{}, &selEvPart)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
