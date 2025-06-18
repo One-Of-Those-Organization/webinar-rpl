@@ -10,6 +10,7 @@ import InputOTP from "@/pages/auth/input_otp";
 
 // Authorize Page
 import DashboardPage from "@/pages/dashboard";
+import DetailPage from "@/pages/detail";
 import ProfilePage from "@/pages/profile";
 import SertifikatUserPage from "@/pages/sertifikat";
 
@@ -90,6 +91,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/detail/:id"
+        element={
+          <ProtectedRoute>
+            <DetailPage />
           </ProtectedRoute>
         }
       />
