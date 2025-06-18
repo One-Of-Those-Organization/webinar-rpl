@@ -11,6 +11,7 @@ class TestApi:
 
     def send(self, expected_err_code: int) -> bool:
         try:
+            print(f"[TEST] {self.desc}")
             if self.method == "POST":
                 response = requests.post(self.url, json=self.payload, headers=self.headers)
             elif self.method == "GET":
@@ -19,7 +20,7 @@ class TestApi:
                 print(f"  [ERROR] Unsupported HTTP method: {self.method}")
                 return False
 
-            # print(f"Status : {response.status_code}\nResponse : {response.text}")
+            print(f"  Status : {response.status_code}\n  Response : {response.text}")
 
             data = response.json()
             return expected_err_code == data.get("error_code", -1)

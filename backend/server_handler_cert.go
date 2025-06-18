@@ -6,15 +6,12 @@ import (
     "strconv"
     "fmt"
     "encoding/base64"
-	"path/filepath"
-	"io"
 
     "webrpl/table"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// TODO: Make an editor so dont need to upload as zip anymore.
 // POST : api/protected/cert-register
 func appHandleCertTempNew(backend *Backend, route fiber.Router) {
     route.Post("cert-register", func (c *fiber.Ctx) error {
@@ -414,9 +411,9 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 
 		htmlFilename := fmt.Sprintf("%s/index.html", certTempDir)
 
-        strings.ReplaceAll(string(htmlData), "@@", fmt.Sprintf("%s://%s/%s/bg.png", backend.mode, backend.address, certTempDir))
+        htmlDataProcessed := strings.ReplaceAll(string(htmlData), "@@", fmt.Sprintf("%s://%s/%s/bg.png", backend.mode, backend.address, certTempDir))
 
-		err = os.WriteFile(htmlFilename, htmlData, 0644)
+		err = os.WriteFile(htmlFilename, []byte(htmlDataProcessed), 0644)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
@@ -448,7 +445,6 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 	})
 }
 
-// WIP: Finish this.
 // GET : api/certificate/:base64
 func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 	route.Get("certificate/:base64", func (c *fiber.Ctx) error {

@@ -102,6 +102,7 @@ func appMakeRouteHandler(backend *Backend) {
 
     // OTP STUFF
     appHandleGenOTP(backend, api)
+    appHandleCleanupOTP(backend, protected)
 
     // MISC STUFF
     appHandleCertEditor(backend, protected)
