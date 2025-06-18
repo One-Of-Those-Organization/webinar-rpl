@@ -84,7 +84,9 @@ export function CardView({
     return now < startDate;
   };
 
-  const handleRegister = () => {
+  const handleRegister = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent card click navigation
+    e.stopPropagation(); // Stop event bubbling
     if (webinar && onRegister) {
       onRegister(webinar.id);
     }
@@ -123,124 +125,128 @@ export function CardView({
   }
 
   return (
-    <Card className="py-4 h-full flex flex-col">
-      <CardBody className="overflow-visible py-2 flex-grow">
-        {isLoading && (
-          <Skeleton
-            height={180}
-            width="100%"
-            style={{ borderRadius: "0.75rem", aspectRatio: "4 / 3" }}
-          />
-        )}
-        <div className="relative">
-          <Image
-            alt="Webinar background"
-            className={`rounded-xl object-cover w-full aspect-[4/3] ${
-              isLoading ? "hidden" : "block"
-            }`}
-            src={webinar.imageUrl}
-            onLoad={() => setIsLoading(false)}
-            onError={() => setIsLoading(false)}
-          />
-          {isLive() && (
-            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-              🔴 LIVE
+    <Link href={`/detail/${webinar.id}`}>
+      <Card className="py-4 h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow">
+        <CardBody className="overflow-visible py-2 flex-grow">
+          {isLoading && (
+            <Skeleton
+              height={180}
+              width="100%"
+              style={{ borderRadius: "0.75rem", aspectRatio: "4 / 3" }}
+            />
+          )}
+          <div className="relative">
+            <Image
+              alt="Webinar background"
+              className={`rounded-xl object-cover w-full aspect-[4/3] ${
+                isLoading ? "hidden" : "block"
+              }`}
+              src={webinar.imageUrl}
+              onLoad={() => setIsLoading(false)}
+              onError={() => setIsLoading(false)}
+            />
+            {isLive() && (
+              <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                🔴 LIVE
+              </div>
+            )}
+          </div>
+        </CardBody>
+        
+        <CardHeader className="pb-2 pt-2 px-4 flex-col items-start flex-grow">
+          <h4 className="font-bold text-large line-clamp-2" title={webinar.name}>
+            {webinar.name || "Webinar Title"}
+          </h4>
+          <p className="text-tiny uppercase font-bold text-gray-600">
+            {webinar.speaker || "Speaker Name"}
+          </p>
+          <small className="text-default-500 mb-2">
+            {formatDate(webinar.dstart)}
+          </small>
+          
+          {webinar.description && (
+            <p className="text-sm text-gray-600 line-clamp-3 mb-3" title={webinar.description}>
+              {webinar.description}
+            </p>
+          )}
+
+          {/* Countdown for upcoming webinars */}
+          {isUpcoming() && countdown && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg mb-3 w-full">
+              <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold mb-1">
+                Starts in:
+              </p>
+              <div className="grid grid-cols-4 gap-1 text-center">
+                <div>
+                  <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                    {countdown.days}
+                  </div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Days</div>
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                    {countdown.hours}
+                  </div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Hours</div>
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                    {countdown.minutes}
+                  </div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Min</div>
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                    {countdown.seconds}
+                  </div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Sec</div>
+                </div>
+              </div>
             </div>
           )}
+        </CardHeader>
+
+        {/* Action Button */}
+        <div className="px-4 pb-4">
+          {isRegistered ? (
+            <Button 
+              className="w-full" 
+              color="success" 
+              variant="flat"
+              isDisabled
+              onClick={handleRegister}
+            >
+              ✓ Registered
+            </Button>
+          ) : isLive() ? (
+            <Button 
+              className="w-full" 
+              color="primary"
+              onClick={handleRegister}
+            >
+              Register Now
+            </Button>
+          ) : isUpcoming() && countdown ? (
+            <Button 
+              className="w-full" 
+              color="secondary"
+              variant="bordered"
+              isDisabled
+              onClick={handleRegister}
+            >
+              Coming Soon
+            </Button>
+          ) : (
+            <Button 
+              className="w-full" 
+              color="primary"
+              onClick={handleRegister}
+            >
+              Register Now
+            </Button>
+          )}
         </div>
-      </CardBody>
-      
-      <CardHeader className="pb-2 pt-2 px-4 flex-col items-start flex-grow">
-        <h4 className="font-bold text-large line-clamp-2" title={webinar.name}>
-          {webinar.name || "Webinar Title"}
-        </h4>
-        <p className="text-tiny uppercase font-bold text-gray-600">
-          {webinar.speaker || "Speaker Name"}
-        </p>
-        <small className="text-default-500 mb-2">
-          {formatDate(webinar.dstart)}
-        </small>
-        
-        {webinar.description && (
-          <p className="text-sm text-gray-600 line-clamp-3 mb-3" title={webinar.description}>
-            {webinar.description}
-          </p>
-        )}
-
-        {/* Countdown for upcoming webinars */}
-        {isUpcoming() && countdown && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg mb-3 w-full">
-            <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold mb-1">
-              Starts in:
-            </p>
-            <div className="grid grid-cols-4 gap-1 text-center">
-              <div>
-                <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                  {countdown.days}
-                </div>
-                <div className="text-xs text-blue-600 dark:text-blue-400">Days</div>
-              </div>
-              <div>
-                <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                  {countdown.hours}
-                </div>
-                <div className="text-xs text-blue-600 dark:text-blue-400">Hours</div>
-              </div>
-              <div>
-                <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                  {countdown.minutes}
-                </div>
-                <div className="text-xs text-blue-600 dark:text-blue-400">Min</div>
-              </div>
-              <div>
-                <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                  {countdown.seconds}
-                </div>
-                <div className="text-xs text-blue-600 dark:text-blue-400">Sec</div>
-              </div>
-            </div>
-          </div>
-        )}
-      </CardHeader>
-
-      {/* Action Button */}
-      <div className="px-4 pb-4">
-        {isRegistered ? (
-          <Button 
-            className="w-full" 
-            color="success" 
-            variant="flat"
-            isDisabled
-          >
-            ✓ Telah Terdaftar
-          </Button>
-        ) : isLive() ? (
-          <Button 
-            className="w-full" 
-            color="primary"
-            onClick={handleRegister}
-          >
-            Join Live Webinar
-          </Button>
-        ) : isUpcoming() && countdown ? (
-          <Button 
-            className="w-full" 
-            color="secondary"
-            variant="bordered"
-            isDisabled
-          >
-            Registration Opens Soon
-          </Button>
-        ) : (
-          <Button 
-            className="w-full" 
-            color="primary"
-            onClick={handleRegister}
-          >
-            Register Now
-          </Button>
-        )}
-      </div>
-    </Card>
+      </Card>
+    </Link>
   );
 }
