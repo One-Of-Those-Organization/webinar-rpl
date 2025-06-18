@@ -1,4 +1,4 @@
-import { Link } from "@heroui/link";
+import { Link } from "react-router-dom";
 import { Logo } from "@/components/icons";
 import { Search } from "@/components/search";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -106,9 +106,8 @@ export const Navbar = () => {
       <NavbarContent className="mx-auto gap-3 max-w-fit" justify="start">
         <NavbarBrand className="gap-3 max-w-fit">
           <Link
-            className="flex justify-start items-center gap-1"
-            color="foreground"
-            href="/"
+            to="/"
+            className="flex justify-start items-center gap-1 text-foreground no-underline"
           >
             <Logo />
             <p className="font-bold text-inherit">Webinar UKDC</p>
@@ -118,9 +117,10 @@ export const Navbar = () => {
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
             <Link
-              href="/dashboard"
-              color={isDashboardPage ? "primary" : "foreground"}
-              className="border-b-2 border-transparent hover:border-primary transition-colors"
+              to="/dashboard"
+              className={`border-b-2 border-transparent hover:border-primary transition-colors no-underline ${
+                isDashboardPage ? "text-primary" : "text-foreground"
+              }`}
             >
               Dashboard
             </Link>
@@ -129,9 +129,10 @@ export const Navbar = () => {
 
         <NavbarItem className="hidden lg:flex">
           <Link
-            href="/about"
-            color={isAboutPage ? "primary" : "foreground"}
-            className="border-b-2 border-transparent hover:border-primary transition-colors"
+            to="/about"
+            className={`border-b-2 border-transparent hover:border-primary transition-colors no-underline ${
+              isAboutPage ? "text-primary" : "text-foreground"
+            }`}
           >
             About
           </Link>
@@ -176,18 +177,20 @@ export const Navbar = () => {
             <>
               <NavbarMenuItem>
                 <Link
-                  color={isDashboardPage ? "primary" : "foreground"}
-                  href="/dashboard"
-                  size="lg"
+                  to="/dashboard"
+                  className={`text-lg no-underline ${
+                    isDashboardPage ? "text-primary" : "text-foreground"
+                  }`}
                 >
                   Dashboard
                 </Link>
               </NavbarMenuItem>
               <NavbarMenuItem>
                 <Link
-                  color={isAboutPage ? "primary" : "foreground"}
-                  href="/about"
-                  size="lg"
+                  to="/about"
+                  className={`text-lg no-underline ${
+                    isAboutPage ? "text-primary" : "text-foreground"
+                  }`}
                 >
                   About
                 </Link>
@@ -196,9 +199,10 @@ export const Navbar = () => {
           ) : (
             <NavbarMenuItem>
               <Link
-                color={isAboutPage ? "primary" : "foreground"}
-                href="/about"
-                size="lg"
+                to="/about"
+                className={`text-lg no-underline ${
+                  isAboutPage ? "text-primary" : "text-foreground"
+                }`}
               >
                 About
               </Link>

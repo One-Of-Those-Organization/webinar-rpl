@@ -35,6 +35,8 @@ import "react-loading-skeleton/dist/skeleton.css";
 const DEFAULT_ROWS_PER_PAGE = 8;
 const WEBINARS_PER_PAGE_OPTIONS = [8, 12, 16, 20];
 
+// TODO : make the mobile view after next page webinar goes to the top of the page
+
 export default function WebinarPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
@@ -360,19 +362,34 @@ export default function WebinarPage() {
             {paginatedWebinars.map((webinar, index) => (
               <Card
                 key={webinar.id || index}
-                className="h-full flex flex-col relative pb-14"
+                className="h-full flex flex-col relative pb-14 overflow-hidden"
               >
                 <div className="relative">
+                  {/* 🔥 FIXED: Label Online/Offline dengan backdrop blur */}
+                  <div className="absolute top-2 left-2 z-30">
+                    <div className="backdrop-blur-sm bg-black/20 rounded-full p-1">
+                      <span
+                        className={`px-3 py-1 text-xs font-bold rounded-full shadow-lg border border-white/20 ${
+                          webinar.att === "online"
+                            ? "bg-emerald-500 text-white"
+                            : "bg-orange-500 text-white"
+                        }`}
+                      >
+                        {webinar.att === "online" ? "ONLINE" : "OFFLINE"}
+                      </span>
+                    </div>
+                  </div>
+
                   {imageLoading[webinar.id || index] && (
                     <Skeleton
                       height={168}
-                      className="rounded-t absolute top-0 left-0 w-full"
+                      className="rounded-t absolute top-0 left-0 w-full z-10"
                       style={{ borderRadius: "0.5rem 0.5rem 0 0" }}
                     />
                   )}
                   <Image
                     alt="Webinar image"
-                    className={`object-cover w-full h-42 rounded-t ${
+                    className={`object-cover w-full h-42 rounded-t transition-opacity duration-300 ${
                       imageLoading[webinar.id || index]
                         ? "opacity-0"
                         : "opacity-100"
@@ -382,84 +399,119 @@ export default function WebinarPage() {
                     onError={() => handleImageLoad(webinar.id || index)}
                   />
                 </div>
-                <CardHeader className="p-3 flex flex-col">
+                <CardHeader className="p-3 flex flex-col flex-grow">
                   <h4
-                    className="font-bold text-lg truncate"
+                    className="font-bold text-lg truncate text-foreground hover:text-primary transition-colors cursor-default"
                     title={webinar.name}
                   >
                     {webinar.name || "Judul tidak tersedia"}
                   </h4>
-                  <p className="text-xs uppercase font-bold text-gray-700 dark:text-gray-300 truncate">
+                  <p className="text-xs uppercase font-bold text-primary/80 truncate">
                     {webinar.speaker || "Pembicara tidak tersedia"}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-default-500">
                     {formatDate(webinar.dstart)}
                   </p>
                   {webinar.description && (
                     <p
-                      className="text-xs text-gray-600 dark:text-gray-400 mt-2 line-clamp-2"
+                      className="text-xs text-default-400 mt-2 line-clamp-2 leading-relaxed"
                       title={webinar.description}
                     >
                       {webinar.description}
                     </p>
                   )}
                 </CardHeader>
-                <div className="absolute bottom-0 left-0 right-0 p-3">
+                <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-background/95 to-transparent">
                   <div className="flex space-x-2">
-                    <button
-                      className="flex-1 flex justify-center items-center bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition-colors"
-                      onClick={() => handleEditWebinar(webinar)}
+                    <Button
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+                      size="sm"
+                      radius="md"
+                      startContent={<EditIcon size={14} />}
+                      onPress={() => handleEditWebinar(webinar)}
                     >
-                      <EditIcon size={14} className="mr-1" />
-                      <span>View</span>
-                    </button>
-                    <button
-                      className="flex-1 flex justify-center items-center bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600 transition-colors"
-                      onClick={() => handleOpenDeleteModal(webinar)}
+                      View
+                    </Button>
+                    <Button
+                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+                      size="sm"
+                      radius="md"
+                      startContent={<TrashIcon size={14} />}
+                      onPress={() => handleOpenDeleteModal(webinar)}
                     >
-                      <TrashIcon size={14} className="mr-1" />
-                      <span>Delete</span>
-                    </button>
+                      Delete
+                    </Button>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 text-foreground-400 dark:text-gray-400">
-            {searchValue
-              ? `No webinars found matching "${searchValue}"`
-              : "No webinars available."}
+          <div className="text-center py-20">
+            <div className="max-w-md mx-auto">
+              <div className="text-6xl mb-4">📚</div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                {searchValue ? "No webinars found" : "No webinars available"}
+              </h3>
+              <p className="text-default-500">
+                {searchValue
+                  ? `No webinars found matching "${searchValue}". Try adjusting your search terms.`
+                  : "Start by creating your first webinar to get the party started! 🎉"}
+              </p>
+              {!searchValue && (
+                <div className="mt-6">
+                  <CreateWebinar />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* Bottom Content - Pagination */}
         {!isLoading && totalPages > 1 && (
-          <div className="mt-6">{bottomContent}</div>
+          <div className="mt-8">{bottomContent}</div>
         )}
 
-        {/* Delete Confirmation Modal */}
-        <Modal isOpen={isDeleteModalOpen} onClose={handleCloseDeleteModal}>
+        {/* 🔥 Enhanced Delete Confirmation Modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={handleCloseDeleteModal}
+          backdrop="blur"
+          classNames={{
+            base: "border border-danger-200/20",
+            header: "border-b border-danger-200/20",
+            footer: "border-t border-danger-200/20",
+          }}
+        >
           <ModalContent>
-            <ModalHeader className="flex flex-col text-center">
-              Konfirmasi Hapus Webinar
+            <ModalHeader className="flex flex-col text-center gap-1">
+              <div className="text-danger text-2xl">⚠️</div>
+              <h3 className="text-lg font-semibold">
+                Konfirmasi Hapus Webinar
+              </h3>
             </ModalHeader>
 
-            <ModalBody>
-              <p>
-                Apakah Anda yakin ingin menghapus webinar:{" "}
-                <strong>{webinarToDelete?.name}</strong>?
-              </p>
-              <p className="text-danger">
-                Tindakan ini tidak dapat dibatalkan.
+            <ModalBody className="text-center">
+              <div className="p-4 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200/30">
+                <p className="mb-2">
+                  Apakah Anda yakin ingin menghapus webinar:
+                </p>
+                <p className="font-bold text-lg text-danger">
+                  "{webinarToDelete?.name}"
+                </p>
+              </div>
+              <p className="text-danger font-medium mt-4">
+                ⚠️ Tindakan ini tidak dapat dibatalkan dan akan menghapus semua
+                data terkait!
               </p>
             </ModalBody>
 
-            <ModalFooter>
+            <ModalFooter className="justify-center gap-3">
               <Button
                 variant="light"
                 onPress={handleCloseDeleteModal}
                 isDisabled={isDeleting}
+                className="min-w-24"
               >
                 Batal
               </Button>
@@ -468,14 +520,27 @@ export default function WebinarPage() {
                 onPress={handleDeleteWebinar}
                 isLoading={isDeleting}
                 isDisabled={isDeleting}
+                className="min-w-24 font-semibold"
+                variant="solid"
               >
-                {isDeleting ? "Menghapus..." : "Hapus"}
+                {isDeleting ? "Menghapus..." : "Hapus Sekarang"}
               </Button>
             </ModalFooter>
           </ModalContent>
         </Modal>
       </section>
-      <ToastContainer />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </DefaultLayout>
   );
 }
