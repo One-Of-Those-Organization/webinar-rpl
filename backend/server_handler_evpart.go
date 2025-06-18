@@ -311,7 +311,7 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
             })
         }
 
-        if isAdmin != 1 || selEvPart.EventPRole != "committee" {
+        if isAdmin != 1 && selEvPart.EventPRole != "committee" {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid credentials for this function",
