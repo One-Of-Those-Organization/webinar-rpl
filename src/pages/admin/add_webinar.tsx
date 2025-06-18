@@ -319,6 +319,7 @@ export default function CreateWebinar() {
                     label="Max Attendees"
                     type="number"
                     min={1}
+                    max={1000}
                     variant="flat"
                     value={
                       webinarInput.max === 0 ? "" : webinarInput.max.toString()
