@@ -520,7 +520,7 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
         }
 
         var body struct {
-            EventID int
+            EventID int `json:"event_id"`
         }
 
         err = c.BodyParser(&body)
@@ -533,22 +533,33 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
             })
         }
 
-        var currentUser table.EventParticipant
-        res := backend.db.Preload("User").Where("user_email = ? AND event_id = ?", email, body.EventID).First(&currentUser)
+        var currentUser table.User
+        res := backend.db.Where("user_email = ?", email).First(&currentUser)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to fetch event from db, %v", res.Error),
+                "message": fmt.Sprintf("Failed to fetch user from db, %v", res.Error),
                 "error_code": 4,
                 "data": nil,
             })
         }
 
-        if currentUser.EventPRole != "committee" && admin != 1 {
+        var currentEvPart table.EventParticipant
+        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEvPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch event from db, %v", res.Error),
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        if currentEvPart.EventPRole != "committee" && admin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
                 "message": "Invalid credentials for this function",
-                "error_code": 5,
+                "error_code": 6,
                 "data": nil,
             })
         }
@@ -566,7 +577,7 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to create new event cert template, %v", res.Error),
-                "error_code": 5,
+                "error_code": 7,
                 "data": nil,
             })
         }
