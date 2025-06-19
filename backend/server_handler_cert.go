@@ -624,22 +624,26 @@ func appHandleCertEditor(backend *Backend, route fiber.Router) {
         }
 
         cert_id := c.Query("cert_id")
+        if cert_id == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid cert_id on query.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
         var certTemp table.CertTemplate
         res := backend.db.Where("id = ?", cert_id).First(&certTemp)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to fetch cert temp from db, %v", res.Error),
-                "error_code": 4,
+                "error_code": 5,
                 "data": nil,
             })
         }
 
-        return c.Status(fiber.StatusOK).JSON(fiber.Map{
-            "success": true,
-            "message": "WIP.",
-            "error_code": 0,
-            "data": certTemp,
-        })
+        return c.Render("editor", fiber.Map{})
     })
 }

@@ -91,6 +91,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertUploadTemplate(backend, protected)
 
     appHandleCertNewDumb(backend, protected)
+    // appHandleCertEditor(backend, api)
     appHandleCertEditor(backend, protected)
 
     // EVENT PARTICIPANT STUFF
