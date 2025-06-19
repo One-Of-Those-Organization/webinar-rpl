@@ -19,6 +19,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
+import { auth_user } from "@/api/auth_user";
 
 export const NavbarAdmin = () => {
   const navigate = useNavigate();
@@ -26,60 +27,54 @@ export const NavbarAdmin = () => {
   const [email, setEmail] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const user_data = localStorage.getItem("user_data");
+  const [loading, setLoading] = useState(true);
 
   // Path checks untuk active state
   const isDashboardPage = location.pathname === "/admin";
   const isUserPage = location.pathname === "/admin/user";
   const isWebinarPage = location.pathname === "/admin/webinar";
 
-  useEffect(() => {
+  const fetchUserData = async () => {
     try {
-      // Check kalau dapet data (biar ga null)
-      if (user_data) {
-        // Fetch (parse) data from json
-        const user_data_object: UserData = JSON.parse(user_data);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-        // Set value to useState
-        setEmail(user_data_object.UserEmail);
-        setProfilePicture(user_data_object.UserPicture);
+      const response = await auth_user.get_current_user();
+
+      if (response.success && response.data) {
+        const userData = response.data as UserData;
+        setEmail(userData.UserEmail);
+        setProfilePicture(userData.UserPicture);
         setIsLoggedIn(true);
+      } else {
+        // Token invalid, clear it
+        localStorage.removeItem("token");
       }
     } catch (error) {
-      console.log("Unexpected Error");
+      console.error("Error fetching user data:", error);
+      localStorage.removeItem("token");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchUserData();
   }, []);
 
   const renderDropdownItems = () => {
-    if (isLoggedIn) {
+    if (loading) {
       return (
-        <>
-          <DropdownItem key="profile" className="h-14 gap-2">
-            <p className="font-semibold">Signed in as</p>
-            <p className="font-semibold">{email}</p>
-          </DropdownItem>
-          <DropdownItem key="my-profile" onClick={() => navigate("/profile")}>
-            Profile
-          </DropdownItem>
-          <DropdownItem
-            key="Back to Dashboard"
-            onClick={() => navigate("/dashboard")}
-          >
-            Back to Dashboard
-          </DropdownItem>
-          <DropdownItem
-            key="logout"
-            color="danger"
-            onClick={async () => {
-              localStorage.clear();
-              navigate("/login");
-            }}
-          >
-            Log Out
-          </DropdownItem>
-        </>
+        <DropdownItem key="loading">
+          <p className="text-sm">Loading...</p>
+        </DropdownItem>
       );
-    } else {
+    }
+
+    if (!isLoggedIn) {
       return (
         <DropdownItem key="login" onClick={() => navigate("/login")}>
           <p className="font-semibold">Login</p>
@@ -87,6 +82,37 @@ export const NavbarAdmin = () => {
         </DropdownItem>
       );
     }
+
+    return (
+      <>
+        <DropdownItem key="profile" className="h-14 gap-2">
+          <p className="font-semibold">Signed in as</p>
+          <p className="font-semibold">{email}</p>
+        </DropdownItem>
+
+        <DropdownItem key="my-profile" onClick={() => navigate("/profile")}>
+          Profile
+        </DropdownItem>
+
+        <DropdownItem
+          key="Back to Dashboard"
+          onClick={() => navigate("/dashboard")}
+        >
+          Back to Dashboard
+        </DropdownItem>
+
+        <DropdownItem
+          key="logout"
+          color="danger"
+          onClick={async () => {
+            localStorage.clear();
+            navigate("/login");
+          }}
+        >
+          Log Out
+        </DropdownItem>
+      </>
+    );
   };
 
   return (
@@ -102,43 +128,46 @@ export const NavbarAdmin = () => {
         <NavbarBrand className="gap-3 max-w-fit">
           <RouterLink
             to="/admin"
-            className="flex justify-start items-center gap-1 text-foreground"
+            className="flex justify-start items-center gap-1 text-foreground no-underline"
           >
             <Logo />
             <p className="font-bold text-inherit">Webinar UKDC</p>
           </RouterLink>
         </NavbarBrand>
+
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
             <RouterLink
               to="/admin"
-              className={`${
+              className={`border-b-2 border-transparent hover:border-primary transition-colors no-underline ${
                 isDashboardPage ? "text-primary" : "text-foreground"
-              } hover:opacity-80 transition-opacity`}
+              }`}
             >
               Dashboard
             </RouterLink>
           </NavbarItem>
         )}
+
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
             <RouterLink
               to="/admin/user"
-              className={`${
+              className={`border-b-2 border-transparent hover:border-primary transition-colors no-underline ${
                 isUserPage ? "text-primary" : "text-foreground"
-              } hover:opacity-80 transition-opacity`}
+              }`}
             >
               User
             </RouterLink>
           </NavbarItem>
         )}
+
         {isLoggedIn && (
           <NavbarItem className="hidden lg:flex">
             <RouterLink
               to="/admin/webinar"
-              className={`${
+              className={`border-b-2 border-transparent hover:border-primary transition-colors no-underline ${
                 isWebinarPage ? "text-primary" : "text-foreground"
-              } hover:opacity-80 transition-opacity`}
+              }`}
             >
               Webinar
             </RouterLink>
@@ -147,7 +176,6 @@ export const NavbarAdmin = () => {
       </NavbarContent>
 
       <NavbarContent className="items-center gap-4" justify="end">
-        {isLoggedIn && <NavbarItem className="hidden lg:flex"></NavbarItem>}
         <ThemeSwitch className="hidden lg:block" />
         <Dropdown placement="bottom-end">
           <DropdownTrigger>
@@ -179,11 +207,11 @@ export const NavbarAdmin = () => {
                 <NavbarMenuItem key={`${item}-${index}`}>
                   <RouterLink
                     to={item.href}
-                    className={`${
+                    className={`text-lg no-underline ${
                       location.pathname === item.href
                         ? "text-primary"
                         : "text-foreground"
-                    } text-lg hover:opacity-80 transition-opacity`}
+                    }`}
                   >
                     {item.label}
                   </RouterLink>

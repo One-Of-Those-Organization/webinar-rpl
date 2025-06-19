@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardHeader, CardBody, Image, Link, Button } from "@heroui/react";
+import { Card, CardHeader, CardBody, Image, Link } from "@heroui/react";
 import { Webinar } from "@/api/interface";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 interface CardViewProps {
-  webinar?: Webinar;
-  isRegistered?: boolean;
-  onRegister?: (webinarId: number) => void;
+  webinar: Webinar;
 }
 
-export function CardView({ 
-  webinar, 
-  isRegistered = false, 
-  onRegister 
-}: CardViewProps): React.ReactElement {
+export function CardView({ webinar }: CardViewProps): React.ReactElement {
   const [isLoading, setIsLoading] = useState(true);
   const [countdown, setCountdown] = useState<{
     days: number;
@@ -25,7 +19,7 @@ export function CardView({
 
   // Countdown effect for upcoming webinars
   useEffect(() => {
-    if (!webinar?.dstart) return;
+    if (!webinar.dstart) return;
 
     const updateCountdown = () => {
       const now = new Date().getTime();
@@ -34,8 +28,12 @@ export function CardView({
 
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const hours = Math.floor(
+          (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutes = Math.floor(
+          (difference % (1000 * 60 * 60)) / (1000 * 60)
+        );
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
         setCountdown({ days, hours, minutes, seconds });
@@ -48,7 +46,7 @@ export function CardView({
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, [webinar?.dstart]);
+  }, [webinar.dstart]);
 
   // Format date for display
   const formatDate = (dateStr: string | undefined) => {
@@ -63,13 +61,13 @@ export function CardView({
         minute: "2-digit",
       });
     } catch (e) {
-      return dateStr;
+      return "Invalid date";
     }
   };
 
   // Check if webinar is live
   const isLive = () => {
-    if (!webinar?.dstart || !webinar?.dend) return false;
+    if (!webinar.dstart || !webinar.dend) return false;
     const now = new Date();
     const startDate = new Date(webinar.dstart);
     const endDate = new Date(webinar.dend);
@@ -78,56 +76,16 @@ export function CardView({
 
   // Check if webinar is upcoming
   const isUpcoming = () => {
-    if (!webinar?.dstart) return false;
+    if (!webinar.dstart) return false;
     const now = new Date();
     const startDate = new Date(webinar.dstart);
     return now < startDate;
   };
 
-  const handleRegister = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent card click navigation
-    e.stopPropagation(); // Stop event bubbling
-    if (webinar && onRegister) {
-      onRegister(webinar.id);
-    }
-  };
-
-  // If no webinar data is provided, show dummy content
-  if (!webinar) {
-    return (
-      <Link href="/detail">
-        <Card className="py-4">
-          <CardBody className="overflow-visible py-2">
-            {isLoading && (
-              <Skeleton
-                height={180}
-                width="100%"
-                style={{ borderRadius: "0.75rem", aspectRatio: "4 / 3" }}
-              />
-            )}
-            <Image
-              alt="Card background"
-              className={`rounded-xl object-cover w-full aspect-[4/3] ${
-                isLoading ? "hidden" : "block"
-              }`}
-              src="https://app.requestly.io/delay/1000/https://heroui.com/images/hero-card-complete.jpeg"
-              onLoad={() => setIsLoading(false)}
-            />
-          </CardBody>
-          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-            <h4 className="font-bold text-large">Dummy Lorem</h4>
-            <p className="text-tiny uppercase font-bold">Dummy Lorem</p>
-            <small className="text-default-500">Dummy Lorem</small>
-          </CardHeader>
-        </Card>
-      </Link>
-    );
-  }
-
   return (
     <Link href={`/detail/${webinar.id}`}>
       <Card className="py-4 h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow">
-        <CardBody className="overflow-visible py-2 flex-grow">
+        <CardBody className="overflow-visible py-2">
           {isLoading && (
             <Skeleton
               height={180}
@@ -152,9 +110,12 @@ export function CardView({
             )}
           </div>
         </CardBody>
-        
-        <CardHeader className="pb-2 pt-2 px-4 flex-col items-start flex-grow">
-          <h4 className="font-bold text-large line-clamp-2" title={webinar.name}>
+
+        <CardHeader className="pb-2 pt-2 px-4 flex-col items-start">
+          <h4
+            className="font-bold text-large line-clamp-2"
+            title={webinar.name}
+          >
             {webinar.name || "Webinar Title"}
           </h4>
           <p className="text-tiny uppercase font-bold text-gray-600">
@@ -163,9 +124,12 @@ export function CardView({
           <small className="text-default-500 mb-2">
             {formatDate(webinar.dstart)}
           </small>
-          
+
           {webinar.description && (
-            <p className="text-sm text-gray-600 line-clamp-3 mb-3" title={webinar.description}>
+            <p
+              className="text-sm text-gray-600 line-clamp-3 mb-3"
+              title={webinar.description}
+            >
               {webinar.description}
             </p>
           )}
@@ -181,71 +145,38 @@ export function CardView({
                   <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
                     {countdown.days}
                   </div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">Days</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
+                    Days
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
                     {countdown.hours}
                   </div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">Hours</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
+                    Hours
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
                     {countdown.minutes}
                   </div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">Min</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
+                    Min
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
                     {countdown.seconds}
                   </div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">Sec</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
+                    Sec
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </CardHeader>
-
-        {/* Action Button */}
-        <div className="px-4 pb-4">
-          {isRegistered ? (
-            <Button 
-              className="w-full" 
-              color="success" 
-              variant="flat"
-              isDisabled
-              onClick={handleRegister}
-            >
-              ✓ Registered
-            </Button>
-          ) : isLive() ? (
-            <Button 
-              className="w-full" 
-              color="primary"
-              onClick={handleRegister}
-            >
-              Register Now
-            </Button>
-          ) : isUpcoming() && countdown ? (
-            <Button 
-              className="w-full" 
-              color="secondary"
-              variant="bordered"
-              isDisabled
-              onClick={handleRegister}
-            >
-              Coming Soon
-            </Button>
-          ) : (
-            <Button 
-              className="w-full" 
-              color="primary"
-              onClick={handleRegister}
-            >
-              Register Now
-            </Button>
-          )}
-        </div>
       </Card>
     </Link>
   );

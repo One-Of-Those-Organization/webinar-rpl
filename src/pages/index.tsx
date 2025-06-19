@@ -18,9 +18,9 @@ export default function IndexPage() {
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center min-h-[65vh] text-center">
         <div className="flex flex-col items-center mb-8">
-          <span className={title({ size: "lg" })}>Dapatkan Informasi</span>
+          <span className={title({ size: "lg" })}>Discover Amazing</span>
           <span className={title({ color: "violet", size: "lg" })}>
-            WEBINAR
+            WEBINARS
           </span>
           <span className={title({ size: "sm" })}>Learn. Connect. Grow.</span>
         </div>

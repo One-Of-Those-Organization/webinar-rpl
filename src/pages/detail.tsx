@@ -10,14 +10,16 @@ import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import { QRScanner } from "@/components/QRScanner";
 
-// Detail Webinar Page
+// Webinar Detail Page
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const [webinar, setWebinar] = useState<Webinar | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [registeredWebinars, setRegisteredWebinars] = useState<number[]>([]);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [hasAttended, setHasAttended] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [isSubmittingAttendance, setIsSubmittingAttendance] = useState(false);
 
@@ -30,47 +32,61 @@ export default function DetailPage() {
 
       try {
         const result = await auth_webinar.get_webinar_by_id(parseInt(id));
-        
+
         if (result.success && result.data) {
           const webinarData = Webinar.fromApiResponse(result.data);
           setWebinar(webinarData);
+
+          // Check registration status dari API
+          await checkRegistrationStatus(parseInt(id));
         } else {
-          toast.error(result.message || "Gagal memuat detail webinar");
+          toast.error(result.message || "Failed to load webinar details");
         }
       } catch (error) {
-        toast.error("Gagal memuat detail webinar. Silakan coba lagi nanti.");
+        toast.error("Failed to load webinar details. Please try again later.");
       } finally {
         setIsLoading(false);
       }
     }
 
     loadWebinarDetail();
-
-    // Load registered webinars from localStorage
-    const registered = localStorage.getItem("registered_webinars");
-    if (registered) {
-      setRegisteredWebinars(JSON.parse(registered));
-    }
   }, [id]);
+
+  // New function to check registration status
+  const checkRegistrationStatus = async (eventId: number) => {
+    setIsCheckingStatus(true);
+    try {
+      const result = await auth_participants.event_participate_info(eventId);
+      if (result.success && result.data) {
+        setIsRegistered(true);
+        setHasAttended(result.data.EventPCome || false);
+      } else {
+        setIsRegistered(false);
+        setHasAttended(false);
+      }
+    } catch (error) {
+      setIsRegistered(false);
+      setHasAttended(false);
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
 
   // Format date for display
   const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return "Senin, 28 April 2025"; // Default fallback
+    if (!dateStr) return "No date specified";
     try {
       const date = new Date(dateStr);
-      return date.toLocaleDateString("id-ID", {
+      return date.toLocaleDateString("en-US", {
         weekday: "long",
         day: "numeric",
         month: "long",
         year: "numeric",
       });
     } catch (e) {
-      return "Senin, 28 April 2025"; // Default fallback
+      return "Invalid date format";
     }
   };
-
-  // Check if user is registered
-  const isRegistered = webinar ? registeredWebinars.includes(webinar.id) : false;
 
   // Check if webinar is currently running
   const isWebinarLive = () => {
@@ -86,34 +102,46 @@ export default function DetailPage() {
 
     setIsRegistering(true);
     try {
-      const result = await auth_participants.register({
-        event_id: webinar.id,
-        role: "normal"
+      const result = await auth_participants.event_participate_register({
+        id: webinar.id,
+        role: "normal",
       });
 
+      console.log("🔍 DEBUG REGISTRATION RESULT:", result);
+
       if (result.success) {
-        const newRegistered = [...registeredWebinars, webinar.id];
-        setRegisteredWebinars(newRegistered);
-        localStorage.setItem("registered_webinars", JSON.stringify(newRegistered));
-        toast.success("Berhasil mendaftar webinar!");
+        setIsRegistered(true);
+        toast.success("Successfully registered for webinar!");
       } else {
-        toast.error(result.message || "Gagal mendaftar webinar");
+        toast.error("Failed to register for webinar");
       }
     } catch (error) {
-      toast.error("Gagal mendaftar. Silakan coba lagi nanti.");
+      toast.error("Registration failed. Please try again later.");
     } finally {
       setIsRegistering(false);
     }
   };
 
   const handleAttendanceClick = () => {
+    console.log("🔍 DEBUG ATTENDANCE:");
+    console.log("- isRegistered:", isRegistered);
+    console.log("- hasAttended:", hasAttended);
+    console.log("- isWebinarLive():", isWebinarLive());
+    console.log("- webinar dates:", {
+      start: webinar?.dstart,
+      end: webinar?.dend,
+      now: new Date().toISOString(),
+    });
+
     if (!isRegistered) {
-      toast.warning("Anda harus mendaftar terlebih dahulu untuk melakukan absensi");
+      toast.warning("You must register first before taking attendance");
       return;
     }
 
     if (!isWebinarLive()) {
-      toast.warning("Absensi hanya dapat dilakukan saat webinar sedang berlangsung");
+      toast.warning(
+        "Attendance can only be taken when the webinar is currently running"
+      );
       return;
     }
 
@@ -127,32 +155,22 @@ export default function DetailPage() {
     try {
       const result = await auth_participants.submitAttendance({
         id: webinar.id,
-        code: code
+        code: code,
       });
 
       if (result.success) {
-        toast.success("Absensi berhasil! Terima kasih telah menghadiri webinar.");
-        // Store attendance status in localStorage
-        const attendedWebinars = JSON.parse(localStorage.getItem("attended_webinars") || "[]");
-        if (!attendedWebinars.includes(webinar.id)) {
-          attendedWebinars.push(webinar.id);
-          localStorage.setItem("attended_webinars", JSON.stringify(attendedWebinars));
-        }
+        setHasAttended(true);
+        toast.success(
+          "Attendance successful! Thank you for attending the webinar."
+        );
       } else {
-        toast.error(result.message || "Gagal melakukan absensi");
+        toast.error(result.message || "Failed to submit attendance");
       }
     } catch (error) {
-      toast.error("Gagal melakukan absensi. Silakan coba lagi nanti.");
+      toast.error("Failed to submit attendance. Please try again later.");
     } finally {
       setIsSubmittingAttendance(false);
     }
-  };
-
-  // Check if user has attended
-  const hasAttended = () => {
-    if (!webinar) return false;
-    const attendedWebinars = JSON.parse(localStorage.getItem("attended_webinars") || "[]");
-    return attendedWebinars.includes(webinar.id);
   };
 
   return (
@@ -162,13 +180,16 @@ export default function DetailPage() {
           {/* Image container with relative positioning */}
           <div className="relative">
             <Image
-              alt="Card background"
+              alt="Webinar banner"
               className="object-cover rounded-xl"
-              src={webinar?.imageUrl || "https://heroui.com/images/hero-card-complete.jpeg"}
+              src={
+                webinar?.imageUrl ||
+                "https://heroui.com/images/hero-card-complete.jpeg"
+              }
               width="100%"
               height="100mm"
             />
-            
+
             {/* Live indicator positioned absolutely in top-right corner */}
             {isWebinarLive() && (
               <div className="absolute top-4 right-4 z-10">
@@ -178,7 +199,7 @@ export default function DetailPage() {
               </div>
             )}
           </div>
-          
+
           <div className="flex flex-row gap-2 px-4 py-2 justify-center flex-wrap">
             <Link
               className={buttonStyles({
@@ -190,7 +211,7 @@ export default function DetailPage() {
               href={webinar?.att || "#"}
               target={webinar?.att ? "_blank" : undefined}
             >
-              Materi
+              Materials
             </Link>
             <Link
               className={buttonStyles({
@@ -202,11 +223,11 @@ export default function DetailPage() {
               href={webinar?.link || "#"}
               target={webinar?.link ? "_blank" : undefined}
             >
-              Link
+              Join Link
             </Link>
-            
+
             {/* Registration Button with dynamic functionality */}
-            {isLoading ? (
+            {isLoading || isCheckingStatus ? (
               <Button
                 color="secondary"
                 radius="full"
@@ -226,23 +247,25 @@ export default function DetailPage() {
                 isDisabled={isRegistered || isRegistering}
                 isLoading={isRegistering}
               >
-                {isRegistered ? "✓ Terdaftar" : "Daftar"}
+                {isRegistered ? "✓ Registered" : "Register"}
               </Button>
             )}
-            
+
             {/* Attendance Button with QR Scanner */}
             <Button
-              color={hasAttended() ? "success" : "secondary"}
+              color={hasAttended ? "success" : "secondary"}
               radius="full"
-              variant={hasAttended() ? "flat" : "bordered"}
+              variant={hasAttended ? "flat" : "bordered"}
               size="lg"
               onClick={handleAttendanceClick}
-              isDisabled={!isRegistered || hasAttended() || isSubmittingAttendance}
+              isDisabled={
+                !isRegistered || hasAttended || isSubmittingAttendance
+              }
               isLoading={isSubmittingAttendance}
             >
-              {hasAttended() ? "✓ Hadir" : "Absensi"}
+              {hasAttended ? "✓ Attended" : "Check-in"}
             </Button>
-            
+
             <Link
               className={buttonStyles({
                 color: "secondary",
@@ -252,7 +275,7 @@ export default function DetailPage() {
               })}
               href="#"
             >
-              Sertifikat
+              Certificate
             </Link>
           </div>
         </div>
@@ -267,43 +290,54 @@ export default function DetailPage() {
               )}
             </h1>
           </div>
+
           <div className="font-bold text-xl">
-            Hari Tanggal :{" "}
+            Date:{" "}
             <span className="text-[#B6A3E8] font-bold">
               {isLoading ? (
                 <Spinner size="sm" />
               ) : (
-                formatDate(webinar?.dstart)
+                formatDate(webinar?.dstart) || "No date specified"
               )}
             </span>
           </div>
+
           <div className="font-bold text-xl">
-            Tempat : <span className="text-[#B6A3E8] font-bold">Online</span>
+            Venue:{" "}
+            <span className="text-[#B6A3E8] font-bold">
+              {webinar?.att || "Online"}
+            </span>
           </div>
-          
+
           {/* Speaker info if available */}
           {!isLoading && webinar?.speaker && (
             <div className="font-bold text-xl">
-              Speaker : <span className="text-[#B6A3E8] font-bold">{webinar.speaker}</span>
+              Speaker:{" "}
+              <span className="text-[#B6A3E8] font-bold">
+                {webinar.speaker}
+              </span>
             </div>
           )}
-          
+
           {/* Max participants if available */}
           {!isLoading && webinar?.max && webinar.max > 0 && (
             <div className="font-bold text-xl">
-              Kapasitas : <span className="text-[#B6A3E8] font-bold">{webinar.max} peserta</span>
+              Capacity:{" "}
+              <span className="text-[#B6A3E8] font-bold">
+                {webinar.max} participants
+              </span>
             </div>
           )}
-          
+
           <div>
-            <h1 className="font-bold text-xl">Deskripsi :</h1>
+            <h1 className="font-bold text-xl">Description:</h1>
             <p className="text-justify text-lg">
               {isLoading ? (
                 <Spinner size="sm" />
               ) : webinar?.description && webinar.description.trim() !== "" ? (
                 webinar.description
               ) : (
-                "Lorem ipsum dolor sit amet consectetur, adipisicing elit. At voluptatem commodi consectetur exercitationem repellat quibusdam nisi, eos quos atque repudiandae sequi fuga repellendus omnis? Culpa obcaecati debitis architecto qui corporis."
+                "No description available for this webinar."
               )}
             </p>
           </div>

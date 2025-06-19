@@ -256,7 +256,6 @@ export default function CreateWebinar() {
 
   return (
     <>
-      {/* ✅ Button dengan styling yang sama seperti User Management */}
       <Button
         className="bg-foreground text-background"
         endContent={<PlusIcon />}
@@ -342,7 +341,7 @@ export default function CreateWebinar() {
                       label="Date Start"
                       type="date"
                       variant="flat"
-                      min={todayDate} // ✅ Disable tanggal sebelum hari ini
+                      min={todayDate}
                       value={webinarInput.dstart.split("T")[0]}
                       className="w-full"
                       onChange={(e) =>
@@ -372,7 +371,7 @@ export default function CreateWebinar() {
                       label="Date End"
                       type="date"
                       variant="flat"
-                      min={webinarInput.dstart.split("T")[0] || todayDate} // ✅ End date minimal sama dengan start date atau hari ini
+                      min={webinarInput.dstart.split("T")[0] || todayDate}
                       value={webinarInput.dend.split("T")[0]}
                       className="w-full"
                       onChange={(e) =>

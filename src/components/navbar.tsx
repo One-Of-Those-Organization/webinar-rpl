@@ -5,6 +5,7 @@ import { ThemeSwitch } from "@/components/theme-switch";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
+import { auth_user } from "@/api/auth_user";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -27,31 +28,52 @@ export const Navbar = () => {
   const [profilePicture, setProfilePicture] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const user_data = localStorage.getItem("user_data");
+  const [loading, setLoading] = useState(true);
 
   const isDashboardPage = location.pathname === "/dashboard";
   const isAboutPage = location.pathname === "/about";
 
-  useEffect(() => {
+  const fetchUserData = async () => {
     try {
-      if (user_data) {
-        // Fetch (parse) data from json
-        const user_data_object: UserData = JSON.parse(user_data);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-        // Set value to useState
-        setEmail(user_data_object.UserEmail);
-        setProfilePicture(user_data_object.UserPicture);
+      const response = await auth_user.get_current_user();
+
+      if (response.success && response.data) {
+        const userData = response.data as UserData;
+        setEmail(userData.UserEmail);
+        setProfilePicture(userData.UserPicture);
         setIsLoggedIn(true);
-        if (user_data_object.UserRole === 1) {
-          setIsAdmin(true);
-        }
+        setIsAdmin(userData.UserRole === 1);
+      } else {
+        // Token invalid, clear it
+        localStorage.removeItem("token");
       }
     } catch (error) {
-      console.log("Unexpected Error");
+      console.error("Error fetching user data:", error);
+      localStorage.removeItem("token");
+    } finally {
+      setLoading(false);
     }
-  }, [user_data]);
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
   const renderDropdownItems = () => {
+    if (loading) {
+      return (
+        <DropdownItem key="loading">
+          <p className="text-sm">Loading...</p>
+        </DropdownItem>
+      );
+    }
+
     if (!isLoggedIn) {
       return (
         <DropdownItem key="login" onClick={() => navigate("/login")}>
@@ -61,7 +83,6 @@ export const Navbar = () => {
       );
     }
 
-    // User sudah login, tampilkan menu berdasarkan role
     return (
       <>
         <DropdownItem key="profile" className="h-14 gap-2">
@@ -73,7 +94,6 @@ export const Navbar = () => {
           Profile
         </DropdownItem>
 
-        {/* Tambahkan menu Admin Dashboard jika user adalah admin */}
         {isAdmin && (
           <DropdownItem key="admin" onClick={() => navigate("/admin")}>
             Admin Dashboard
