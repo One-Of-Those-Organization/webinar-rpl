@@ -12,9 +12,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// TODO: all of the cert api will be revamped because "THEY" want an editor
-// for the cert templates... sigh...
-
 // POST : api/protected/cert-register
 func appHandleCertTempNew(backend *Backend, route fiber.Router) {
     route.Post("cert-register", func (c *fiber.Ctx) error {
@@ -42,8 +39,6 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
 
         var body struct {
             EventId       int    `json:"id"`
-            // NOTE:
-            // CertTemplate is a html+css that will be autofilled. (this is path btw.)
             CertTemplate  string `json:"cert_temp"`
         }
 
@@ -344,7 +339,7 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 			})
 		}
 
-		certDir := "static"
+		certDir := "static-hidden"
 		if err := os.MkdirAll(certDir, 0755); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
