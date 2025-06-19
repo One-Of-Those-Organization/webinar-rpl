@@ -10,8 +10,10 @@ import (
     "webrpl/table"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+    jwtware "github.com/gofiber/contrib/jwt"
 )
 
+// IMPORTANT -- DEPRECATED SHOULD NO BE USED. --
 // POST : api/protected/cert-register
 func appHandleCertTempNew(backend *Backend, route fiber.Router) {
     route.Post("cert-register", func (c *fiber.Ctx) error {
@@ -290,6 +292,7 @@ func appHandleCertEdit(backend *Backend, route fiber.Router) {
     })
 }
 
+// IMPORTANT -- DEPRECATED SHOULD NO BE USED. --
 // NOTE: @@ -> $bg.png.path
 // NOTE: data_html, data_img
 // POST : api/protected/cert-upload-template
@@ -588,11 +591,15 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
     })
 }
 
-// TODO: Finish this API
 // NOTE: Accept the event_id as the query so it knows what for.
 // GET : api/protected/cert-editor
 func appHandleCertEditor(backend *Backend, route fiber.Router) {
-    route.Get("cert-editor", func (c *fiber.Ctx) error {
+    editorRoute := route.Group("/", jwtware.New(jwtware.Config{
+        SigningKey: jwtware.SigningKey{Key: []byte(backend.pass)},
+        TokenLookup: "cookie:jwt, header:Authorization",
+        ContextKey:  "user",
+    }))
+    editorRoute.Get("cert-editor", func (c *fiber.Ctx) error {
         claims, err := GetJWT(c)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -644,6 +651,14 @@ func appHandleCertEditor(backend *Backend, route fiber.Router) {
             })
         }
 
+        backend.engine.ClearCache()
         return c.Render("editor", fiber.Map{})
     })
+}
+
+// NOTE: You are not supposed to use this from outside
+//       the buildin editor!!!!
+
+// POST : api/protected/-cert-editor-upload-image
+func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
 }
