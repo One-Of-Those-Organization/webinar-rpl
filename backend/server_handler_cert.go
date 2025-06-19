@@ -10,7 +10,6 @@ import (
     "webrpl/table"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-    jwtware "github.com/gofiber/contrib/jwt"
 )
 
 // IMPORTANT -- DEPRECATED SHOULD NO BE USED. --
@@ -594,12 +593,7 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
 // NOTE: Accept the event_id as the query so it knows what for.
 // GET : api/protected/cert-editor
 func appHandleCertEditor(backend *Backend, route fiber.Router) {
-    editorRoute := route.Group("/", jwtware.New(jwtware.Config{
-        SigningKey: jwtware.SigningKey{Key: []byte(backend.pass)},
-        TokenLookup: "cookie:jwt, header:Authorization",
-        ContextKey:  "user",
-    }))
-    editorRoute.Get("cert-editor", func (c *fiber.Ctx) error {
+    route.Get("cert-editor", func (c *fiber.Ctx) error {
         claims, err := GetJWT(c)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

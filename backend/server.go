@@ -49,6 +49,8 @@ func appMakeRouteHandler(backend *Backend) {
 
     protected := api.Group("/protected", jwtware.New(jwtware.Config{
         SigningKey: jwtware.SigningKey{Key: []byte(backend.pass)},
+        TokenLookup: "header:Authorization,cookie:jwt",
+        ContextKey: "user",
     }))
 
     app.Static("/static", "./static")
@@ -92,8 +94,8 @@ func appMakeRouteHandler(backend *Backend) {
 
     appHandleCertNewDumb(backend, protected)
 
-    appHandleCertEditor(backend, api)
-    appHandleCertEditorUploadImage(backend, api) // WIP
+    appHandleCertEditor(backend, protected)
+    appHandleCertEditorUploadImage(backend, protected) // WIP
 
     // EVENT PARTICIPANT STUFF
     appHandleEventParticipateRegister(backend, protected)
