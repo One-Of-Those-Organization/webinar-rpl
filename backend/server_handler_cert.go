@@ -12,6 +12,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// TODO: all of the cert api will be revamped because "THEY" want an editor
+// for the cert templates... sigh...
+
 // POST : api/protected/cert-register
 func appHandleCertTempNew(backend *Backend, route fiber.Router) {
     route.Post("cert-register", func (c *fiber.Ctx) error {
@@ -455,7 +458,7 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": true,
+                "success": false,
                 "message": fmt.Sprintf("Failed to fetch event participant for this code, %v", res.Error),
                 "error_code": 1,
                 "data": nil,
@@ -466,7 +469,7 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
         res = backend.db.Where("event_id = ?", evPart.EventId).First(&cerTemp)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": true,
+                "success": false,
                 "message": fmt.Sprintf("Failed to fetch certificate template from the db, %v", res.Error),
                 "error_code": 2,
                 "data": nil,
@@ -486,4 +489,98 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 			"Name": evPart.User.UserFullName,
 		})
 	})
+}
+
+// new but dumb stuff
+
+// NOTE: wrapper around alot of independent api so it is more locked up.
+// POST : api/protected/create-new-cert-from-event
+func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
+    route.Post("create-new-cert-from-event", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c);
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        email := claims["email"].(string)
+        admin := claims["admin"].(float64)
+
+        if email == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email on JWT.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            EventID int
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.EventParticipant
+        res := backend.db.Preload("User").Where("user_email = ? AND event_id = ?", email, body.EventID).First(&currentUser)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch event from db, %v", res.Error),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        if currentUser.EventPRole != "committee" && admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        newCertTemplate := table.CertTemplate {
+            EventId: body.EventID,
+            // CertTemplate: body.CertTemplate,
+        }
+
+        res = backend.db.Create(&newCertTemplate)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to create new event material, %v", res.Error),
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "success": true,
+            "message": "WIP",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// TODO: Finish this API
+// NOTE: Accept the event_id as the query so it knows what for.
+// GET : api/protected/cert-editor
+func appHandleCertEditor(backend *Backend, route fiber.Router) {
+    // route.Get("cert-editor", func (c *fiber.Ctx) error {
+    // })
 }
