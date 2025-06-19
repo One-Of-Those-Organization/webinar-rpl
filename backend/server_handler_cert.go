@@ -597,6 +597,54 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
 // NOTE: Accept the event_id as the query so it knows what for.
 // GET : api/protected/cert-editor
 func appHandleCertEditor(backend *Backend, route fiber.Router) {
-    // route.Get("cert-editor", func (c *fiber.Ctx) error {
-    // })
+    route.Get("cert-editor", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        admin := claims["admin"].(float64)
+        email := claims["email"].(string)
+
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        if email == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email on JWT.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        cert_id := c.Query("cert_id")
+        var certTemp table.CertTemplate
+        res := backend.db.Where("id = ?", cert_id).First(&certTemp)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch cert temp from db, %v", res.Error),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "WIP.",
+            "error_code": 0,
+            "data": certTemp,
+        })
+    })
 }

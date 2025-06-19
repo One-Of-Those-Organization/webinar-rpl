@@ -11,3 +11,11 @@ if __name__ == "__main__":
         desc="Test creating new cert temp"
     )
     test1.test(0)
+
+    test2 = TestApi.TestApi(
+        "protected/cert-editor?cert_id=13",
+        headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
+        method="get",
+        desc="Test accessing the editor."
+    )
+    test2.test(0)

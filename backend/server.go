@@ -24,7 +24,7 @@ type Backend struct {
 func appCreateNewServer(db *gorm.DB, sec SecretHolder, address string) *Backend {
     secret := sec.Password
     rand_t := rand.New(rand.NewSource(time.Now().UnixNano()))
-    engine := NewDynamicEngine("./static/", ".html")
+    engine := NewDynamicEngine("./static-hidden/", ".html")
     app := fiber.New(fiber.Config{
         AppName: "Webinar-RPL Backend",
         Views: engine,
@@ -91,6 +91,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertUploadTemplate(backend, protected)
 
     appHandleCertNewDumb(backend, protected)
+    appHandleCertEditor(backend, protected)
 
     // EVENT PARTICIPANT STUFF
     appHandleEventParticipateRegister(backend, protected)
@@ -105,9 +106,6 @@ func appMakeRouteHandler(backend *Backend) {
     // OTP STUFF
     appHandleGenOTP(backend, api)
     appHandleCleanupOTP(backend, protected)
-
-    // MISC STUFF
-    appHandleCertEditor(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")
