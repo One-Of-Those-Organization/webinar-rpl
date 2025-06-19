@@ -553,26 +553,31 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
             })
         }
 
+        // straight up set the the cert path to nonexistance index.html
+        cert_path := fmt.Sprintf("%d/index.html", body.EventID)
+
         newCertTemplate := table.CertTemplate {
             EventId: body.EventID,
-            // CertTemplate: body.CertTemplate,
+            CertTemplate: cert_path,
         }
 
         res = backend.db.Create(&newCertTemplate)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to create new event material, %v", res.Error),
+                "message": fmt.Sprintf("Failed to create new event cert template, %v", res.Error),
                 "error_code": 5,
                 "data": nil,
             })
         }
 
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
-            "message": "WIP",
+            "message": "Check data. Please access the editor link with the id this api return.",
             "error_code": 0,
-            "data": nil,
+            "data": fiber.Map{
+                "id": newCertTemplate.ID,
+            },
         })
     })
 }
