@@ -223,7 +223,7 @@ func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
         }
 
         var currentUser table.User
-        res := backend.db.Where("email = ?", useThisEmail).First(&currentUser)
+        res := backend.db.Where("user_email = ?", useThisEmail).First(&currentUser)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
