@@ -73,7 +73,16 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
-        // TODO: Check date older than today
+
+        now := time.Now()
+        if body.DStart.Before(now) || body.DEnd.Before(body.DStart) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to edit event because invalid date.",
+				"error_code": 8,
+				"data": nil,
+			})
+        }
 
         if body.Max <= 0 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -414,6 +423,16 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
             }
             event.EventMaterials = make([]table.EventMaterial, 1)
             event.EventMaterials = append(event.EventMaterials, mat)
+        }
+
+        now := time.Now()
+        if body.DStart.Before(now) || body.DEnd.Before(*body.DStart) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to edit event because invalid date.",
+				"error_code": 8,
+				"data": nil,
+			})
         }
 
 		result = backend.db.Save(&event)
