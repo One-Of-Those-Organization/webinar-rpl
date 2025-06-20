@@ -577,16 +577,18 @@
 
         async function uploadToBackend(data) {
             let a = await fetch(
-                "http://localhost:3000/api/protected/-cert-editor-upload-image",
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({data: data}),
+                "http://localhost:3000/api/c/-cert-editor-upload-image",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({data: data}),
+                }
             )
 
-            const result = await response.json();
+            const result = await a.json();
             console.log(result);
         }
 
@@ -603,6 +605,7 @@
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
+                        const base64String = e.target.result[1];
                         // const base64String = e.target.result.split(',')[1]; // Remove "data:image/png;base64,"
                         // console.log("Base64 string:", base64String);
                         uploadToBackend(base64String)

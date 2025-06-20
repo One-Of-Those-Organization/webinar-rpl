@@ -11,6 +11,7 @@
 // 7. Get All Users (Admin Only) ✅
 // 8. Get User by Email (Admin Only) ✅
 // 9. Get User Count (Admin Only) ✅
+// 10. Get Current User Info (User Only) ✅
 
 import {
   BaseResponse,
@@ -103,11 +104,6 @@ export const auth_user = {
         body: JSON.stringify(data),
       });
       const result = await response.json();
-
-      if (result.success && result.token) {
-        localStorage.setItem("token", result.token);
-        localStorage.setItem("user_data", JSON.stringify(result.data));
-      }
       return result;
     } catch (error) {
       return {
@@ -243,6 +239,25 @@ export const auth_user = {
         },
       });
 
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
+      };
+    }
+  },
+
+  // API Get User Info
+  get_current_user: async (): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/protected/user-info`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return await response.json();
     } catch (error) {
       return {

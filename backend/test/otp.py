@@ -1,7 +1,6 @@
 import TestApi
 import utils
 
-
 if __name__ == "__main__":
     admin_token = utils.login("admin@wowadmin.com", "secret")
 

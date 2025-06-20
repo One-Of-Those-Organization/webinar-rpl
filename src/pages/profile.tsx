@@ -2,7 +2,7 @@ import { button as buttonStyles } from "@heroui/theme";
 import DefaultLayout from "@/layouts/default";
 import { Image, Button } from "@heroui/react";
 import { Input } from "@heroui/input";
-import { FaCamera, FaExclamationTriangle } from "react-icons/fa";
+import { FaCamera, FaExclamationTriangle, FaSpinner } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
 import { auth_user } from "@/api/auth_user";
@@ -10,12 +10,12 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function ProfilPage() {
-  const user_data = localStorage.getItem("user_data");
   const [initialLoading, setInitialLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
   // Current data state
   const [userData, setUserData] = useState({
@@ -35,63 +35,84 @@ export default function ProfilPage() {
     createdAt: "",
   });
 
-  // ✅ Check for unsaved changes - termasuk gambar
   useEffect(() => {
     const hasChanges =
       userData.name !== originalData.name ||
       userData.instance !== originalData.instance ||
-      userData.profile !== originalData.profile; // ✅ Deteksi perubahan gambar
+      userData.profile !== originalData.profile;
     setHasUnsavedChanges(hasChanges);
   }, [userData, originalData]);
 
   // Handle keyboard shortcuts for saving and canceling
   useEffect(() => {
     const handleKeyPress = (e: any) => {
-      if (e.key === "Escape" && isEditing) {
+      if (e.key === "Escape" && isEditing && !isSaving && !imageUploading) {
         handleCancelClick();
       }
-      if (e.ctrlKey && e.key === "s" && isEditing) {
+      if (
+        e.ctrlKey &&
+        e.key === "s" &&
+        isEditing &&
+        !isSaving &&
+        !imageUploading
+      ) {
         e.preventDefault();
         handleSave();
       }
     };
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [isEditing, hasUnsavedChanges]);
+  }, [isEditing, hasUnsavedChanges, isSaving, imageUploading]);
 
-  // Load initial data
-  useEffect(() => {
+  const fetchUserData = async () => {
     try {
-      if (user_data) {
-        const user_data_object: UserData = JSON.parse(user_data);
+      setInitialLoading(true);
+      const response = await auth_user.get_current_user();
+
+      if (response.success && response.data) {
+        const user_data_object = response.data as UserData;
 
         const initData = {
           name: user_data_object.UserFullName,
           email: user_data_object.UserEmail,
           instance: user_data_object.UserInstance,
-          profile: user_data_object.UserPicture,
+          profile: user_data_object.UserPicture || "/logo_if.png",
           createdAt: user_data_object.UserCreatedAt,
         };
 
         setUserData(initData);
         setOriginalData(initData);
+      } else {
+        toast.error(response.message || "Failed to fetch user data");
       }
     } catch (error) {
-      toast.error("Unexpected Error!");
+      toast.error("Unexpected error while fetching user data!");
     } finally {
       setInitialLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchUserData();
   }, []);
 
   const handleSave = async () => {
-    if (!isEditing) return;
+    if (!isEditing || isSaving || imageUploading) return;
 
-    if (!userData.name.trim()) {
+    const trimmedName = userData.name.trim();
+    const trimmedInstance = userData.instance.trim();
+
+    if (!trimmedName) {
       toast.error("Name cannot be empty");
       return;
     }
 
-    if (!userData.instance.trim()) {
+    if (trimmedName.length < 2) {
+      toast.error("Name must be at least 2 characters long");
+      return;
+    }
+
+    if (!trimmedInstance) {
       toast.error("Instance cannot be empty");
       return;
     }
@@ -105,24 +126,14 @@ export default function ProfilPage() {
     try {
       setIsSaving(true);
       const response = await auth_user.user_edit({
-        name: userData.name,
-        instance: userData.instance,
+        name: trimmedName,
+        instance: trimmedInstance,
         picture: userData.profile,
       });
 
       if (response.success) {
         toast.success("Profile updated successfully!");
-
-        const updatedData = {
-          UserFullName: userData.name,
-          UserEmail: userData.email,
-          UserInstance: userData.instance,
-          UserPicture: userData.profile,
-          UserCreatedAt: userData.createdAt,
-        };
-        localStorage.setItem("user_data", JSON.stringify(updatedData));
-
-        setOriginalData(userData);
+        await fetchUserData();
         setIsEditing(false);
       } else {
         toast.error(response.message || "Failed to update profile");
@@ -144,11 +155,12 @@ export default function ProfilPage() {
 
   // Handle cancel button click
   const handleCancelClick = () => {
+    if (isSaving || imageUploading) return;
+
     if (hasUnsavedChanges) {
       setShowCancelConfirm(true);
     } else {
       setIsEditing(false);
-      toast.info("Exiting edit mode");
     }
   };
 
@@ -163,13 +175,10 @@ export default function ProfilPage() {
   // Handle edit button click
   const handleEditClick = () => {
     setIsEditing(true);
-    toast.info("You can now edit your profile");
   };
 
-  // ✅ Handle image change - hanya bisa dijalankan saat editing
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // ✅ Blokir jika tidak dalam mode edit
-    if (!isEditing) {
+    if (!isEditing || imageUploading) {
       toast.warning(
         "Please enter edit mode first to change your profile picture"
       );
@@ -194,45 +203,41 @@ export default function ProfilPage() {
       return;
     }
 
-    toast.info("Processing image...");
+    setImageUploading(true);
     const reader = new FileReader();
 
     reader.onloadend = async () => {
       const base64Image = reader.result as string;
 
       try {
-        // ✅ Upload image to server
         const response = await auth_user.user_image({ data: base64Image });
 
         if (response.success) {
-          let serverPath = response.data?.filename || "";
-          const staticUrl = serverPath;
-
-          // ✅ Update userData state untuk trigger unsaved changes detection
-          setUserData((prev) => ({ ...prev, profile: staticUrl }));
-
+          const serverPath = response.data?.filename || "";
+          setUserData((prev) => ({ ...prev, profile: serverPath }));
           toast.success("Image uploaded! Remember to save your changes.");
         } else {
-          toast.error("Failed to upload image");
+          toast.error(response.message || "Failed to upload image");
         }
       } catch (error) {
         toast.error("Error uploading image");
+      } finally {
+        setImageUploading(false);
+        e.target.value = "";
       }
     };
 
     reader.readAsDataURL(file);
   };
 
-  // ✅ Handle image removal - hanya bisa dijalankan saat editing
   const handleRemoveImage = async () => {
-    if (!isEditing) {
+    if (!isEditing || imageUploading) {
       toast.warning(
         "Please enter edit mode first to remove your profile picture"
       );
       return;
     }
 
-    // ✅ Set ke default image dan trigger unsaved changes
     setUserData((prev) => ({ ...prev, profile: "/logo_if.png" }));
     toast.success("Profile picture will be removed when you save changes");
   };
@@ -241,12 +246,12 @@ export default function ProfilPage() {
     toast.info("Change password feature is not implemented yet");
   };
 
-  // If initial loading, show a spinner
   if (initialLoading) {
     return (
       <DefaultLayout>
-        <div className="flex justify-center items-center min-h-[400px]">
+        <div className="flex flex-col justify-center items-center min-h-[400px] gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500" />
+          <p className="text-gray-600">Loading your profile...</p>
         </div>
       </DefaultLayout>
     );
@@ -305,26 +310,31 @@ export default function ProfilPage() {
               width={200}
               height={200}
             />
-            {/* ✅ Camera icon hanya aktif saat editing */}
             <label
-              className={`absolute -bottom-1 -right-[0px] z-10 rounded-full p-2 ${
-                isEditing
-                  ? "bg-secondary-500 text-white cursor-pointer hover:bg-secondary-600 transition-colors"
+              className={`absolute -bottom-1 -right-[0px] z-10 rounded-full p-2 transition-colors ${
+                isEditing && !imageUploading
+                  ? "bg-secondary-500 text-white cursor-pointer hover:bg-secondary-600"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
               title={
-                isEditing
-                  ? "Change profile picture"
-                  : "Enter edit mode to change picture"
+                imageUploading
+                  ? "Uploading image..."
+                  : isEditing
+                    ? "Change profile picture"
+                    : "Enter edit mode to change picture"
               }
             >
-              <FaCamera className="w-5 h-5" />
+              {imageUploading ? (
+                <FaSpinner className="w-5 h-5 animate-spin" />
+              ) : (
+                <FaCamera className="w-5 h-5" />
+              )}
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
-                disabled={!isEditing} // ✅ Disable input saat tidak editing
+                disabled={!isEditing || imageUploading}
               />
             </label>
           </div>
@@ -337,7 +347,7 @@ export default function ProfilPage() {
               size: "sm",
             })}
             onClick={handleRemoveImage}
-            disabled={!isEditing} // ✅ Disable saat tidak editing
+            disabled={!isEditing || imageUploading}
           >
             Remove
           </Button>
@@ -371,6 +381,11 @@ export default function ProfilPage() {
             {hasUnsavedChanges && isEditing && (
               <span className="text-orange-500 text-xs font-medium">
                 • Unsaved changes
+              </span>
+            )}
+            {imageUploading && (
+              <span className="text-blue-500 text-xs font-medium">
+                • Uploading image...
               </span>
             )}
           </div>
@@ -410,7 +425,6 @@ export default function ProfilPage() {
             isRequired
           />
 
-          {/* ✅ Indicator untuk perubahan gambar */}
           {hasUnsavedChanges &&
             userData.profile !== originalData.profile &&
             isEditing && (
@@ -431,7 +445,7 @@ export default function ProfilPage() {
                   size: "sm",
                 })}
                 onClick={handleCancelClick}
-                disabled={isSaving}
+                disabled={isSaving || imageUploading}
               >
                 Cancel
               </Button>
@@ -444,6 +458,7 @@ export default function ProfilPage() {
                   size: "sm",
                 })}
                 onClick={handleEditClick}
+                disabled={imageUploading}
               >
                 Edit Profile
               </Button>
@@ -458,7 +473,7 @@ export default function ProfilPage() {
               })}
               onClick={handleSave}
               isLoading={isSaving}
-              disabled={!isEditing || isSaving}
+              disabled={!isEditing || isSaving || imageUploading}
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>

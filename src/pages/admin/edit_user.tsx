@@ -3,7 +3,7 @@ import DefaultLayout from "@/layouts/default_admin";
 import { Image, Button } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { FaCamera, FaExclamationTriangle } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth_user } from "@/api/auth_user";
 import { toast, ToastContainer } from "react-toastify";
@@ -16,6 +16,9 @@ export default function EditUserPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  // Ref untuk input file
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Checkpoint for original data
   const [originalData, setOriginalData] = useState({
@@ -94,6 +97,85 @@ export default function EditUserPage() {
     loadUserData();
   }, [email, navigate]);
 
+  // Handle image upload
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validasi ukuran file (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size should not exceed 5MB");
+        // Reset input file
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
+
+      // Validasi tipe file
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Please select a valid image file (JPG, PNG, GIF)");
+        // Reset input file
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        handleInputChange("picture", result);
+        toast.success("Image selected!");
+      };
+
+      reader.onerror = () => {
+        toast.error("Failed to read the image file");
+        // Reset input file
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle remove image
+  const handleRemoveImage = useCallback(() => {
+    // Clear profile state
+    handleInputChange("picture", "");
+
+    // Reset input file value
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.files = null;
+    }
+
+    // Clear any potential cached data
+    setTimeout(() => {
+      if (fileInputRef.current) {
+        fileInputRef.current.type = "";
+        fileInputRef.current.type = "file";
+      }
+    }, 0);
+
+    toast.success("Image removed successfully");
+  }, []);
+
+  // Handle camera click
+  const handleCameraClick = useCallback(() => {
+    if (fileInputRef.current && isEditing) {
+      fileInputRef.current.click();
+    }
+  }, [isEditing]);
+
   // Handle saving user data
   const handleSave = async () => {
     if (!userData.name.trim()) {
@@ -126,7 +208,14 @@ export default function EditUserPage() {
         setOriginalData(userData);
         setIsEditing(false);
       } else {
-        toast.error(response.message || "Failed to update user");
+        if (response.error_code === 401) {
+          toast.error("Session expired. Please login again.");
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
+        } else {
+          toast.error(response.message || "Failed to update user");
+        }
       }
     } catch (error) {
       toast.error("Error updating user");
@@ -158,6 +247,13 @@ export default function EditUserPage() {
     setUserData(originalData);
     setIsEditing(false);
     setShowCancelConfirm(false);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.files = null;
+    }
+
     toast.info("Changes discarded, reverting to original data");
   };
 
@@ -174,11 +270,18 @@ export default function EditUserPage() {
   return (
     <DefaultLayout>
       {showCancelConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
               <FaExclamationTriangle className="text-yellow-500 text-xl" />
-              <h3 className="text-lg font-semibold">Discard Changes?</h3>
+              <h3 id="modal-title" className="text-lg font-semibold">
+                Discard Changes?
+              </h3>
             </div>
             <p className="text-gray-600 mb-6">
               You have unsaved changes. Are you sure you want to discard them?
@@ -212,6 +315,7 @@ export default function EditUserPage() {
       )}
 
       <section className="flex flex-col lg:flex-row gap-10 p-4 md:p-8">
+        {/* Profile Image Section */}
         <div className="order-1 lg:order-2 flex flex-col gap-4 items-center w-full lg:w-auto">
           <div className="relative">
             <Image
@@ -222,23 +326,48 @@ export default function EditUserPage() {
               width={200}
               height={200}
             />
-            <label className="absolute -bottom-1 -right-[0px] z-10 bg-secondary-500 text-white rounded-full p-2 cursor-pointer">
+            {/* Camera Icon */}
+            <div
+              className={`absolute -bottom-1 -right-[0px] z-10 bg-secondary-500 text-white rounded-full p-2 transition-colors ${
+                isEditing
+                  ? "cursor-pointer hover:bg-secondary-600"
+                  : "cursor-not-allowed opacity-50"
+              }`}
+              onClick={handleCameraClick}
+              role="button"
+              tabIndex={isEditing ? 0 : -1}
+              onKeyDown={(e) => {
+                if (isEditing && (e.key === "Enter" || e.key === " ")) {
+                  handleCameraClick();
+                }
+              }}
+            >
               <FaCamera className="w-5 h-5" />
-              <input type="file" accept="image/*" className="hidden" disabled />
-            </label>
+            </div>
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif"
+              onChange={handleImageChange}
+              style={{ display: "none" }}
+            />
           </div>
 
-          <Button
-            className={buttonStyles({
-              color: "secondary",
-              radius: "full",
-              variant: "solid",
-              size: "sm",
-            })}
-            disabled
-          >
-            Remove
-          </Button>
+          {/* Remove Button - Tampilkan hanya jika ada gambar dan sedang editing */}
+          {userData.picture && isEditing && (
+            <Button
+              className={buttonStyles({
+                color: "danger",
+                radius: "full",
+                variant: "solid",
+                size: "sm",
+              })}
+              onClick={handleRemoveImage}
+            >
+              Remove Image
+            </Button>
+          )}
 
           <div className="w-full">
             <Input
@@ -256,6 +385,7 @@ export default function EditUserPage() {
           </div>
         </div>
 
+        {/* Form Section */}
         <div className="order-2 lg:order-1 flex flex-wrap gap-4 w-full lg:w-[700px]">
           <div className="flex items-center gap-2 w-full">
             <p className="text-blue-600 font-semibold text-sm">
@@ -290,6 +420,7 @@ export default function EditUserPage() {
             className="w-full"
             value={userData.email}
             readOnly
+            description="Email cannot be changed"
           />
 
           <Input

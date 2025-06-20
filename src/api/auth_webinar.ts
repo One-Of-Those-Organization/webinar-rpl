@@ -138,7 +138,6 @@ export const auth_webinar = {
         if (result.token) {
           localStorage.setItem("token", result.token);
         }
-        localStorage.setItem("webinar_data", JSON.stringify(result.data));
       }
       return result;
     } catch (error) {
@@ -192,5 +191,5 @@ export const auth_webinar = {
         success: false,
       };
     }
-  }
+  },
 };

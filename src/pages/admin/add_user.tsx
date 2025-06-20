@@ -6,11 +6,11 @@ import {
   DropdownItem,
   Button,
 } from "@heroui/react";
-import DefaultLayout from "@/layouts/default";
+import DefaultLayout from "@/layouts/default_admin";
 import { Image } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { FaCamera } from "react-icons/fa";
-import { useState, useRef, useCallback } from "react"; // Tambahkan useCallback
+import { useState, useRef, useCallback } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { auth_user } from "@/api/auth_user";
@@ -24,9 +24,12 @@ export default function AddUserPage() {
   const [password, setPassword] = useState("");
   const [profile, setProfile] = useState("");
   const [userRole, setUserRole] = useState(0);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Regex patterns
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=<>?{}[\]~.]).{8,}$/;
 
   // Ref untuk input file
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +83,7 @@ export default function AddUserPage() {
     }
   };
 
-  // Perbaikan fungsi handleRemoveImage dengan useCallback
+  // Handle remove image
   const handleRemoveImage = useCallback(() => {
     // Clear profile state
     setProfile("");
@@ -88,7 +91,6 @@ export default function AddUserPage() {
     // Reset input file value
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
-      // Force clear dengan cara lain jika perlu
       fileInputRef.current.files = null;
     }
 
@@ -111,35 +113,67 @@ export default function AddUserPage() {
   }, []);
 
   const handleSubmit = async () => {
-    if (!name || !email || !instance || !password) {
-      toast.warn("Please fill all required fields");
-      return;
-    }
-
-    if (name.length === 0) {
-      toast.info("Please enter the name");
-      return;
-    }
-
-    if (instance.length === 0) {
-      toast.info("Please enter the instance");
-      return;
-    }
-
-    if (password.length === 0) {
-      toast.info("Please enter the password");
-      return;
-    }
-
-    if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
     setLoading(true);
-    setError("");
 
     try {
+      // Handle client-side validation errors
+      let clientOnlyError = null;
+
+      switch (true) {
+        case name.length <= 0:
+          clientOnlyError = {
+            message: "Please enter the name",
+            type: "info",
+          };
+          break;
+
+        case email.length <= 0:
+          clientOnlyError = {
+            message: "Please enter the email",
+            type: "info",
+          };
+          break;
+
+        case !emailRegex.test(email):
+          clientOnlyError = {
+            message: "Please enter a valid email address",
+            type: "warn",
+          };
+          break;
+
+        case instance.length <= 0:
+          clientOnlyError = {
+            message: "Please enter the instance",
+            type: "info",
+          };
+          break;
+
+        case password.length <= 0:
+          clientOnlyError = {
+            message: "Please enter the password",
+            type: "info",
+          };
+          break;
+
+        case !passwordRegex.test(password):
+          clientOnlyError = {
+            message:
+              "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+            type: "warn",
+          };
+          break;
+      }
+
+      if (clientOnlyError) {
+        if (clientOnlyError.type === "warn") {
+          toast.warn(clientOnlyError.message);
+        } else {
+          toast.info(clientOnlyError.message);
+        }
+        setLoading(false);
+        return;
+      }
+
       // Prepare data untuk API call
       const registerData: RegisterAdmin = {
         name: name,
@@ -161,11 +195,13 @@ export default function AddUserPage() {
         });
       }
 
+      // Handle server-side validation errors
       if (result.success) {
         toast.success(
           result.message ||
             `${userRole === 1 ? "Admin" : "Regular"} user added successfully!`
         );
+
         // Reset form fields
         setName("");
         setEmail("");
@@ -184,23 +220,36 @@ export default function AddUserPage() {
         setTimeout(() => {
           window.location.href = "/admin/user";
         }, 2000);
-      } else {
-        // Handle specific error codes
-        if (result.error_code === 401) {
+        return;
+      }
+
+      // Handle server-side validation errors
+      switch (result.error_code) {
+        case 2:
+          toast.warn("All field must be filled");
+          break;
+
+        case 3:
+          toast.warn("Invalid Email.");
+          break;
+
+        case 5:
+          toast.warn("User with that email already registered.");
+          break;
+
+        case 401:
           toast.error("Session expired. Please login again.");
           setTimeout(() => {
             window.location.href = "/login";
           }, 2000);
-        } else {
-          setError(result.message || "Failed to add user");
+          break;
+
+        default:
           toast.error(result.message || "Failed to add user");
-        }
+          break;
       }
     } catch (error) {
-      const errorMessage = "An unexpected error occurred";
-      setError(errorMessage);
-      toast.error(errorMessage);
-      console.error("Registration error:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -215,7 +264,8 @@ export default function AddUserPage() {
             <Image
               className="rounded-full object-cover pointer-events-none"
               alt="User Profile"
-              src={profile || "/logo_if.png"} // Perbaikan: Gunakan fallback langsung
+              src={profile || "/logo_if.png"}
+              fallbackSrc="/logo_if.png"
               width={200}
               height={200}
             />
@@ -239,7 +289,7 @@ export default function AddUserPage() {
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/gif"
               onChange={handleImageChange}
-              style={{ display: "none" }} // Gunakan style display none sebagai alternatif
+              style={{ display: "none" }}
             />
           </div>
 
@@ -247,7 +297,7 @@ export default function AddUserPage() {
           {profile && (
             <Button
               className={buttonStyles({
-                color: "danger", // Ubah ke danger untuk lebih jelas
+                color: "danger",
                 radius: "full",
                 variant: "solid",
                 size: "sm",
@@ -261,111 +311,118 @@ export default function AddUserPage() {
 
         {/* Form Section */}
         <div className="order-2 lg:order-1 flex flex-wrap gap-4 w-full lg:w-[700px]">
-          {error && <p className="text-red-500 text-sm mb-4 w-full">{error}</p>}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="w-full flex flex-wrap gap-4"
+          >
+            <Input
+              color="secondary"
+              label="Name"
+              type="text"
+              variant="flat"
+              className="w-full"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
 
-          <Input
-            color="secondary"
-            label="Name"
-            type="text"
-            variant="flat"
-            className="w-full"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+            <Input
+              color="secondary"
+              label="Email"
+              type="email"
+              variant="flat"
+              className="w-full"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-          <Input
-            color="secondary"
-            label="Email"
-            type="email"
-            variant="flat"
-            className="w-full"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+            <Input
+              color="secondary"
+              label="Instance"
+              type="text"
+              variant="flat"
+              className="w-full"
+              value={instance}
+              onChange={(e) => setInstance(e.target.value)}
+            />
 
-          <Input
-            color="secondary"
-            label="Instance"
-            type="text"
-            variant="flat"
-            className="w-full"
-            value={instance}
-            onChange={(e) => setInstance(e.target.value)}
-            required
-          />
+            <Input
+              color="secondary"
+              label="Password"
+              type="password"
+              variant="flat"
+              className="w-full"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
-          <Input
-            color="secondary"
-            label="Password"
-            type="password"
-            variant="flat"
-            className="w-full"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+            <div className="w-full">
+              <label className="text-sm text-secondary-600 mb-1 block">
+                User Role
+              </label>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button className="text-sm w-full p-2 mt-1 rounded-md bg-secondary-50 border border-secondary-200 text-purple-700 justify-start">
+                    {userRole === 1 ? "Admin" : "Regular User"}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="User Role Options"
+                  className="bg-secondary-50"
+                >
+                  <DropdownItem
+                    key="0"
+                    className="text-purple-700"
+                    onClick={() => setUserRole(0)}
+                  >
+                    Regular User
+                  </DropdownItem>
+                  <DropdownItem
+                    key="1"
+                    className="text-purple-700"
+                    onClick={() => setUserRole(1)}
+                  >
+                    Admin
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </div>
 
-          <div className="w-full">
-            <label className="text-sm text-secondary-600">User Role</label>
-            <Dropdown>
-              <DropdownTrigger>
-                <Button className="text-sm w-full p-2 mt-1 rounded-md bg-secondary-50 border border-secondary-200 text-purple-700">
-                  {userRole === 1 ? "Admin" : "Regular User"}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="User Role Options"
-                className="bg-secondary-50"
+            <div className="flex justify-center lg:justify-start gap-2 pt-4 w-full">
+              <Button
+                className={buttonStyles({
+                  color: "secondary",
+                  radius: "full",
+                  variant: "bordered",
+                  size: "sm",
+                })}
+                onClick={() => (window.location.href = "/admin/user")}
+                disabled={loading}
+                type="button"
               >
-                <DropdownItem
-                  key="0"
-                  className="text-purple-700"
-                  onClick={() => setUserRole(0)}
-                >
-                  Regular User
-                </DropdownItem>
-                <DropdownItem
-                  key="1"
-                  className="text-purple-700"
-                  onClick={() => setUserRole(1)}
-                >
-                  Admin
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </div>
+                Cancel
+              </Button>
 
-          <div className="flex justify-center lg:justify-start gap-2 pt-4 w-full">
-            <button
-              className={buttonStyles({
-                color: "secondary",
-                radius: "full",
-                variant: "solid",
-                size: "sm",
-              })}
-              onClick={() => (window.location.href = "/admin/user")}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-
-            <button
-              className={buttonStyles({
-                color: "secondary",
-                radius: "full",
-                variant: "solid",
-                size: "sm",
-              })}
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading
-                ? "Adding..."
-                : `Add ${userRole === 1 ? "Admin" : "Regular"} User`}
-            </button>
-          </div>
+              <Button
+                className={buttonStyles({
+                  color: "secondary",
+                  radius: "full",
+                  variant: "solid",
+                  size: "sm",
+                })}
+                onClick={handleSubmit}
+                disabled={loading}
+                isLoading={loading}
+                type="submit"
+              >
+                {loading
+                  ? "Adding..."
+                  : `Add ${userRole === 1 ? "Admin" : "Regular"} User`}
+              </Button>
+            </div>
+          </form>
         </div>
 
         {/* Toast Container */}

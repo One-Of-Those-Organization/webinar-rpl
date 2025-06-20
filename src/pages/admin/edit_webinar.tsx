@@ -103,7 +103,6 @@ export default function EditWebinarPage() {
     panitia: [] as string[],
   });
 
-  // ✅ Get today's date for min attribute
   const todayDate = getTodayDate();
 
   // Load webinar data on component mount
@@ -508,7 +507,6 @@ export default function EditWebinarPage() {
       return;
     }
 
-    // ✅ Validasi tanggal
     const fullStartDateTime = combineDateAndTime(
       editForm.dateStart,
       editForm.timeStart
@@ -811,7 +809,6 @@ export default function EditWebinarPage() {
                   Materials
                 </Link>
 
-                {/* ✅ Button Link hanya tampil jika webinar online */}
                 {webinarData.att === "online" && (
                   <Link
                     className={buttonStyles({
@@ -908,7 +905,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* ✅ Conditional rendering untuk Tempat/Lokasi berdasarkan attendance type */}
                 <div className="font-bold text-xl">
                   {webinarData.att === "online" ? "Tempat" : "Lokasi Webinar"} :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -978,7 +974,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* ✅ Conditional rendering untuk link webinar */}
                 {webinarData.link && webinarData.att === "online" && (
                   <div className="font-bold text-xl">
                     Webinar Link :{" "}
@@ -1156,13 +1151,12 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
-                {/* ✅ Date and time fields dengan validasi disabled */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
                     label="Start Date *"
                     type="date"
-                    min={todayDate} // ✅ Disable tanggal sebelum hari ini
+                    min={todayDate}
                     value={editForm.dateStart}
                     onChange={(e) =>
                       handleInputChange("dateStart", e.target.value)
@@ -1184,7 +1178,7 @@ export default function EditWebinarPage() {
                     color="secondary"
                     label="End Date *"
                     type="date"
-                    min={editForm.dateStart || todayDate} // ✅ End date minimal sama dengan start date atau hari ini
+                    min={editForm.dateStart || todayDate}
                     value={editForm.dateEnd}
                     onChange={(e) =>
                       handleInputChange("dateEnd", e.target.value)

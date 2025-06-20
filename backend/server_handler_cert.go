@@ -653,7 +653,7 @@ func appHandleCertEditor(backend *Backend, route fiber.Router) {
 // NOTE: You are not supposed to use this from outside
 //       the buildin editor!!!!
 
-// POST : api/protected/-cert-editor-upload-image
+// POST : api/c/-cert-editor-upload-image
 func appHandleCertEditorUploadImage(_ *Backend, route fiber.Router) {
     route.Post("-cert-editor-upload-image", func (c *fiber.Ctx) error {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{

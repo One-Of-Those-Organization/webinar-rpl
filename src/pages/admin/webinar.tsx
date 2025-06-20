@@ -529,18 +529,7 @@ export default function WebinarPage() {
           </ModalContent>
         </Modal>
       </section>
-      <ToastContainer
-        position="bottom-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
+      <ToastContainer />
     </DefaultLayout>
   );
 }

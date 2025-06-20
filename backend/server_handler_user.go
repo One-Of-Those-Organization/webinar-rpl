@@ -303,7 +303,7 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
         }
 
         res := backend.db.Delete(&table.User{}, body.UserID)
-        if res.Error != nil {
+        if res.Error != nil || res.RowsAffected <= 0 {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to delete user from the DB.",

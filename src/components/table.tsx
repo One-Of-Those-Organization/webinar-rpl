@@ -142,7 +142,10 @@ export default function UserManagementTable() {
   const filteredUsers = useMemo(() => {
     if (!searchValue) return users;
     return users.filter((user) =>
-      user.name.toLowerCase().includes(searchValue.toLowerCase())
+      user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchValue.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchValue.toLowerCase()) ||
+      user.instansi.toLowerCase().includes(searchValue.toLowerCase())
     );
   }, [users, searchValue]);
 

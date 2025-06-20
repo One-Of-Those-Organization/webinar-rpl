@@ -99,7 +99,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertNewDumb(backend, protected)
 
     appHandleCertEditor(backend, cookieJWT)
-    appHandleCertEditorUploadImage(backend, protected) // WIP
+    appHandleCertEditorUploadImage(backend, cookieJWT) // WIP
 
     // EVENT PARTICIPANT STUFF
     appHandleEventParticipateRegister(backend, protected)
