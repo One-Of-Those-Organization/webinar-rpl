@@ -9,29 +9,44 @@ class TestApi:
         self.payload = payload
         self.desc = desc
 
-    def send(self, expected_err_code: int) -> bool:
+    def send_and_test(self, expected_err_code: int) -> bool:
         try:
-            print(f"[TEST] {self.desc}")
+            print ("=" * 20)
             if self.method == "POST":
                 response = requests.post(self.url, json=self.payload, headers=self.headers)
             elif self.method == "GET":
                 response = requests.get(self.url, headers=self.headers)
             else:
-                print(f"  [ERROR] Unsupported HTTP method: {self.method}")
+                print(f"[ERROR] Unsupported HTTP method: {self.method}")
                 return False
 
-            print(f"  Status : {response.status_code}\n  Response : {response.text}")
+            print(f"Status : {response.status_code}\nResponse : {response.text}")
 
             data = response.json()
             return expected_err_code == data.get("error_code", -1)
 
         except Exception as e:
-            print(f"  [ERROR] Request failed: {e}")
+            print(f"[ERROR] Request failed: {e}")
             return False
 
+    def send(self) -> requests.Response | None:
+        try:
+            if self.method == "POST":
+                response = requests.post(self.url, json=self.payload, headers=self.headers)
+            elif self.method == "GET":
+                response = requests.get(self.url, headers=self.headers)
+            else:
+                return None
+
+            data = response.json()
+            return data
+
+        except Exception:
+            return None
+
     def test(self, expected_err_code: int):
-        status = "PASSED" if self.send(expected_err_code) else "FAIL"
-        print(f"[{status}]: {self.desc}")
+        status = "PASSED" if self.send_and_test(expected_err_code) else "FAIL"
+        print(f"[{status}]: {self.desc}\n")
 
 # bearer_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1haWwiOiJhZG1pbkB3b3dhZG1pbi5jb20iLCJleHAiOjE3NDk3MTM1NzF9.cIcq2G2VlQMKHAR_7srCCWaMPI5hJ6jZEIVmgNbD_js"
 
