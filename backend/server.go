@@ -49,8 +49,12 @@ func appMakeRouteHandler(backend *Backend) {
 
     protected := api.Group("/protected", jwtware.New(jwtware.Config{
         SigningKey: jwtware.SigningKey{Key: []byte(backend.pass)},
-        TokenLookup: "header:Authorization,cookie:jwt",
-        ContextKey: "user",
+    }))
+
+    cookieJWT := api.Group("/c", jwtware.New(jwtware.Config{
+        SigningKey:  jwtware.SigningKey{Key: []byte(backend.pass)},
+        TokenLookup: "cookie:jwt",
+        ContextKey:  "user",
     }))
 
     app.Static("/static", "./static")
@@ -94,7 +98,7 @@ func appMakeRouteHandler(backend *Backend) {
 
     appHandleCertNewDumb(backend, protected)
 
-    appHandleCertEditor(backend, protected)
+    appHandleCertEditor(backend, cookieJWT)
     appHandleCertEditorUploadImage(backend, protected) // WIP
 
     // EVENT PARTICIPANT STUFF
@@ -108,7 +112,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventParticipateOfEventCount(backend, protected)
 
     // OTP STUFF
-    appHandleGenOTP(backend, api)
+    appHandleGenOTP(backend, protected)
     appHandleCleanupOTP(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {

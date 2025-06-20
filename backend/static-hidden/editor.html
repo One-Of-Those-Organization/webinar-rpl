@@ -575,6 +575,25 @@
             }
         }
 
+        async function uploadToBackend(data) {
+            let a = await fetch(
+                "http://localhost:3000/api/protected/-cert-editor-upload-image",
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({data: data}),
+            )
+
+            const result = await response.json();
+            console.log(result);
+        }
+
+        async function uploadCertTemp(data) {
+            console.log("WIP");
+        }
+
         function uploadBackground() {
             const input = document.getElementById('fileInput');
             input.click();
@@ -584,8 +603,9 @@
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        const base64String = e.target.result.split(',')[1]; // Remove "data:image/png;base64,"
-                        console.log("Base64 string:", base64String);
+                        // const base64String = e.target.result.split(',')[1]; // Remove "data:image/png;base64,"
+                        // console.log("Base64 string:", base64String);
+                        uploadToBackend(base64String)
                     };
                     reader.readAsDataURL(file); // Reads as base64
                 }

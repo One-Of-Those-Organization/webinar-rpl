@@ -591,7 +591,7 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
 }
 
 // NOTE: Accept the event_id as the query so it knows what for.
-// GET : api/protected/cert-editor
+// GET : api/c/cert-editor
 func appHandleCertEditor(backend *Backend, route fiber.Router) {
     route.Get("cert-editor", func (c *fiber.Ctx) error {
         claims, err := GetJWT(c)
@@ -654,5 +654,13 @@ func appHandleCertEditor(backend *Backend, route fiber.Router) {
 //       the buildin editor!!!!
 
 // POST : api/protected/-cert-editor-upload-image
-func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
+func appHandleCertEditorUploadImage(_ *Backend, route fiber.Router) {
+    route.Post("-cert-editor-upload-image", func (c *fiber.Ctx) error {
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "WIP.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
 }
