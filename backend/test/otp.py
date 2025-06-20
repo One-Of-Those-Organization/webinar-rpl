@@ -1,8 +1,10 @@
 import TestApi
+import utils
 
-admin_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1haWwiOiJhZG1pbkB3b3dhZG1pbi5jb20iLCJleHAiOjE3NTA1NjkyNTl9.jkTxe0_Tz1-4SJpdl49-dseAJorWGM_N7DyevA8kSV0"
 
 if __name__ == "__main__":
+    admin_token = utils.login("admin@wowadmin.com", "secret")
+
     test1 = TestApi.TestApi(
         "gen-otp-for-register?email=fernandoperry1234@gmail.com",
         method="GET",
