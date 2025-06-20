@@ -576,6 +576,8 @@
         }
 
         async function uploadToBackend(data) {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("event_id");
             let a = await fetch(
                 "http://localhost:3000/api/c/-cert-editor-upload-image",
                 {
@@ -584,12 +586,17 @@
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({data: data}),
+                    body: JSON.stringify(
+                        {
+                            data: data,
+                            event_id: id,
+                        }
+                    ),
                 }
             )
 
             const result = await a.json();
-            console.log(result);
+            return result.data.filename;
         }
 
         async function uploadCertTemp(data) {
@@ -604,11 +611,15 @@
                 const file = input.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const base64String = e.target.result[1];
-                        // const base64String = e.target.result.split(',')[1]; // Remove "data:image/png;base64,"
-                        // console.log("Base64 string:", base64String);
-                        uploadToBackend(base64String)
+                    reader.onload = async function(e) {
+                        const base64String = e.target.result.split(',')[1];
+                        let filePath = await uploadToBackend(base64String);
+                        const div = document.getElementById("canvas");
+                        div.style.backgroundImage = `url('${filePath}')`;
+                        div.style.backgroundSize = 'cover';
+                        div.style.backgroundPosition = 'center';
+                        div.style.backgroundRepeat = 'no-repeat';
+                        console.log(filePath)
                     };
                     reader.readAsDataURL(file); // Reads as base64
                 }
