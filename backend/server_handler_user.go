@@ -91,6 +91,15 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
             })
         }
 
+        c.Cookie(&fiber.Cookie{
+            Name:     "jwt",
+            Value:    t,
+            HTTPOnly: true,
+            Secure:   false,
+            SameSite: "Lax",
+            Expires:  time.Now().Add(72 * time.Hour),
+        })
+
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "successfully logged in.",

@@ -12,6 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// IMPORTANT -- DEPRECATED SHOULD NO BE USED. --
 // POST : api/protected/cert-register
 func appHandleCertTempNew(backend *Backend, route fiber.Router) {
     route.Post("cert-register", func (c *fiber.Ctx) error {
@@ -39,8 +40,6 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
 
         var body struct {
             EventId       int    `json:"id"`
-            // NOTE:
-            // CertTemplate is a html+css that will be autofilled. (this is path btw.)
             CertTemplate  string `json:"cert_temp"`
         }
 
@@ -292,6 +291,7 @@ func appHandleCertEdit(backend *Backend, route fiber.Router) {
     })
 }
 
+// IMPORTANT -- DEPRECATED SHOULD NO BE USED. --
 // NOTE: @@ -> $bg.png.path
 // NOTE: data_html, data_img
 // POST : api/protected/cert-upload-template
@@ -341,7 +341,7 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 			})
 		}
 
-		certDir := "static"
+		certDir := "static-hidden"
 		if err := os.MkdirAll(certDir, 0755); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
@@ -423,7 +423,7 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 			})
 		}
         imgFilename := fmt.Sprintf("%s/bg.png", certTempDir)
-		err = os.WriteFile(imgFilename, htmlData, 0644)
+		err = os.WriteFile(imgFilename, imgData, 0644)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
@@ -455,7 +455,7 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": true,
+                "success": false,
                 "message": fmt.Sprintf("Failed to fetch event participant for this code, %v", res.Error),
                 "error_code": 1,
                 "data": nil,
@@ -466,7 +466,7 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
         res = backend.db.Where("event_id = ?", evPart.EventId).First(&cerTemp)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": true,
+                "success": false,
                 "message": fmt.Sprintf("Failed to fetch certificate template from the db, %v", res.Error),
                 "error_code": 2,
                 "data": nil,
@@ -481,9 +481,460 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 
         backend.engine.ClearCache()
 		return c.Render(stripped, fiber.Map{
-			"UniqID": base64Param,
-            "Event": evPart.Event.EventName,
-			"Name": evPart.User.UserFullName,
+			"UniqueID": base64Param,
+            "EventName": evPart.Event.EventName,
+			"UserName": evPart.User.UserFullName,
 		})
 	})
+}
+
+// new but dumb stuff
+
+// NOTE: wrapper around alot of independent api so it is more locked up.
+// POST : api/protected/create-new-cert-from-event
+func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
+    route.Post("create-new-cert-from-event", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c);
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        email := claims["email"].(string)
+        admin := claims["admin"].(float64)
+
+        if email == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email on JWT.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            EventID int `json:"event_id"`
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.User
+        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch user from db, %v", res.Error),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        var currentEvPart table.EventParticipant
+        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEvPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch event from db, %v", res.Error),
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        if currentEvPart.EventPRole != "committee" && admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
+        // straight up set the the cert path to nonexistance index.html
+        cert_path := fmt.Sprintf("%d/index.html", body.EventID)
+
+        newCertTemplate := table.CertTemplate {
+            EventId: body.EventID,
+            CertTemplate: cert_path,
+        }
+
+        res = backend.db.Create(&newCertTemplate)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to create new event cert template, %v", res.Error),
+                "error_code": 7,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data. Please access the editor link with the id this api return.",
+            "error_code": 0,
+            "data": fiber.Map{
+                // the old way is to use cert_id which is dumb.
+                "id": body.EventID,
+            },
+        })
+    })
+}
+
+// NOTE: Accept the event_id as the query so it knows what for.
+// GET : api/c/cert-editor
+func appHandleCertEditor(backend *Backend, route fiber.Router) {
+    route.Get("cert-editor", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        admin := claims["admin"].(float64)
+        email := claims["email"].(string)
+
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        if email == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid email on JWT.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        event_id := c.Query("event_id")
+        if event_id == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid event_id on query.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        var certTemp table.CertTemplate
+        res := backend.db.Where("event_id = ?", event_id).First(&certTemp)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to fetch cert temp from db, %v", res.Error),
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        backend.engine.ClearCache()
+        return c.Render("editor", fiber.Map{})
+    })
+}
+
+// NOTE: You are not supposed to use this from outside
+//       the buildin editor!!!!
+
+// POST : api/c/-cert-editor-upload-image
+func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
+    route.Post("-cert-editor-upload-image", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        admin := claims["admin"].(float64)
+        email := claims["email"].(string)
+
+        if email == "" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid empty email.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.User
+        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to get the user with that email from the db, %v", err),
+                "error_code": 9,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            Data      string `json:"data"`
+            EventID   string `json:"event_id"`
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        var currentEventPart table.EventParticipant
+        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEventPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", err),
+                "error_code": 10,
+                "data": nil,
+            })
+        }
+
+        if admin != 1 && currentEventPart.EventPRole != "committee" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+		if body.Data == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "No data provided",
+				"error_code": 5,
+				"data": nil,
+			})
+		}
+
+		certDir := "static"
+		if err := os.MkdirAll(certDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to create certificate template directory",
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+        if i := strings.Index(body.Data, ","); i != -1 {
+            body.Data = body.Data[i+1:]
+        }
+
+        decoded, err := base64.StdEncoding.DecodeString(body.Data)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Invalid base64 data, %v", err),
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+        // NOTE: WILL BE ENABLED IN THE FUTURE NEED TO CHANGE ON CERT UPLOAD TOO AFTER ALL
+		// if !strings.Contains(string(decoded), "image/png") {
+		// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		// 		"success": false,
+		// 		"message": fmt.Sprintf("Invalid base64 data, %v", err),
+		// 		"error_code": 6,
+		// 		"data": nil,
+		// 	})
+		// }
+
+		certTempDir := fmt.Sprintf("%s/%s", certDir, body.EventID)
+		if err := os.MkdirAll(certTempDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to create certificate template directory",
+				"error_code": 7,
+				"data": nil,
+			})
+		}
+
+        imgFilename := fmt.Sprintf("%s/bg.png", certTempDir)
+		err = os.WriteFile(imgFilename, decoded, 0644)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to save data.",
+				"error_code": 8,
+				"data": nil,
+			})
+		}
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Image Uploaded successfully.",
+            "error_code": 0,
+            "data": fiber.Map{
+                "filename": fmt.Sprintf("%s://%s/%s", backend.mode, backend.address, imgFilename),
+            },
+        })
+    })
+}
+
+// NOTE: You are not supposed to use this from outside
+//       the buildin editor!!!!
+
+// POST : api/c/-cert-editor-upload-html
+func appHandleCertEditorUploadHtml(backend *Backend, route fiber.Router) {
+    route.Post("-cert-editor-upload-html", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        admin := claims["admin"].(float64)
+        email := claims["email"].(string)
+
+        if email == "" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid empty email.",
+                "error_code": 3,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.User
+        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to get the user with that email from the db, %v", err),
+                "error_code": 9,
+                "data": nil,
+            })
+        }
+
+        var body struct {
+            Data      string `json:"data"`
+            EventID   string `json:"event_id"`
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        var currentEventPart table.EventParticipant
+        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEventPart)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", err),
+                "error_code": 10,
+                "data": nil,
+            })
+        }
+
+        if admin != 1 && currentEventPart.EventPRole != "committee" {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials for this function",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+		if body.Data == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": "No data provided",
+				"error_code": 5,
+				"data": nil,
+			})
+		}
+
+		certDir := "static"
+		if err := os.MkdirAll(certDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to create certificate template directory",
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+        if i := strings.Index(body.Data, ","); i != -1 {
+            body.Data = body.Data[i+1:]
+        }
+
+        decoded, err := base64.StdEncoding.DecodeString(body.Data)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("Invalid base64 data, %v", err),
+				"error_code": 6,
+				"data": nil,
+			})
+		}
+
+		certTempDir := fmt.Sprintf("%s/%s", certDir, body.EventID)
+		if err := os.MkdirAll(certTempDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to create certificate template directory",
+				"error_code": 7,
+				"data": nil,
+			})
+		}
+
+        htmlFilename := fmt.Sprintf("%s/index.html", certTempDir)
+		err = os.WriteFile(htmlFilename, decoded, 0644)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Failed to save data.",
+				"error_code": 8,
+				"data": nil,
+			})
+		}
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "HTML Uploaded successfully.",
+            "error_code": 0,
+            "data": fiber.Map{
+                "filename": fmt.Sprintf("%s://%s/%s", backend.mode, backend.address, htmlFilename),
+            },
+        })
+    })
 }

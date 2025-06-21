@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Template</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .template-canvas {
+            width: 800px;
+            height: 600px;
+            background: #ff4444;
+            background-image: url(http://0.0.0.0:3000/static/7/bg.png);
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .template-object {
+            position: absolute;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-wrap: break-word;
+            text-align: center;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .template-canvas {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="template-canvas">
+        <div class="template-object" style="left: 50px; top: 50px; width: 150px; height: 50px; color: rgb(255, 255, 255); font-size: 16px; font-weight: bold; font-style: normal; text-decoration: none;">
+            {{ .UserName }}
+        </div>
+        <div class="template-object" style="left: 250px; top: 150px; width: 180px; height: 60px; color: rgb(0, 0, 0); font-size: 16px; font-weight: bold; font-style: normal; text-decoration: none;">
+            {{ .EventName }}
+        </div>
+        <div class="template-object" style="left: 100px; top: 300px; width: 120px; height: 45px; color: rgb(246, 97, 81); font-size: 16px; font-weight: bold; font-style: normal; text-decoration: none;  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {{ .UniqueID }}
+        </div>
+    </div>
+</body>
+</html>
