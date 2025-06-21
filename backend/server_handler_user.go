@@ -364,21 +364,29 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                 updates["user_password"] = hashedPassword
             }
 
-            result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
-            if result.Error != nil {
-                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                    "success": false,
-                    "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
-                    "error_code": 3,
-                    "data": nil,
-                })
-            }
-            return c.Status(fiber.StatusOK).JSON(fiber.Map{
-                "success": true,
-                "message": "Data modified.",
-                "error_code": 0,
-                "data": nil,
-            })
+	    result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
+	    if result.Error != nil {
+    		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+        	    "success": false,
+        	    "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
+        	    "error_code": 3,
+        	    "data": nil,
+    	        })
+	    }
+	    if result.RowsAffected == 0 {
+    		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+        	    "success": false,
+            	    "message": "User not found or no changes made.",
+        	    "error_code": 5,
+        	    "data": nil,
+    	        })
+	    }
+	    return c.Status(fiber.StatusOK).JSON(fiber.Map{
+    		    "success": true,
+    	 	    "message": "Data modified.",
+    		    "error_code": 0,
+    	  	    "data": nil,            
+    	    })
         } else {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,

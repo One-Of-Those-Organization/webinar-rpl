@@ -1,85 +1,114 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
 import { auth } from "@/api/auth";
+import { auth_otp } from "@/api/auth_otp";
 import { EyeSlashFilledIcon, EyeFilledIcon, Logo } from "@/components/icons";
+import { RegisterData } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Declare data and conditional here
 export default function RegisterPage() {
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [instance, setInstance] = useState("");
-  const [pass, setPass] = useState("");
+  const [form, setForm] = useState<RegisterData>({
+    name: "",
+    email: "",
+    instance: "",
+    pass: "",
+    otp: "",
+  });
   const [confirmPass, setConfirmPass] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [error, setError] = useState("");
+  const [otpCooldown, setOtpCooldown] = useState(0);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
-  const togglePasswordVisibility = () => {
-    setIsPasswordVisible(!isPasswordVisible);
-  };
-  const toggleConfirmPasswordVisibility = () => {
-    setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
-  };
+
+  const navigate = useNavigate();
+
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=<>?{}[\]~.]).{8,}$/;
+
+  const handleChange =
+    (key: keyof RegisterData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setForm((prev) => ({
+        ...prev,
+        [key]: e.target.value,
+      }));
+    };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (otpCooldown > 0) {
+      timer = setTimeout(() => setOtpCooldown((t) => t - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [otpCooldown]);
+
+  const canSendOtp =
+    !!form.name &&
+    !!form.email &&
+    !!form.pass &&
+    !!confirmPass &&
+    passwordRegex.test(form.pass) &&
+    form.pass === confirmPass &&
+    otpCooldown === 0;
+
+  const handleGenOTP = async () => {
+    if (!canSendOtp) return;
+    setOtpLoading(true);
+    toast.info("Sending OTP to your email...");
+    setError("");
+    try {
+      const response = await auth_otp.send_otp(form.email);
+      if (response.success) {
+        toast.success("OTP sent to your email.");
+        setOtpCooldown(30);
+      } else {
+        setError(response.message);
+        toast.error(response.message);
+      }
+    } catch (error) {
+      setError("Failed to send OTP. Please try again.");
+      toast.error("Failed to send OTP. Please try again.");
+    }
+    setOtpLoading(false);
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    if (!form.name || !form.email || !form.pass || !confirmPass || !form.otp) {
+      setError("All required fields must be filled.");
+      toast.warn("All required fields must be filled.");
+      setLoading(false);
+      return;
+    }
+
+    if (form.pass !== confirmPass) {
+      setError("Passwords do not match.");
+      toast.warn("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    if (!passwordRegex.test(form.pass)) {
+      setError(
+        "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character."
+      );
+      toast.warn(
+        "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character."
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Handle client-side validation errors
-      let clientOnlyError = null;
+      const response = await auth.register(form);
 
-      switch (true) {
-        case confirmPass.length <= 0:
-          clientOnlyError = {
-            message: "Please input your Confirm Password.",
-            type: "info",
-          };
-          break;
-
-        case pass !== confirmPass:
-          clientOnlyError = {
-            message: "Passwords do not match.",
-            type: "warn",
-          };
-          break;
-
-        case !passwordRegex.test(pass):
-          clientOnlyError = {
-            message:
-              "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
-            type: "warn",
-          };
-          break;
-      }
-
-      if (clientOnlyError) {
-        setError(clientOnlyError.message);
-        if (clientOnlyError.type === "warn") {
-          toast.warn(clientOnlyError.message);
-        } else {
-          toast.info(clientOnlyError.message);
-        }
-        setLoading(false);
-        return;
-      }
-
-      const response = await auth.register({
-        name,
-        email,
-        instance,
-        pass,
-      });
-
-      // Handle server-side validation errors
       if (response.success) {
         setError("");
         toast.success("Register Successful!");
@@ -87,23 +116,23 @@ export default function RegisterPage() {
         return;
       }
 
-      // Handle server-side validation errors
       switch (response.error_code) {
         case 2:
           setError("All field must be filled.");
           toast.warn("All field must be filled");
           break;
-
         case 3:
           setError("Invalid Email.");
           toast.warn("Invalid Email.");
           break;
-
         case 5:
           setError("User with that email already registered.");
           toast.warn("User with that email already registered.");
           break;
-
+        case 6:
+          setError("Invalid or expired OTP.");
+          toast.warn("Invalid or expired OTP.");
+          break;
         default:
           setError("Register Failed.");
           toast.error("Register Failed");
@@ -126,56 +155,53 @@ export default function RegisterPage() {
             REGISTER
           </h1>
           <form onSubmit={handleRegister}>
-            {/* Show Error */}
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-            {/* Label Name */}
             <div className="mb-4 md:mb-6">
               <Input
                 color="secondary"
                 label="Name"
                 type="text"
                 variant="flat"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={form.name}
+                onChange={handleChange("name")}
+                autoComplete="name"
               />
             </div>
-
-            {/* Label Email */}
             <div className="mb-4 md:mb-6">
               <Input
                 color="secondary"
                 label="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                variant="flat"
+                value={form.email}
+                onChange={handleChange("email")}
+                type="email"
+                autoComplete="email"
               />
             </div>
-
-            {/* Label Instance */}
             <div className="mb-4 md:mb-6">
               <Input
                 color="secondary"
                 label="Instance"
                 type="text"
                 variant="flat"
-                value={instance}
-                onChange={(e) => setInstance(e.target.value)}
+                value={form.instance}
+                onChange={handleChange("instance")}
+                autoComplete="organization"
               />
             </div>
-
-            {/* Label Password */}
             <div className="mb-4 md:mb-6">
               <Input
                 color="secondary"
                 label="Password"
                 type={isPasswordVisible ? "text" : "password"}
                 variant="flat"
-                value={pass}
-                onChange={(e) => setPass(e.target.value)}
+                value={form.pass}
+                onChange={handleChange("pass")}
+                autoComplete="new-password"
                 endContent={
                   <button
                     type="button"
-                    onClick={togglePasswordVisibility}
+                    onClick={() => setIsPasswordVisible((v) => !v)}
                     aria-label="Toggle password visibility"
                     className="focus:outline-none"
                   >
@@ -188,8 +214,6 @@ export default function RegisterPage() {
                 }
               />
             </div>
-
-            {/* Label Confirm Password */}
             <div className="mb-4 md:mb-6">
               <Input
                 color="secondary"
@@ -198,10 +222,11 @@ export default function RegisterPage() {
                 variant="flat"
                 value={confirmPass}
                 onChange={(e) => setConfirmPass(e.target.value)}
+                autoComplete="new-password"
                 endContent={
                   <button
                     type="button"
-                    onClick={toggleConfirmPasswordVisibility}
+                    onClick={() => setIsConfirmPasswordVisible((v) => !v)}
                     aria-label="Toggle password visibility"
                     className="focus:outline-none"
                   >
@@ -214,8 +239,45 @@ export default function RegisterPage() {
                 }
               />
             </div>
-
-            {/* Submit Button */}
+            <div className="mb-4 md:mb-6">
+              <Input
+                color="secondary"
+                label="OTP"
+                type="text"
+                variant="flat"
+                value={form.otp}
+                onChange={handleChange("otp")}
+                autoComplete="one-time-code"
+                endContent={
+                  <button
+                    type="button"
+                    disabled={!canSendOtp || otpLoading}
+                    className={`ml-2 px-3 py-1 rounded-full text-sm font-semibold border
+                      ${
+                        otpCooldown > 0 || otpLoading
+                          ? "border-gray-300 text-gray-400 bg-transparent cursor-not-allowed"
+                          : "border-purple-500 text-purple-500 bg-transparent hover:bg-purple-50"
+                      }
+                    `}
+                    onClick={handleGenOTP}
+                    style={{ minWidth: 60 }}
+                  >
+                    {otpCooldown > 0
+                      ? `Send${otpLoading ? "..." : ""} (${otpCooldown}s)`
+                      : otpLoading
+                        ? "Sending..."
+                        : "Send"}
+                  </button>
+                }
+              />
+              {!canSendOtp && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Please complete the required data (name, valid email, valid
+                  password, and matching password confirmation) before sending
+                  the OTP.
+                </p>
+              )}
+            </div>
             <div className="flex flex-col items-center gap-4">
               <button
                 type="submit"
@@ -233,7 +295,6 @@ export default function RegisterPage() {
           </form>
         </div>
       </div>
-
       {/* Right Sidebar */}
       <div className="w-full md:w-1/2 bg-purple-300 flex flex-col items-center justify-center py-12 md:py-0 order-1 md:order-2">
         <div className="flex flex-col items-center gap-4">
@@ -241,9 +302,8 @@ export default function RegisterPage() {
           <p className="text-md font-poppins text-center text-purple-500">
             Already have account?
           </p>
-          {/* Button Switch to Login */}
           <button
-            type="submit"
+            type="button"
             onClick={() => navigate("/login")}
             className={`${buttonStyles({
               color: "secondary",
