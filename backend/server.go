@@ -90,6 +90,14 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertEdit(backend, protected)
     appHandleCertUploadTemplate(backend, protected)
 
+<<<<<<< HEAD
+=======
+    appHandleCertNewDumb(backend, protected)
+
+    appHandleCertEditor(backend, cookieJWT)
+    appHandleCertEditorUploadImage(backend, cookieJWT)
+
+>>>>>>> 88b6241 (fix: make gen OTP didnt need JWT.)
     // EVENT PARTICIPANT STUFF
     appHandleEventParticipateRegister(backend, protected)
     appHandleEventParticipateInfoOf(backend, protected)
