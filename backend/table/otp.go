@@ -13,4 +13,5 @@ type OTP struct {
     UserEmail   string    `gorm:"column:user_email"`
     OtpCode     string    `gorm:"column:otp_code"`
     TimeCreated time.Time `gorm:"column:time_created"`
+    Used        bool      `gorm:"column:used"`
 }
