@@ -138,6 +138,7 @@ func createOTPCode(backend *Backend, n int, userEmail string) (*table.OTP, error
             UserEmail:   userEmail,
             OtpCode:     result,
             TimeCreated: time.Now(),
+            Used:        false,
         }
         if err := backend.db.Create(&newOTP).Error; err != nil {
             return nil, errors.New("failed to create new OTP")
