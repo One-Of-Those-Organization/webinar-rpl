@@ -19,7 +19,7 @@ export interface RegisterData {
   instance: string;
   pass: string;
   picture?: string;
-  otp: string;
+  otp_code: string;
 }
 
 // Login Data (POST)

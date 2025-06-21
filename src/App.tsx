@@ -38,6 +38,7 @@ export default function App() {
       <Route path="/about" element={<AboutPage />} />
 
       {/* Guest Only Routes */}
+      {/* Login Page */}
       <Route
         path="/login"
         element={
@@ -47,6 +48,7 @@ export default function App() {
         }
       />
 
+      {/* Register Page */}
       <Route
         path="/register"
         element={
@@ -56,6 +58,7 @@ export default function App() {
         }
       />
 
+      {/* Lupa Password */}
       <Route
         path="/lupa_password"
         element={
@@ -65,6 +68,7 @@ export default function App() {
         }
       />
 
+      {/* OTP Lupa Password */}
       <Route
         path="/otp_lupa_password"
         element={
@@ -74,6 +78,7 @@ export default function App() {
         }
       />
 
+      {/* Input OTP Code */}
       <Route
         path="/input_otp"
         element={

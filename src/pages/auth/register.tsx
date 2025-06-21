@@ -15,7 +15,7 @@ export default function RegisterPage() {
     email: "",
     instance: "",
     pass: "",
-    otp: "",
+    otp_code: "",
   });
   const [confirmPass, setConfirmPass] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,7 +81,13 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
 
-    if (!form.name || !form.email || !form.pass || !confirmPass || !form.otp) {
+    if (
+      !form.name ||
+      !form.email ||
+      !form.pass ||
+      !confirmPass ||
+      !form.otp_code
+    ) {
       setError("All required fields must be filled.");
       toast.warn("All required fields must be filled.");
       setLoading(false);
@@ -245,8 +251,8 @@ export default function RegisterPage() {
                 label="OTP"
                 type="text"
                 variant="flat"
-                value={form.otp}
-                onChange={handleChange("otp")}
+                value={form.otp_code}
+                onChange={handleChange("otp_code")}
                 autoComplete="one-time-code"
                 endContent={
                   <button

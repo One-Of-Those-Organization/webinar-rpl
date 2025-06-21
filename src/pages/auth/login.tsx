@@ -9,24 +9,45 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+
+  // Page state: 'login' | 'forgot' | 'otp' | 'reset'
+  const [page, setPage] = useState("login");
+
+  // Login page states
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Forgot password states
+  const [forgotEmail, setForgotEmail] = useState("");
+
+  // OTP page state
+  const [otp, setOtp] = useState("");
+
+  // Reset password page states
+  const [newPass, setNewPass] = useState("");
+  const [confirmNewPass, setConfirmNewPass] = useState("");
+  const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
+  const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] =
+    useState(false);
+
+  // General error/loading
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const togglePasswordVisibility = () => {
-    setIsPasswordVisible(!isPasswordVisible);
-  };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Toggles
+  const togglePasswordVisibility = () => setIsPasswordVisible((v) => !v);
+  const toggleNewPasswordVisibility = () => setIsNewPasswordVisible((v) => !v);
+  const toggleConfirmNewPasswordVisibility = () =>
+    setIsConfirmNewPasswordVisible((v) => !v);
+
+  const handleLogin = async (e: any) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // API call
       const response = await auth.login({ email, pass });
 
-      // Check for successful login first
       if (response.success === true) {
         setError("");
         toast.success("Login Successful!");
@@ -34,23 +55,19 @@ export default function LoginPage() {
         return;
       }
 
-      // Only handle errors if the login wasn't successful
       switch (response.error_code) {
         case 2:
           setError("All field must be filled.");
           toast.warn("All field must be filled");
           break;
-
         case 3:
           setError("Invalid Email.");
           toast.warn("Invalid Email.");
           break;
-
         case 5:
           setError("Password is Incorrect");
           toast.warn("Password is Incorrect");
           break;
-
         default:
           setError("Login Failed.");
           toast.error("Login Failed");
@@ -64,6 +81,21 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgot = (e: any) => {
+    e.preventDefault();
+    toast.info("OTP has been sent to your email.");
+  };
+
+  const handleOTP = (e: any) => {
+    e.preventDefault();
+    toast.info("OTP verified successfully.");
+  };
+
+  const handleResetPassword = (e: any) => {
+    e.preventDefault();
+    toast.info("Password has been reset successfully.");
+  };
+
   return (
     <section className="flex flex-col md:flex-row h-screen">
       {/* Left Sidebar */}
@@ -74,7 +106,7 @@ export default function LoginPage() {
             Doesn't have account?
           </p>
           <button
-            type="submit"
+            type="button"
             onClick={() => navigate("/register")}
             className={`${buttonStyles({
               color: "secondary",
@@ -88,78 +120,255 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* Right Content */}
       <div className="w-full md:w-1/2 flex items-center justify-center py-12 md:py-0 px-4">
         <div className="w-full max-w-xl">
-          <h1 className="text-3xl font-poppins md:text-4xl font-bold mb-6 md:mb-8">
-            LOGIN
-          </h1>
-          <form onSubmit={handleLogin} noValidate>
-            {/* Show Error */}
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-            <div className="mb-4 md:mb-6">
-              {/* Label Email */}
-              <Input
-                color="secondary"
-                label="Email"
-                type="email"
-                variant="flat"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            {/* Label Password */}
-            <div className="mb-4 md:mb-6 relative">
-              <Input
-                color="secondary"
-                label="Password"
-                type={isPasswordVisible ? "text" : "password"}
-                variant="flat"
-                value={pass}
-                onChange={(e) => setPass(e.target.value)}
-                endContent={
+          {/* LOGIN PAGE */}
+          {page === "login" && (
+            <>
+              <h1 className="text-3xl font-poppins md:text-4xl font-bold mb-6 md:mb-8">
+                LOGIN
+              </h1>
+              <form onSubmit={handleLogin}>
+                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                <div className="mb-4 md:mb-6">
+                  <Input
+                    color="secondary"
+                    label="Email"
+                    type="email"
+                    variant="flat"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="mb-4 md:mb-6 relative">
+                  <Input
+                    color="secondary"
+                    label="Password"
+                    type={isPasswordVisible ? "text" : "password"}
+                    variant="flat"
+                    value={pass}
+                    onChange={(e) => setPass(e.target.value)}
+                    endContent={
+                      <button
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        aria-label="Toggle password visibility"
+                        className="focus:outline-none"
+                      >
+                        {isPasswordVisible ? (
+                          <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        ) : (
+                          <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        )}
+                      </button>
+                    }
+                  />
+                </div>
+                <div className="mb-6 text-right">
+                  <span
+                    className="text-sm font-poppins font-bold text-blue-500 hover:text-blue-700 cursor-pointer"
+                    onClick={() => {
+                      setError("");
+                      setPage("forgot");
+                    }}
+                  >
+                    Forgot Password ?
+                  </span>
+                </div>
+                <div className="flex flex-col items-center gap-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: "solid",
+                      size: "lg",
+                    })}
+                  >
+                    {loading ? "Loading..." : "Login"}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+
+          {/* FORGOT PAGE */}
+          {page === "forgot" && (
+            <>
+              <h1 className="text-3xl font-poppins md:text-4xl font-bold mb-6 md:mb-8">
+                Recovery Account
+              </h1>
+              <form onSubmit={handleForgot}>
+                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                <div className="mb-4 md:mb-6">
+                  <Input
+                    color="secondary"
+                    label="Email"
+                    type="email"
+                    variant="flat"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col items-center gap-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: "solid",
+                      size: "lg",
+                    })}
+                  >
+                    {loading ? "Loading..." : "Send OTP"}
+                  </button>
                   <button
                     type="button"
-                    onClick={togglePasswordVisibility}
-                    aria-label="Toggle password visibility"
-                    className="focus:outline-none"
+                    onClick={() => {
+                      setError("");
+                      setPage("login");
+                    }}
+                    className="text-blue-500 hover:underline"
                   >
-                    {isPasswordVisible ? (
-                      <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                    ) : (
-                      <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                    )}
+                    Back to Login
                   </button>
-                }
-              />
-            </div>
-            <div className="mb-6 text-right">
-              {/* Redirect Lupa Password (WIP) */}
-              <a
-                className="text-sm font-poppins font-bold text-blue-500 hover:text-blue-700"
-                href="/otp_lupa_password"
-              >
-                Forgot Password ?
-              </a>
-            </div>
-            <div className="flex flex-col items-center gap-4">
-              {/* Button Login to Dashboard */}
-              <button
-                type="submit"
-                disabled={loading}
-                className={buttonStyles({
-                  color: "secondary",
-                  radius: "full",
-                  variant: "solid",
-                  size: "lg",
-                })}
-              >
-                {loading ? "Loading..." : "Login"}
-              </button>
-            </div>
-          </form>
+                </div>
+              </form>
+            </>
+          )}
+
+          {/* OTP INPUT PAGE */}
+          {page === "otp" && (
+            <>
+              <h1 className="text-3xl font-poppins md:text-4xl font-bold mb-6 md:mb-8">
+                Enter OTP
+              </h1>
+              <form onSubmit={handleOTP}>
+                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                <div className="mb-4 md:mb-6">
+                  <Input
+                    color="secondary"
+                    label="OTP Code"
+                    type="text"
+                    variant="flat"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col items-center gap-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: "solid",
+                      size: "lg",
+                    })}
+                  >
+                    {loading ? "Loading..." : "Verify OTP"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError("");
+                      setPage("forgot");
+                    }}
+                    className="text-blue-500 hover:underline"
+                  >
+                    Back
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+
+          {/* RESET PASSWORD PAGE */}
+          {page === "reset" && (
+            <>
+              <h1 className="text-3xl font-poppins md:text-4xl font-bold mb-6 md:mb-8">
+                Reset Password
+              </h1>
+              <form onSubmit={handleResetPassword}>
+                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                <div className="mb-4 md:mb-6 flex flex-col gap-4">
+                  <Input
+                    color="secondary"
+                    label="Set New Password"
+                    type={isNewPasswordVisible ? "text" : "password"}
+                    variant="flat"
+                    value={newPass}
+                    onChange={(e) => setNewPass(e.target.value)}
+                    endContent={
+                      <button
+                        type="button"
+                        onClick={toggleNewPasswordVisibility}
+                        aria-label="Toggle password visibility"
+                        className="focus:outline-none"
+                      >
+                        {isNewPasswordVisible ? (
+                          <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        ) : (
+                          <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        )}
+                      </button>
+                    }
+                  />
+                  <Input
+                    color="secondary"
+                    label="Confirm New Password"
+                    type={isConfirmNewPasswordVisible ? "text" : "password"}
+                    variant="flat"
+                    value={confirmNewPass}
+                    onChange={(e) => setConfirmNewPass(e.target.value)}
+                    endContent={
+                      <button
+                        type="button"
+                        onClick={toggleConfirmNewPasswordVisibility}
+                        aria-label="Toggle password visibility"
+                        className="focus:outline-none"
+                      >
+                        {isConfirmNewPasswordVisible ? (
+                          <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        ) : (
+                          <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        )}
+                      </button>
+                    }
+                  />
+                </div>
+                <div className="flex flex-col items-center gap-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: "solid",
+                      size: "lg",
+                    })}
+                  >
+                    {loading ? "Loading..." : "Change Password"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError("");
+                      setPage("login");
+                    }}
+                    className="text-blue-500 hover:underline"
+                  >
+                    Back to Login
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
         </div>
       </div>
-      {/* Toast Container */}
       <ToastContainer />
     </section>
   );
