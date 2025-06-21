@@ -203,7 +203,7 @@
             <button onclick="uploadBackground()">Upload background</button>
             <input type="file" id="fileInput" accept="image/png" style="display: none;">
 
-            <button class="export" onclick="exportCanvas()">Save</button>
+            <button class="export" onclick="exportCanvas(backgroundURL)">Save</button>
         </div>
 
         <div class="canvas" id="canvas">
@@ -252,6 +252,8 @@
         let startTop = 0;
         let resizeDirection = '';
         let objectCounter = { UserName: 1, EventName: 1, UnikID: 1 };
+
+        var backgroundURL = "";
 
         const canvas = document.getElementById('canvas');
         const propertiesContent = document.getElementById('properties-content');
@@ -483,9 +485,28 @@
             `;
         }
 
+        function invertColor(hex) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) {
+                hex = hex.split('').map(char => char + char).join('');
+            }
+
+            if (hex.length !== 6) {
+                throw new Error("Invalid HEX color.");
+            }
+
+            let r = (255 - parseInt(hex.slice(0, 2), 16)).toString(16).padStart(2, '0');
+            let g = (255 - parseInt(hex.slice(2, 4), 16)).toString(16).padStart(2, '0');
+            let b = (255 - parseInt(hex.slice(4, 6), 16)).toString(16).padStart(2, '0');
+
+            return `#${r}${g}${b}`;
+        }
+
+
         function updateColor(newColor) {
             if (selectedElement) {
                 selectedElement.style.color = newColor;
+                selectedElement.style.backgroundColor = invertColor(newColor);
             }
         }
 
@@ -600,7 +621,27 @@
         }
 
         async function uploadCertTemp(data) {
-            console.log("WIP");
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("event_id");
+            let a = await fetch(
+                "http://localhost:3000/api/c/-cert-editor-upload-html",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(
+                        {
+                            data: data,
+                            event_id: id,
+                        }
+                    ),
+                }
+            )
+
+            const result = await a.json();
+            return;
         }
 
         function uploadBackground() {
@@ -613,20 +654,19 @@
                     const reader = new FileReader();
                     reader.onload = async function(e) {
                         const base64String = e.target.result.split(',')[1];
-                        let filePath = await uploadToBackend(base64String);
+                        backgroundURL = await uploadToBackend(base64String);
                         const div = document.getElementById("canvas");
-                        div.style.backgroundImage = `url('${filePath}')`;
+                        div.style.backgroundImage = `url('${backgroundURL}')`;
                         div.style.backgroundSize = 'cover';
                         div.style.backgroundPosition = 'center';
                         div.style.backgroundRepeat = 'no-repeat';
-                        console.log(filePath)
                     };
                     reader.readAsDataURL(file); // Reads as base64
                 }
             };
         }
 
-        function exportCanvas() {
+        function exportCanvas(bg_url) {
             const objects = document.querySelectorAll('.draggable-object');
             let objectsHtml = '';
 
@@ -643,19 +683,20 @@
                 const textDecoration = obj.style.textDecoration || 'none';
 
                 // Convert type to Go template variable
-                let templateVar = '';
+                let templateVar = "";
                 switch(type) {
                     case 'UserName':
-                        templateVar = '{{ .UserName }}';
+                        templateVar = `\{\{ .UserName \}\}`;
                         break;
                     case 'EventName':
-                        templateVar = '{{ .EventName }}';
+                        templateVar = `\{\{ .EventName \}\}`;
                         break;
                     case 'UnikID':
-                        templateVar = '{{ .UniqueID }}';
+                        templateVar = `\{\{ .UniqueID \}\}`;
                         break;
                     default:
                         templateVar = type;
+                        break;
                 }
 
                 objectsHtml += `        <div class="template-object" style="left: ${left}; top: ${top}; width: ${width}; height: ${height}; color: ${color}; font-size: ${fontSize}; font-weight: ${fontWeight}; font-style: ${fontStyle}; text-decoration: ${textDecoration};">
@@ -690,22 +731,22 @@
             width: 800px;
             height: 600px;
             background: #ff4444;
+            background-image: url(${bg_url});
             position: relative;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .template-object {
             position: absolute;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #333;
-            border-radius: 4px;
             padding: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             word-wrap: break-word;
             text-align: center;
         }
@@ -728,9 +769,8 @@
 ${objectsHtml}    </div>
 </body>
 </html>`;
-            // TODO: encode the base64 and send it to API
             const base = btoa(exportedHtml);
-            console.log(base)
+            uploadCertTemp(base);
         }
     </script>
 </body>
