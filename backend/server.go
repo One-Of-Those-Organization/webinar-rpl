@@ -24,7 +24,10 @@ type Backend struct {
 func appCreateNewServer(db *gorm.DB, sec SecretHolder, address string) *Backend {
     secret := sec.Password
     rand_t := rand.New(rand.NewSource(time.Now().UnixNano()))
-    engine := NewDynamicEngine("./static-hidden/", ".html")
+    engine := NewDynamicEngine([]string{
+        "./static-hidden/",
+        "./static/",
+}, ".html")
     app := fiber.New(fiber.Config{
         AppName: "Webinar-RPL Backend",
         Views: engine,

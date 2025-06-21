@@ -481,9 +481,9 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
 
         backend.engine.ClearCache()
 		return c.Render(stripped, fiber.Map{
-			"UniqID": base64Param,
-            "Event": evPart.Event.EventName,
-			"Name": evPart.User.UserFullName,
+			"UniqueID": base64Param,
+            "EventName": evPart.Event.EventName,
+			"UserName": evPart.User.UserFullName,
 		})
 	})
 }
