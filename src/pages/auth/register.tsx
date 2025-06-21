@@ -266,7 +266,7 @@ export default function RegisterPage() {
                       }
                     `}
                     onClick={handleGenOTP}
-                    style={{ minWidth: 60 }}
+                    style={{ minWidth: 100 }}
                   >
                     {otpCooldown > 0
                       ? `Send${otpLoading ? "..." : ""} (${otpCooldown}s)`

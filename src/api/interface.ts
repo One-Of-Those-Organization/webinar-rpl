@@ -74,6 +74,12 @@ export interface Users {
   avatar?: string;
 }
 
+export interface UserResetPassword {
+  email: string;
+  pass: string;
+  otp_code: string;
+}
+
 // Admin Register Data (POST)
 export interface RegisterAdmin {
   email: string;

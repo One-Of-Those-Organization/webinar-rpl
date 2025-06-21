@@ -107,7 +107,7 @@ export const Navbar = () => {
           color="danger"
           onClick={async () => {
             localStorage.clear();
-            navigate("/");
+            navigate("/", { state: { logoutSuccess: true } });
           }}
         >
           Log Out

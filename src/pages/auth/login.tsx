@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
 import { auth } from "@/api/auth";
+import { auth_user } from "@/api/auth_user";
+import { auth_otp } from "@/api/auth_otp";
 import { EyeFilledIcon, EyeSlashFilledIcon, Logo } from "@/components/icons";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -50,7 +52,6 @@ export default function LoginPage() {
 
       if (response.success === true) {
         setError("");
-        toast.success("Login Successful!");
         navigate("/dashboard");
         return;
       }
@@ -81,19 +82,56 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgot = (e: any) => {
+  const handleForgot = async (e: any) => {
     e.preventDefault();
-    toast.info("OTP has been sent to your email.");
+    setLoading(true);
+    try {
+      const response = await auth_otp.send_otp(forgotEmail);
+      if (response.success) {
+        toast.success("OTP has been sent to your email.");
+        setPage("otp");
+      } else {
+        toast.error(response.message || "Failed to send OTP.");
+      }
+    } catch (err) {
+      toast.error("Failed to send OTP.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOTP = (e: any) => {
     e.preventDefault();
-    toast.info("OTP verified successfully.");
+    if (!otp) {
+      setError("OTP code is required.");
+      toast.warn("OTP code is required.");
+      return;
+    }
+
+    setPage("reset");
+    toast.info("OTP verified. Please enter your new password.");
   };
 
-  const handleResetPassword = (e: any) => {
+  const handleResetPassword = async (e: any) => {
     e.preventDefault();
-    toast.info("Password has been reset successfully.");
+    setLoading(true);
+    try {
+      const response = await auth_user.user_reset_password({
+        email: forgotEmail,
+        pass: newPass,
+        otp_code: otp,
+      });
+      if (response.success) {
+        toast.success("Password has been reset successfully.");
+        setPage("login");
+      } else {
+        toast.error(response.message || "Failed to reset password.");
+      }
+    } catch (err) {
+      toast.error("Failed to reset password.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

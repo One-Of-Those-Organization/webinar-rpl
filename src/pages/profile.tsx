@@ -161,6 +161,9 @@ export default function ProfilPage() {
       setShowCancelConfirm(true);
     } else {
       setIsEditing(false);
+      toast.info("Edit cancelled, no changes were made.", {
+        toastId: "edit-cancelled",
+      });
     }
   };
 
@@ -174,7 +177,10 @@ export default function ProfilPage() {
 
   // Handle edit button click
   const handleEditClick = () => {
-    setIsEditing(true);
+    if (!isEditing) {
+      setIsEditing(true);
+      toast.info("You can now edit your profile", { toastId: "edit-profile" });
+    }
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
