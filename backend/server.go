@@ -99,7 +99,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertNewDumb(backend, protected)
 
     appHandleCertEditor(backend, cookieJWT)
-    appHandleCertEditorUploadImage(backend, cookieJWT) // WIP
+    appHandleCertEditorUploadImage(backend, cookieJWT)
 
     // EVENT PARTICIPANT STUFF
     appHandleEventParticipateRegister(backend, protected)
@@ -112,7 +112,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventParticipateOfEventCount(backend, protected)
 
     // OTP STUFF
-    appHandleGenOTP(backend, protected)
+    appHandleGenOTP(backend, api)
     appHandleCleanupOTP(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
