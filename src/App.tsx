@@ -13,6 +13,7 @@ import DashboardPage from "@/pages/dashboard";
 import DetailPage from "@/pages/detail";
 import ProfilePage from "@/pages/profile";
 import SertifikatUserPage from "@/pages/sertifikat";
+import WebinarSectionPage from "@/pages/WebinarSection";
 
 // Firewall / Route
 import ProtectedRoute from "@/components/firewall/protectedroute";
@@ -94,6 +95,13 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      // Add this route to your router configuration
+      <Route path="/webinars/:section" element={
+        <ProtectedRoute>
+          <WebinarSectionPage />
+        </ProtectedRoute>
+        } />
 
       <Route
         path="/detail/:id"

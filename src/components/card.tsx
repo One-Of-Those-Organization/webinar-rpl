@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardHeader, CardBody, Image, Link } from "@heroui/react";
+import { Card, CardHeader, CardBody, Image, Link, Button } from "@heroui/react";
 import { Webinar } from "@/api/interface";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 interface CardViewProps {
   webinar: Webinar;
+  isRegistered?: boolean;
+  onRegister?: (webinarId: number) => void;
+  sectionType?: string;
 }
 
-export function CardView({ webinar }: CardViewProps): React.ReactElement {
+export function CardView({ 
+  webinar, 
+  isRegistered = false, 
+  onRegister,
+  sectionType 
+}: CardViewProps): React.ReactElement {
   const [isLoading, setIsLoading] = useState(true);
   const [countdown, setCountdown] = useState<{
     days: number;
@@ -82,6 +90,14 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
     return now < startDate;
   };
 
+  const handleRegister = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent card click navigation
+    e.stopPropagation(); // Stop event bubbling
+    if (webinar && onRegister) {
+      onRegister(webinar.id);
+    }
+  };
+
   return (
     <Link href={`/detail/${webinar.id}`}>
       <Card className="py-4 h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow">
@@ -103,15 +119,10 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
               onLoad={() => setIsLoading(false)}
               onError={() => setIsLoading(false)}
             />
-            {isLive() && (
-              <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                🔴 LIVE
-              </div>
-            )}
           </div>
         </CardBody>
 
-        <CardHeader className="pb-2 pt-2 px-4 flex-col items-start">
+        <CardHeader className="pb-2 pt-2 px-4 flex-col items-start flex-grow">
           <h4
             className="font-bold text-large line-clamp-2"
             title={webinar.name}
@@ -125,17 +136,17 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
             {formatDate(webinar.dstart)}
           </small>
 
-          {webinar.description && (
+          {/* {webinar.description && (
             <p
               className="text-sm text-gray-600 line-clamp-3 mb-3"
               title={webinar.description}
             >
               {webinar.description}
             </p>
-          )}
+          )} */}
 
-          {/* Countdown for upcoming webinars */}
-          {isUpcoming() && countdown && (
+          {/* Countdown for upcoming webinars - Always show if upcoming */}
+          {sectionType === "Upcoming" && countdown && (
             <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg mb-3 w-full">
               <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold mb-1">
                 Starts in:
@@ -177,6 +188,39 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
             </div>
           )}
         </CardHeader>
+
+        {/* Action Button - Only show for Live and Registered webinars */}
+        {sectionType !== "Upcoming" && (
+          <div className="px-4 pb-4">
+            {isRegistered ? (
+              <Button 
+                className="w-full" 
+                color="success" 
+                variant="flat"
+                isDisabled
+                onClick={handleRegister}
+              >
+                ✓ Registered
+              </Button>
+            ) : isLive() ? (
+              <Button 
+                className="w-full" 
+                color="primary"
+                onClick={handleRegister}
+              >
+                Register Now
+              </Button>
+            ) : (
+              <Button 
+                className="w-full" 
+                color="primary"
+                onClick={handleRegister}
+              >
+                Register Now
+              </Button>
+            )}
+          </div>
+        )}
       </Card>
     </Link>
   );
