@@ -8,7 +8,7 @@ import { auth_webinar } from "@/api/auth_webinar";
 import { auth_participants } from "@/api/auth_participants";
 import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
-import { QRScanner } from "@/components/QRScanner";
+import { QRCodeDisplay } from "@/components/QRCodeDisplay"; // Updated import
 
 // Webinar Detail Page
 
@@ -20,8 +20,13 @@ export default function DetailPage() {
   const [isRegistered, setIsRegistered] = useState(false);
   const [hasAttended, setHasAttended] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
-  const [isSubmittingAttendance, setIsSubmittingAttendance] = useState(false);
+  const [isQRDisplayOpen, setIsQRDisplayOpen] = useState(false); // Changed from scanner to display
+  const [countdown, setCountdown] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  } | null>(null);
 
   useEffect(() => {
     async function loadWebinarDetail() {
@@ -52,19 +57,79 @@ export default function DetailPage() {
     loadWebinarDetail();
   }, [id]);
 
+  // Listen for storage changes and webinar registration events
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (id) {
+        checkRegistrationStatus(parseInt(id));
+      }
+    };
+
+    const handleWebinarRegistered = (event: CustomEvent) => {
+      if (id && event.detail.webinarId === parseInt(id)) {
+        setIsRegistered(true);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('webinar-registered', handleWebinarRegistered as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('webinar-registered', handleWebinarRegistered as EventListener);
+    };
+  }, [id]);
+
+  // Countdown effect for upcoming webinars
+  useEffect(() => {
+    if (!webinar?.dstart) return;
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const startTime = new Date(webinar.dstart).getTime();
+      const difference = startTime - now;
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+          (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutes = Math.floor(
+          (difference % (1000 * 60 * 60)) / (1000 * 60)
+        );
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+        setCountdown({ days, hours, minutes, seconds });
+      } else {
+        setCountdown(null);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [webinar?.dstart]);
+
   // New function to check registration status
   const checkRegistrationStatus = async (eventId: number) => {
     setIsCheckingStatus(true);
     try {
+      console.log("🔍 Checking registration status for event:", eventId);
       const result = await auth_participants.event_participate_info(eventId);
+      console.log("🔍 Registration status result:", result);
+      
       if (result.success && result.data) {
         setIsRegistered(true);
         setHasAttended(result.data.EventPCome || false);
+        console.log("✅ User is registered, attendance:", result.data.EventPCome);
       } else {
         setIsRegistered(false);
         setHasAttended(false);
+        console.log("❌ User is not registered");
       }
     } catch (error) {
+      console.error("Error checking registration status:", error);
       setIsRegistered(false);
       setHasAttended(false);
     } finally {
@@ -97,11 +162,96 @@ export default function DetailPage() {
     return now >= startDate && now <= endDate;
   };
 
+  // Check if webinar is upcoming
+  const isWebinarUpcoming = () => {
+    if (!webinar?.dstart) return false;
+    const now = new Date();
+    const startDate = new Date(webinar.dstart);
+    return now < startDate;
+  };
+
+  // Check if webinar has ended
+  const isWebinarEnded = () => {
+    if (!webinar?.dend) return false;
+    const now = new Date();
+    const endDate = new Date(webinar.dend);
+    return now > endDate;
+  };
+
+  // Get button state based on webinar status and registration
+  const getRegisterButtonState = () => {
+    // Priority 1: Already registered
+    if (isRegistered) {
+      return {
+        text: "✓ Registered",
+        color: "success" as const,
+        variant: "flat" as const,
+        disabled: true,
+        clickable: false
+      };
+    }
+
+    // Priority 2: Webinar is upcoming
+    if (isWebinarUpcoming()) {
+      return {
+        text: "Upcoming",
+        color: "default" as const,
+        variant: "bordered" as const,
+        disabled: true,
+        clickable: false
+      };
+    }
+
+    // Priority 3: Webinar is live
+    if (isWebinarLive()) {
+      return {
+        text: "Register Now",
+        color: "primary" as const,
+        variant: "solid" as const,
+        disabled: false,
+        clickable: true
+      };
+    }
+
+    // Priority 4: Webinar has ended
+    if (isWebinarEnded()) {
+      return {
+        text: "Registration Closed",
+        color: "default" as const,
+        variant: "bordered" as const,
+        disabled: true,
+        clickable: false
+      };
+    }
+
+    // Default state
+    return {
+      text: "Register",
+      color: "secondary" as const,
+      variant: "bordered" as const,
+      disabled: false,
+      clickable: true
+    };
+  };
+
   const handleRegister = async () => {
     if (!webinar) return;
 
+    // Check if registration is allowed
+    const buttonState = getRegisterButtonState();
+    if (!buttonState.clickable) {
+      if (isWebinarUpcoming()) {
+        toast.warning("Registration will be available when the webinar goes live");
+      } else if (isWebinarEnded()) {
+        toast.warning("Registration is closed. This webinar has ended");
+      }
+      return;
+    }
+
     setIsRegistering(true);
     try {
+      console.log("🔍 Attempting to register for webinar:", webinar.id);
+      
       const result = await auth_participants.event_participate_register({
         id: webinar.id,
         role: "normal",
@@ -112,16 +262,30 @@ export default function DetailPage() {
       if (result.success) {
         setIsRegistered(true);
         toast.success("Successfully registered for webinar!");
+        
+        // Update localStorage to trigger storage event
+        const currentRegistered = JSON.parse(localStorage.getItem("registered_webinars") || "[]");
+        if (!currentRegistered.includes(webinar.id)) {
+          const newRegistered = [...currentRegistered, webinar.id];
+          localStorage.setItem("registered_webinars", JSON.stringify(newRegistered));
+        }
+        
+        // Trigger custom event for same-page updates
+        window.dispatchEvent(new CustomEvent('webinar-registered', { 
+          detail: { webinarId: webinar.id } 
+        }));
       } else {
-        toast.error("Failed to register for webinar");
+        toast.error(result.message || "Failed to register for webinar");
       }
     } catch (error) {
+      console.error("Registration error:", error);
       toast.error("Registration failed. Please try again later.");
     } finally {
       setIsRegistering(false);
     }
   };
 
+  // Updated handleAttendanceClick to show QR code instead of scanner
   const handleAttendanceClick = () => {
     console.log("🔍 DEBUG ATTENDANCE:");
     console.log("- isRegistered:", isRegistered);
@@ -134,44 +298,27 @@ export default function DetailPage() {
     });
 
     if (!isRegistered) {
-      toast.warning("You must register first before taking attendance");
+      toast.warning("You must register first before checking in");
       return;
     }
 
     if (!isWebinarLive()) {
       toast.warning(
-        "Attendance can only be taken when the webinar is currently running"
+        "Check-in is only available when the webinar is currently running"
       );
       return;
     }
 
-    setIsQRScannerOpen(true);
-  };
-
-  const handleQRScanSuccess = async (code: string) => {
-    if (!webinar) return;
-
-    setIsSubmittingAttendance(true);
-    try {
-      const result = await auth_participants.submitAttendance({
-        id: webinar.id,
-        code: code,
-      });
-
-      if (result.success) {
-        setHasAttended(true);
-        toast.success(
-          "Attendance successful! Thank you for attending the webinar."
-        );
-      } else {
-        toast.error(result.message || "Failed to submit attendance");
-      }
-    } catch (error) {
-      toast.error("Failed to submit attendance. Please try again later.");
-    } finally {
-      setIsSubmittingAttendance(false);
+    if (hasAttended) {
+      toast.info("You have already checked in for this webinar");
+      return;
     }
+
+    // Show QR code display modal
+    setIsQRDisplayOpen(true);
   };
+
+  const buttonState = getRegisterButtonState();
 
   return (
     <DefaultLayout>
@@ -190,11 +337,27 @@ export default function DetailPage() {
               height="100mm"
             />
 
-            {/* Live indicator positioned absolutely in top-right corner */}
+            {/* Status indicators */}
             {isWebinarLive() && (
               <div className="absolute top-4 right-4 z-10">
-                <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse shadow-lg">
                   🔴 LIVE
+                </span>
+              </div>
+            )}
+
+            {isWebinarUpcoming() && (
+              <div className="absolute top-4 right-4 z-10">
+                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                  📅 UPCOMING
+                </span>
+              </div>
+            )}
+
+            {isWebinarEnded() && (
+              <div className="absolute top-4 right-4 z-10">
+                <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                  🏁 ENDED
                 </span>
               </div>
             )}
@@ -239,31 +402,30 @@ export default function DetailPage() {
               </Button>
             ) : (
               <Button
-                color={isRegistered ? "success" : "secondary"}
+                color={buttonState.color}
                 radius="full"
-                variant={isRegistered ? "flat" : "bordered"}
+                variant={buttonState.variant}
                 size="lg"
                 onClick={handleRegister}
-                isDisabled={isRegistered || isRegistering}
+                isDisabled={buttonState.disabled || isRegistering}
                 isLoading={isRegistering}
+                className={buttonState.disabled ? "opacity-50 cursor-not-allowed" : ""}
               >
-                {isRegistered ? "✓ Registered" : "Register"}
+                {buttonState.text}
               </Button>
             )}
 
-            {/* Attendance Button with QR Scanner */}
+            {/* Check-in Button (shows QR code) */}
             <Button
               color={hasAttended ? "success" : "secondary"}
               radius="full"
               variant={hasAttended ? "flat" : "bordered"}
               size="lg"
               onClick={handleAttendanceClick}
-              isDisabled={
-                !isRegistered || hasAttended || isSubmittingAttendance
-              }
-              isLoading={isSubmittingAttendance}
+              isDisabled={!isRegistered || hasAttended || !isWebinarLive()}
+              className={(!isRegistered || hasAttended || !isWebinarLive()) ? "opacity-50 cursor-not-allowed" : ""}
             >
-              {hasAttended ? "✓ Attended" : "Check-in"}
+              {hasAttended ? "✅ Checked In" : "📱 Check-in"}
             </Button>
 
             <Link
@@ -305,7 +467,7 @@ export default function DetailPage() {
           <div className="font-bold text-xl">
             Venue:{" "}
             <span className="text-[#B6A3E8] font-bold">
-              {webinar?.att || "Online"}
+              Online
             </span>
           </div>
 
@@ -341,15 +503,37 @@ export default function DetailPage() {
               )}
             </p>
           </div>
+
+          {/* Status information */}
+          {/* <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <h3 className="font-semibold mb-2">Status:</h3>
+            <div className="flex items-center gap-2">
+              {isWebinarUpcoming() && (
+                <span className="text-blue-600">📅 Registration will open when webinar goes live</span>
+              )}
+              {isWebinarLive() && !isRegistered && (
+                <span className="text-green-600">🟢 Registration is now open!</span>
+              )}
+              {isWebinarLive() && isRegistered && !hasAttended && (
+                <span className="text-blue-600">📱 Webinar is live - Click Check-in to show your QR code</span>
+              )}
+              {isWebinarLive() && isRegistered && hasAttended && (
+                <span className="text-green-600">✅ You have successfully checked in</span>
+              )}
+              {isWebinarEnded() && (
+                <span className="text-gray-600">🏁 This webinar has ended</span>
+              )}
+            </div>
+          </div> */}
         </div>
       </section>
 
-      {/* QR Scanner Modal */}
-      <QRScanner
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
-        onScanSuccess={handleQRScanSuccess}
+      {/* QR Code Display Modal */}
+      <QRCodeDisplay
+        isOpen={isQRDisplayOpen}
+        onClose={() => setIsQRDisplayOpen(false)}
         webinarId={webinar?.id || 0}
+        webinarName={webinar?.name || ""}
       />
 
       <ToastContainer />
