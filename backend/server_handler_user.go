@@ -910,6 +910,7 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
             Password string `json:"pass"`
             Instance string `json:"instance"`
             Picture  string `json:"picture"`
+            UserRole *int   `json:"user_role"`
         }
 
         err:= c.BodyParser(&body)
@@ -970,13 +971,18 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
             })
         }
 
+        useMe := 1
+        if body.UserRole != nil {
+            useMe = *body.UserRole
+        }
+
         newUser := table.User {
             UserFullName: body.FullName,
             UserEmail: body.Email,
             UserPassword: hashedPassword,
             UserPicture: body.Picture,
             UserInstance: body.Instance,
-            UserRole: 1,
+            UserRole: useMe,
             UserCreatedAt: time.Now(),
         }
 
