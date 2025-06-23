@@ -8,7 +8,8 @@ import { auth_webinar } from "@/api/auth_webinar";
 import { auth_participants } from "@/api/auth_participants";
 import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
-import { QRCodeDisplay } from "@/components/QRCodeDisplay"; // Updated import
+import { QRCodeDisplay } from "@/components/QRCodeDisplay";
+import { QRScanner } from "@/components/QRScanner";
 
 // Webinar Detail Page
 
@@ -19,8 +20,11 @@ export default function DetailPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [hasAttended, setHasAttended] = useState(false);
+  const [userRole, setUserRole] = useState<string>("");
+  const [participantRole, setParticipantRole] = useState<string>("");
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [isQRDisplayOpen, setIsQRDisplayOpen] = useState(false); // Changed from scanner to display
+  const [isQRDisplayOpen, setIsQRDisplayOpen] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [countdown, setCountdown] = useState<{
     days: number;
     hours: number;
@@ -36,11 +40,15 @@ export default function DetailPage() {
       }
 
       try {
+        // Load webinar details
         const result = await auth_webinar.get_webinar_by_id(parseInt(id));
 
         if (result.success && result.data) {
           const webinarData = Webinar.fromApiResponse(result.data);
           setWebinar(webinarData);
+
+          // Load user profile to get role
+          await loadUserProfile();
 
           // Check registration status dari API
           await checkRegistrationStatus(parseInt(id));
@@ -56,6 +64,20 @@ export default function DetailPage() {
 
     loadWebinarDetail();
   }, [id]);
+
+  // Load user profile to get role
+  const loadUserProfile = async () => {
+    try {
+      const result = await auth_participants.get_user_profile();
+      if (result.success && result.data) {
+        setUserRole(result.data.UserRole?.toString() || "2"); // Default to normal user (2)
+        console.log("🔍 User role:", result.data.UserRole);
+      }
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+      setUserRole("2"); // Default to normal user
+    }
+  };
 
   // Listen for storage changes and webinar registration events
   useEffect(() => {
@@ -122,16 +144,20 @@ export default function DetailPage() {
       if (result.success && result.data) {
         setIsRegistered(true);
         setHasAttended(result.data.EventPCome || false);
+        setParticipantRole(result.data.EventPRole || "normal");
         console.log("✅ User is registered, attendance:", result.data.EventPCome);
+        console.log("🔍 Participant role:", result.data.EventPRole);
       } else {
         setIsRegistered(false);
         setHasAttended(false);
+        setParticipantRole("");
         console.log("❌ User is not registered");
       }
     } catch (error) {
       console.error("Error checking registration status:", error);
       setIsRegistered(false);
       setHasAttended(false);
+      setParticipantRole("");
     } finally {
       setIsCheckingStatus(false);
     }
@@ -176,6 +202,11 @@ export default function DetailPage() {
     const now = new Date();
     const endDate = new Date(webinar.dend);
     return now > endDate;
+  };
+
+  // Check if user is committee
+  const isCommittee = () => {
+    return userRole === "1" || participantRole === "committee";
   };
 
   // Get button state based on webinar status and registration
@@ -285,22 +316,15 @@ export default function DetailPage() {
     }
   };
 
-  // Updated handleAttendanceClick to show QR code instead of scanner
+  // Handle attendance/check-in based on role
   const handleAttendanceClick = () => {
     console.log("🔍 DEBUG ATTENDANCE:");
     console.log("- isRegistered:", isRegistered);
     console.log("- hasAttended:", hasAttended);
     console.log("- isWebinarLive():", isWebinarLive());
-    console.log("- webinar dates:", {
-      start: webinar?.dstart,
-      end: webinar?.dend,
-      now: new Date().toISOString(),
-    });
-
-    if (!isRegistered) {
-      toast.warning("You must register first before checking in");
-      return;
-    }
+    console.log("- userRole:", userRole);
+    console.log("- participantRole:", participantRole);
+    console.log("- isCommittee():", isCommittee());
 
     if (!isWebinarLive()) {
       toast.warning(
@@ -309,13 +333,60 @@ export default function DetailPage() {
       return;
     }
 
+    // Committee can scan QR codes
+    if (isCommittee()) {
+      setIsQRScannerOpen(true);
+      return;
+    }
+
+    // Normal users need to be registered first
+    if (!isRegistered) {
+      toast.warning("You must register first before checking in");
+      return;
+    }
+
     if (hasAttended) {
       toast.info("You have already checked in for this webinar");
       return;
     }
 
-    // Show QR code display modal
+    // Show QR code display modal for normal users
     setIsQRDisplayOpen(true);
+  };
+
+  // Handle QR scan success
+  const handleQRScanSuccess = async (scannedData: string) => {
+    try {
+      console.log("🔍 QR scan success:", scannedData);
+      
+      // Parse QR code data
+      let qrData;
+      try {
+        qrData = JSON.parse(scannedData);
+      } catch (e) {
+        // If not JSON, treat as simple code
+        qrData = { participantCode: scannedData };
+      }
+
+      // Submit attendance
+      const result = await auth_participants.submitAttendance({
+        id: qrData.eventId || webinar?.id || 0,
+        code: qrData.participantCode || scannedData,
+      });
+
+      if (result.success) {
+        toast.success("Attendance recorded successfully!");
+        // Refresh registration status to update UI
+        if (id) {
+          await checkRegistrationStatus(parseInt(id));
+        }
+      } else {
+        toast.error(result.message || "Failed to record attendance");
+      }
+    } catch (error) {
+      console.error("Error processing QR scan:", error);
+      toast.error("Failed to process QR code");
+    }
   };
 
   const buttonState = getRegisterButtonState();
@@ -358,6 +429,15 @@ export default function DetailPage() {
               <div className="absolute top-4 right-4 z-10">
                 <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
                   🏁 ENDED
+                </span>
+              </div>
+            )}
+
+            {/* Role indicator for debugging */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="absolute top-4 left-4 z-10">
+                <span className="bg-purple-500 text-white px-2 py-1 rounded text-xs">
+                  {isCommittee() ? "👑 COMMITTEE" : "👤 USER"}
                 </span>
               </div>
             )}
@@ -415,17 +495,23 @@ export default function DetailPage() {
               </Button>
             )}
 
-            {/* Check-in Button (shows QR code) */}
+            {/* Check-in Button - Different behavior based on role */}
             <Button
-              color={hasAttended ? "success" : "secondary"}
+              color={hasAttended || isCommittee() ? "success" : "secondary"}
               radius="full"
               variant={hasAttended ? "flat" : "bordered"}
               size="lg"
               onClick={handleAttendanceClick}
-              isDisabled={!isRegistered || hasAttended || !isWebinarLive()}
-              className={(!isRegistered || hasAttended || !isWebinarLive()) ? "opacity-50 cursor-not-allowed" : ""}
+              isDisabled={!isWebinarLive()}
+              className={!isWebinarLive() ? "opacity-50 cursor-not-allowed" : ""}
             >
-              {hasAttended ? "✅ Checked In" : "📱 Check-in"}
+              {isCommittee() ? (
+                "📷 Scan QR"
+              ) : hasAttended ? (
+                "✅ Checked In"
+              ) : (
+                "📱 Check-in"
+              )}
             </Button>
 
             <Link
@@ -503,37 +589,23 @@ export default function DetailPage() {
               )}
             </p>
           </div>
-
-          {/* Status information */}
-          {/* <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <h3 className="font-semibold mb-2">Status:</h3>
-            <div className="flex items-center gap-2">
-              {isWebinarUpcoming() && (
-                <span className="text-blue-600">📅 Registration will open when webinar goes live</span>
-              )}
-              {isWebinarLive() && !isRegistered && (
-                <span className="text-green-600">🟢 Registration is now open!</span>
-              )}
-              {isWebinarLive() && isRegistered && !hasAttended && (
-                <span className="text-blue-600">📱 Webinar is live - Click Check-in to show your QR code</span>
-              )}
-              {isWebinarLive() && isRegistered && hasAttended && (
-                <span className="text-green-600">✅ You have successfully checked in</span>
-              )}
-              {isWebinarEnded() && (
-                <span className="text-gray-600">🏁 This webinar has ended</span>
-              )}
-            </div>
-          </div> */}
         </div>
       </section>
 
-      {/* QR Code Display Modal */}
+      {/* QR Code Display Modal (for normal users) */}
       <QRCodeDisplay
         isOpen={isQRDisplayOpen}
         onClose={() => setIsQRDisplayOpen(false)}
         webinarId={webinar?.id || 0}
         webinarName={webinar?.name || ""}
+      />
+
+      {/* QR Scanner Modal (for committee) */}
+      <QRScanner
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+        onScanSuccess={handleQRScanSuccess}
+        webinarId={webinar?.id || 0}
       />
 
       <ToastContainer />

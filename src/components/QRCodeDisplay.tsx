@@ -41,7 +41,7 @@ export function QRCodeDisplay({ isOpen, onClose, webinarId, webinarName }: QRCod
           participantCode: result.data.EventPCode,
           participantRole: result.data.EventPRole,
           userId: result.data.UserId,
-          timestamp: new Date().toISOString(),
+          timestamp: "2025-06-23T08:39:40.000Z",
           // Add additional data for verification
           checksum: generateChecksum(result.data.EventPCode, webinarId)
         };
@@ -108,7 +108,7 @@ export function QRCodeDisplay({ isOpen, onClose, webinarId, webinarName }: QRCod
       <ModalContent>
         <ModalHeader>
           <div className="flex flex-col">
-            <h3 className="text-lg font-semibold">Check-in QR Code</h3>
+            <h3 className="text-lg font-semibold">👤 Your Check-in QR Code</h3>
             <p className="text-sm text-gray-600">{webinarName}</p>
           </div>
         </ModalHeader>
@@ -116,7 +116,7 @@ export function QRCodeDisplay({ isOpen, onClose, webinarId, webinarName }: QRCod
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Spinner size="lg" />
-              <p className="mt-4 text-gray-600">Generating QR code...</p>
+              <p className="mt-4 text-gray-600">Generating your QR code...</p>
             </div>
           ) : error ? (
             <div className="text-center py-8">
@@ -139,7 +139,7 @@ export function QRCodeDisplay({ isOpen, onClose, webinarId, webinarName }: QRCod
               {/* Participant Information */}
               {participantData && (
                 <div className="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-4">
-                  <h4 className="font-semibold mb-2">Participant Information</h4>
+                  <h4 className="font-semibold mb-2">Your Participant Information</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <span className="font-medium">Role:</span>
@@ -149,21 +149,11 @@ export function QRCodeDisplay({ isOpen, onClose, webinarId, webinarName }: QRCod
                       <span className="font-medium">Status:</span>
                       <span className="ml-2">{participantData.EventPCome ? "✅ Attended" : "⏳ Pending"}</span>
                     </div>
-                    {/* <div className="col-span-2">
-                      <span className="font-medium">Participant Code:</span>
-                      <div className="flex items-center mt-1">
-                        <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs mr-2 flex-1">
-                          {participantData.EventPCode}
-                        </code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={handleCopyCode}
-                        >
-                          Copy
-                        </Button>
-                      </div>
-                    </div> */}
+                    <div className="col-span-2 text-center">
+                      <span className="text-xs text-gray-500">
+                        Current Time: 2025-06-23 08:39:40 UTC
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -171,12 +161,13 @@ export function QRCodeDisplay({ isOpen, onClose, webinarId, webinarName }: QRCod
               {/* Instructions */}
               <div className="w-full text-center text-sm text-gray-600">
                 <p className="mb-2">
-                  <strong>Instructions:</strong>
+                  <strong>How to check in:</strong>
                 </p>
                 <ol className="text-left space-y-1">
-                  <li>1. Show this QR code to the event organizer</li>
+                  <li>1. Show this QR code to the committee member</li>
                   <li>2. Wait for them to scan your code</li>
                   <li>3. Your attendance will be automatically recorded</li>
+                  <li>4. Keep this screen open until scan is complete</li>
                 </ol>
               </div>
               

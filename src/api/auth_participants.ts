@@ -1,16 +1,3 @@
-// API Participants Usage List :
-
-// 6/8 Completed ✅
-
-// 1. Participant Register ✅
-// 2. Get Participants by Event ✅
-// 3. Edit Participant from Event ✅
-// 4. Delete Participant from Event ✅
-// 5. Get Event Participation Info by Event ✅
-// 6. Set Participant Absence ❌ - Later for Participant Check In
-// 7. Get Participant Count by Event ✅
-// 8. Get Event Participation by User ❌ - Low Priority, but can implemented it last
-
 import { BaseResponse, EventPartisipantRegister } from "./interface";
 
 const API_URL = "http://localhost:3000";
@@ -142,6 +129,35 @@ export const auth_participants = {
       return result;
     } catch (error) {
       console.error("Attendance submission error:", error);
+      return {
+        success: false,
+        message: "Failed to connect to server",
+      };
+    }
+  },
+
+  // API untuk mendapatkan user profile/role
+  get_user_profile: async (): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      console.log("🔍 Getting user profile");
+      
+      const response = await fetch(
+        `${API_URL}/api/protected/user-profile`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      const result = await response.json();
+      console.log("🔍 User profile result:", result);
+      return result;
+    } catch (error) {
+      console.error("User profile error:", error);
       return {
         success: false,
         message: "Failed to connect to server",
