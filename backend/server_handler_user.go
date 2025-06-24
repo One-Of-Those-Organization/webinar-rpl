@@ -910,6 +910,7 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
             Password string `json:"pass"`
             Instance string `json:"instance"`
             Picture  string `json:"picture"`
+            UserRole *int   `json:"user_role"`
         }
 
         err:= c.BodyParser(&body)
@@ -970,13 +971,18 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
             })
         }
 
+        useMe := 1
+        if body.UserRole != nil {
+            useMe = *body.UserRole
+        }
+
         newUser := table.User {
             UserFullName: body.FullName,
             UserEmail: body.Email,
             UserPassword: hashedPassword,
             UserPicture: body.Picture,
             UserInstance: body.Instance,
-            UserRole: 1,
+            UserRole: useMe,
             UserCreatedAt: time.Now(),
         }
 
@@ -993,6 +999,30 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "successfully created new user",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// NOTE: Call this to logout (eg. delete the cookie)
+// POST : api/c/logout
+// POST : api/protected/logout
+func appHandleUserLogOut(backend *Backend, route fiber.Router) {
+    route.Post("logout", func (c *fiber.Ctx) error {
+        _, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to access this api.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        c.ClearCookie("jwt")
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "successfully logged out.",
             "error_code": 0,
             "data": nil,
         })

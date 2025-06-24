@@ -6,6 +6,7 @@ import (
     "strconv"
     "fmt"
     "encoding/base64"
+    "time"
 
     "webrpl/table"
 	"github.com/gofiber/fiber/v2"
@@ -458,6 +459,16 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
                 "success": false,
                 "message": fmt.Sprintf("Failed to fetch event participant for this code, %v", res.Error),
                 "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        now := time.Now()
+        if evPart.Event.EventDEnd.Before(now) {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "The event is not done yet.",
+                "error_code": 3,
                 "data": nil,
             })
         }

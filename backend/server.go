@@ -76,6 +76,8 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleUserUploadImage(backend, protected)
     appHandleUserCount(backend, protected)
     appHandleRegisterAdmin(backend, protected)
+    appHandleUserLogOut(backend, protected)
+    appHandleUserLogOut(backend, cookieJWT)
 
     // EVENT STUFF
     appHandleEventInfoAll(backend, protected)
