@@ -13,5 +13,3 @@ def login(email: str, password: str) -> str:
     if response:
         return response.get("token")
     return ""
-
-test = login("admin@wowadmin.com", "secret")

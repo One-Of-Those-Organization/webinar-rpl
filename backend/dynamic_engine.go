@@ -11,7 +11,7 @@ import (
 )
 
 type DynamicEngine struct {
-    directory   string
+    directories []string
     extension   string
     funcMap     template.FuncMap
     left        string
@@ -22,9 +22,9 @@ type DynamicEngine struct {
     cacheTTL    time.Duration
 }
 
-func NewDynamicEngine(directory, extension string) *DynamicEngine {
+func NewDynamicEngine(directories []string, extension string) *DynamicEngine {
     return &DynamicEngine{
-        directory: directory,
+        directories: directories,
         extension: extension,
         funcMap:   make(template.FuncMap),
         left:      "{{",
@@ -86,7 +86,19 @@ func (e *DynamicEngine) loadTemplate(name string) (*template.Template, error) {
         }
     }
 
-    templatePath := filepath.Join(e.directory, name+e.extension)
+    var templatePath string
+    var found bool
+    for _, dir := range e.directories {
+        tryPath := filepath.Join(dir, name+e.extension)
+        if _, err := os.Stat(tryPath); err == nil {
+            templatePath = tryPath
+            found = true
+            break
+        }
+    }
+    if !found {
+        return nil, fmt.Errorf("template %s does not exist in any directories", name)
+    }
 
     // Check if file exists
     if _, err := os.Stat(templatePath); os.IsNotExist(err) {

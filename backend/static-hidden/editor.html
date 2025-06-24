@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Canvas Editor</title>
+    <title>Simple Certificate Template Editor</title>
     <style>
         * {
             margin: 0;
@@ -178,31 +178,6 @@
             align-items: center;
         }
 
-        .export-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 10000;
-        }
-
-        .export-modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 800px;
-            max-height: 80%;
-            overflow-y: auto;
-        }
-
         .export-code {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -219,12 +194,16 @@
 <body>
     <div class="editor-container">
         <div class="toolbar">
-            <button onclick="addObject('UserName')">Add UserName</button>
-            <button onclick="addObject('EventName')">Add EventName</button>
-            <button onclick="addObject('UnikID')">Add UnikID</button>
+            <button onclick="addObject('UserName')">Add Name</button>
+            <button onclick="addObject('EventName')">Add Event</button>
+            <button onclick="addObject('UnikID')">Add EvID</button>
             <button onclick="deleteSelected()">Delete Selected</button>
             <button onclick="clearCanvas()">Clear Canvas</button>
-            <button class="export" onclick="exportCanvas()">Export HTML</button>
+
+            <button onclick="uploadBackground()">Upload background</button>
+            <input type="file" id="fileInput" accept="image/png" style="display: none;">
+
+            <button class="export" onclick="exportCanvas(backgroundURL)">Save</button>
         </div>
 
         <div class="canvas" id="canvas">
@@ -260,20 +239,6 @@
         </div>
     </div>
 
-    <!-- Export Modal -->
-    <div class="export-modal" id="exportModal">
-        <div class="export-modal-content">
-            <h3>Exported HTML Template</h3>
-            <p>Copy the code below and save it as an HTML file. The template uses Go template syntax for dynamic content:</p>
-            <div class="export-code" id="exportCode"></div>
-            <div style="text-align: right; margin-top: 15px;">
-                <button onclick="downloadExport()">Download File</button>
-                <button onclick="copyToClipboard()">Copy to Clipboard</button>
-                <button onclick="closeExportModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         let isDragging = false;
         let isResizing = false;
@@ -287,6 +252,8 @@
         let startTop = 0;
         let resizeDirection = '';
         let objectCounter = { UserName: 1, EventName: 1, UnikID: 1 };
+
+        var backgroundURL = "";
 
         const canvas = document.getElementById('canvas');
         const propertiesContent = document.getElementById('properties-content');
@@ -518,9 +485,28 @@
             `;
         }
 
+        function invertColor(hex) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) {
+                hex = hex.split('').map(char => char + char).join('');
+            }
+
+            if (hex.length !== 6) {
+                throw new Error("Invalid HEX color.");
+            }
+
+            let r = (255 - parseInt(hex.slice(0, 2), 16)).toString(16).padStart(2, '0');
+            let g = (255 - parseInt(hex.slice(2, 4), 16)).toString(16).padStart(2, '0');
+            let b = (255 - parseInt(hex.slice(4, 6), 16)).toString(16).padStart(2, '0');
+
+            return `#${r}${g}${b}`;
+        }
+
+
         function updateColor(newColor) {
             if (selectedElement) {
                 selectedElement.style.color = newColor;
+                selectedElement.style.backgroundColor = invertColor(newColor);
             }
         }
 
@@ -610,7 +596,77 @@
             }
         }
 
-        function exportCanvas() {
+        async function uploadToBackend(data) {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("event_id");
+            let a = await fetch(
+                "http://localhost:3000/api/c/-cert-editor-upload-image",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(
+                        {
+                            data: data,
+                            event_id: id,
+                        }
+                    ),
+                }
+            )
+
+            const result = await a.json();
+            return result.data.filename;
+        }
+
+        async function uploadCertTemp(data) {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("event_id");
+            let a = await fetch(
+                "http://localhost:3000/api/c/-cert-editor-upload-html",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(
+                        {
+                            data: data,
+                            event_id: id,
+                        }
+                    ),
+                }
+            )
+
+            const result = await a.json();
+            return;
+        }
+
+        function uploadBackground() {
+            const input = document.getElementById('fileInput');
+            input.click();
+
+            input.onchange = () => {
+                const file = input.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        const base64String = e.target.result.split(',')[1];
+                        backgroundURL = await uploadToBackend(base64String);
+                        const div = document.getElementById("canvas");
+                        div.style.backgroundImage = `url('${backgroundURL}')`;
+                        div.style.backgroundSize = 'cover';
+                        div.style.backgroundPosition = 'center';
+                        div.style.backgroundRepeat = 'no-repeat';
+                    };
+                    reader.readAsDataURL(file); // Reads as base64
+                }
+            };
+        }
+
+        function exportCanvas(bg_url) {
             const objects = document.querySelectorAll('.draggable-object');
             let objectsHtml = '';
 
@@ -627,22 +683,23 @@
                 const textDecoration = obj.style.textDecoration || 'none';
 
                 // Convert type to Go template variable
-                let templateVar = '';
+                let templateVar = "";
                 switch(type) {
                     case 'UserName':
-                        templateVar = '{{ .UserName }}';
+                        templateVar = `\{\{ .UserName \}\}`;
                         break;
                     case 'EventName':
-                        templateVar = '{{ .EventName }}';
+                        templateVar = `\{\{ .EventName \}\}`;
                         break;
                     case 'UnikID':
-                        templateVar = '{{ .UniqueID }}';
+                        templateVar = `\{\{ .UniqueID \}\}`;
                         break;
                     default:
                         templateVar = type;
+                        break;
                 }
 
-                objectsHtml += `        <div class="template-object" style="left: ${left}; top: ${top}; width: ${width}; height: ${height}; color: ${color}; font-size: ${fontSize}; font-weight: ${fontWeight}; font-style: ${fontStyle}; text-decoration: ${textDecoration};">
+                objectsHtml += `        <div class="template-object" style="left: ${left}; top: ${top}; width: ${width}; height: ${height}; color: ${color}; font-size: ${fontSize}; font-weight: ${fontWeight}; font-style: ${fontStyle}; text-decoration: ${textDecoration}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
             ${templateVar}
         </div>\n`;
             });
@@ -674,22 +731,22 @@
             width: 800px;
             height: 600px;
             background: #ff4444;
+            background-image: url(${bg_url});
             position: relative;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .template-object {
             position: absolute;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #333;
-            border-radius: 4px;
             padding: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             word-wrap: break-word;
             text-align: center;
         }
@@ -712,51 +769,9 @@
 ${objectsHtml}    </div>
 </body>
 </html>`;
-
-            document.getElementById('exportCode').textContent = exportedHtml;
-            document.getElementById('exportModal').style.display = 'block';
+            const base = btoa(exportedHtml);
+            uploadCertTemp(base);
         }
-
-        function closeExportModal() {
-            document.getElementById('exportModal').style.display = 'none';
-        }
-
-        function downloadExport() {
-            const content = document.getElementById('exportCode').textContent;
-            const blob = new Blob([content], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'template.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function copyToClipboard() {
-            const content = document.getElementById('exportCode').textContent;
-            navigator.clipboard.writeText(content).then(() => {
-                alert('HTML code copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = content;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('HTML code copied to clipboard!');
-            });
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('exportModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeExportModal();
-            }
-        });
     </script>
 </body>
 </html>

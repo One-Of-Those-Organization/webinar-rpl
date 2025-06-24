@@ -225,6 +225,8 @@ export default function CreateWebinar() {
         if (response.success) {
           let serverPath = response.data?.filename || response.data;
 
+          serverPath = serverPath.replace(/^https?:\/\/[^/]+:3000/, "http://localhost:3000");
+
           const staticUrl = serverPath;
 
           // Simpan URL gambar ke state
