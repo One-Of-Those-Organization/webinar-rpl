@@ -120,8 +120,8 @@ export default function CreateWebinar() {
       const formattedWebinarData = {
         name: webinarInput.name,
         img: webinarInput.image,
-        dstart: formatDateForBackend(webinarInput.dstart),
-        dend: formatDateForBackend(webinarInput.dend),
+        dstart: webinarInput.dstart,
+        dend: webinarInput.dend,
         speaker: webinarInput.speaker,
         att: webinarInput.attendance,
         link: webinarInput.link,
@@ -173,12 +173,14 @@ export default function CreateWebinar() {
     }
   };
 
+  // TODO: This is the issue all along i debuged this and this function will set it as is.
   // Function to handle time change for start and end times
   const handleTimeChange = (field: "dstart" | "dend", value: string) => {
     const dateValue = webinarInput[field].split("T")[0];
+    const newDate = `${dateValue}T${value}`;
     setWebinarInput({
       ...webinarInput,
-      [field]: `${dateValue}T${value}:00Z`,
+      [field]: new Date(newDate).toISOString(),
     });
   };
 
