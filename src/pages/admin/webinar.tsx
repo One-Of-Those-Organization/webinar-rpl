@@ -27,6 +27,7 @@ import {
   ChevronDownIcon,
 } from "@/components/icons";
 import { auth_webinar } from "@/api/auth_webinar";
+import { auth_certificate } from "@/api/auth_certificate";
 import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
@@ -34,8 +35,6 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 const DEFAULT_ROWS_PER_PAGE = 8;
 const WEBINARS_PER_PAGE_OPTIONS = [8, 12, 16, 20];
-
-// TODO : make the mobile view after next page webinar goes to the top of the page
 
 export default function WebinarPage() {
   const navigate = useNavigate();
@@ -51,6 +50,12 @@ export default function WebinarPage() {
   // State untuk delete confirmation
   const [webinarToDelete, setWebinarToDelete] = useState<Webinar | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // State untuk certificate modal
+  const [certificateModal, setCertificateModal] = useState<{
+    isOpen: boolean;
+    webinar: Webinar | null;
+  }>({ isOpen: false, webinar: null });
 
   // HeroUI modal hooks
   const {
@@ -152,8 +157,9 @@ export default function WebinarPage() {
           </CardHeader>
           <div className="absolute bottom-0 left-0 right-0 p-3">
             <div className="flex space-x-2">
-              <Skeleton height={36} width="48%" />
-              <Skeleton height={36} width="48%" />
+              <Skeleton height={36} width="33%" />
+              <Skeleton height={36} width="33%" />
+              <Skeleton height={36} width="33%" />
             </div>
           </div>
         </Card>
@@ -237,6 +243,11 @@ export default function WebinarPage() {
     }
   };
 
+  // Function untuk certificate configuration
+  const handleCertificateConfig = (webinar: Webinar) => {
+    setCertificateModal({ isOpen: true, webinar });
+  };
+
   // Function untuk formatting tanggal
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return "Date not available";
@@ -310,8 +321,7 @@ export default function WebinarPage() {
           </span>
 
           <span className="text-default-400 text-small">
-            Showing {isLoading ? "..." : paginatedWebinars.length} of{" "}
-            {isLoading ? "..." : filteredWebinars.length}
+            Current time: 2025-06-23 11:18:32 UTC | User: Mikaelazzz
           </span>
         </div>
       </div>
@@ -365,7 +375,7 @@ export default function WebinarPage() {
                 className="h-full flex flex-col relative pb-14 overflow-hidden"
               >
                 <div className="relative">
-                  {/* 🔥 FIXED: Label Online/Offline dengan backdrop blur */}
+                  {/* Label Online/Offline dengan backdrop blur */}
                   <div className="absolute top-2 left-2 z-30">
                     <div className="backdrop-blur-sm bg-black/20 rounded-full p-1">
                       <span
@@ -433,6 +443,15 @@ export default function WebinarPage() {
                       View
                     </Button>
                     <Button
+                      className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+                      size="sm"
+                      radius="md"
+                      startContent={<span>📜</span>}
+                      onPress={() => handleCertificateConfig(webinar)}
+                    >
+                      Certificate
+                    </Button>
+                    <Button
                       className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
                       size="sm"
                       radius="md"
@@ -472,7 +491,7 @@ export default function WebinarPage() {
           <div className="mt-8">{bottomContent}</div>
         )}
 
-        {/* 🔥 Enhanced Delete Confirmation Modal */}
+        {/* Delete Confirmation Modal */}
         <Modal
           isOpen={isDeleteModalOpen}
           onClose={handleCloseDeleteModal}
@@ -524,6 +543,60 @@ export default function WebinarPage() {
                 variant="solid"
               >
                 {isDeleting ? "Menghapus..." : "Hapus Sekarang"}
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        {/* Certificate Configuration Modal */}
+        <Modal
+          isOpen={certificateModal.isOpen}
+          onClose={() => setCertificateModal({ isOpen: false, webinar: null })}
+          size="md"
+        >
+          <ModalContent>
+            <ModalHeader>
+              <h3>Certificate Configuration</h3>
+            </ModalHeader>
+            <ModalBody>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Webinar: {certificateModal.webinar?.name}</h4>
+                  <p className="text-gray-600 text-sm">Configure certificate settings for this webinar</p>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  <Button
+                    color="primary"
+                    onClick={() => {
+                      setCertificateModal({ isOpen: false, webinar: null });
+                      navigate('/admin/certificate-editor');
+                    }}
+                    className="w-full"
+                  >
+                    🎨 Create New Certificate Template
+                  </Button>
+                  
+                  <Button
+                    color="secondary"
+                    variant="bordered"
+                    onClick={() => {
+                      // TODO: Open existing templates modal
+                      toast.info("View existing templates feature coming soon!");
+                    }}
+                    className="w-full"
+                  >
+                    📋 View Existing Templates
+                  </Button>
+                </div>
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button 
+                variant="light" 
+                onPress={() => setCertificateModal({ isOpen: false, webinar: null })}
+              >
+                Close
               </Button>
             </ModalFooter>
           </ModalContent>
