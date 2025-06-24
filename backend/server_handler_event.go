@@ -323,15 +323,7 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
 
         claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
-
-        if isAdmin != 1 {
-            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid credentials for this function",
-                "error_code": 2,
-                "data": nil,
-            })
-        }
+		email := claims["email"].(string)
 
         var body struct {
 			EventId       int       `json:"id"`
@@ -361,13 +353,45 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
 		event := table.Event{}
 		result := backend.db.First(&event, body.EventId)
 		if result.Error != nil {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
 				"message": fmt.Sprintf("Event not found with ID: %d", body.EventId),
 				"error_code": 4,
 				"data": nil,
 			})
 		}
+
+        if isAdmin != 1 {
+			var selUser table.User
+			res := backend.db.Where("user_email = ?", email).First(&selUser)
+			if res.Error != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"success": false,
+					"message": "Failed to fetch the event participant of this user.",
+					"error_code": 8,
+					"data": nil,
+				})
+			}
+
+			var evPart table.EventParticipant
+			res = backend.db.Where("event_id = ? AND user_id = ?", body.EventId, selUser.ID).First(&evPart)
+			if res.Error != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"success": false,
+					"message": "Failed to fetch the event participant of this user.",
+					"error_code": 9,
+					"data": nil,
+				})
+			}
+			if evPart.EventPRole != "committee" {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"success": false,
+					"message": "Invalid credentials for this function",
+					"error_code": 2,
+					"data": nil,
+				})
+			}
+        }
 
 		if body.Desc != nil {
 			event.EventDesc = *body.Desc
