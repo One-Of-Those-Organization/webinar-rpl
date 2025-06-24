@@ -87,7 +87,9 @@ export const Navbar = () => {
       <>
         <DropdownItem key="profile" className="h-14 gap-2">
           <p className="font-semibold">Signed in as</p>
-          <p className="font-semibold">{email}</p>
+          <p className="font-semibold break-all whitespace-normal max-w-[200px]">
+            {email}
+          </p>
         </DropdownItem>
 
         <DropdownItem key="my-profile" onClick={() => navigate("/profile")}>
@@ -105,7 +107,7 @@ export const Navbar = () => {
           color="danger"
           onClick={async () => {
             localStorage.clear();
-            navigate("/");
+            navigate("/", { state: { logoutSuccess: true } });
           }}
         >
           Log Out

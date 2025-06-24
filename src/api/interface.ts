@@ -19,6 +19,7 @@ export interface RegisterData {
   instance: string;
   pass: string;
   picture?: string;
+  otp_code: string;
 }
 
 // Login Data (POST)
@@ -71,6 +72,12 @@ export interface Users {
   email: string;
   instansi: string;
   avatar?: string;
+}
+
+export interface UserResetPassword {
+  email: string;
+  pass: string;
+  otp_code: string;
 }
 
 // Admin Register Data (POST)

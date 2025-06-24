@@ -161,6 +161,9 @@ export default function ProfilPage() {
       setShowCancelConfirm(true);
     } else {
       setIsEditing(false);
+      toast.info("Edit cancelled, no changes were made.", {
+        toastId: "edit-cancelled",
+      });
     }
   };
 
@@ -174,7 +177,10 @@ export default function ProfilPage() {
 
   // Handle edit button click
   const handleEditClick = () => {
-    setIsEditing(true);
+    if (!isEditing) {
+      setIsEditing(true);
+      toast.info("You can now edit your profile", { toastId: "edit-profile" });
+    }
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,7 +219,11 @@ export default function ProfilPage() {
         const response = await auth_user.user_image({ data: base64Image });
 
         if (response.success) {
-          const serverPath = response.data?.filename || "";
+          let serverPath = response.data?.filename || "";
+          serverPath = serverPath.replace(
+            /^https?:\/\/[^/]+:3000/,
+            "http://localhost:3000"
+          );
           setUserData((prev) => ({ ...prev, profile: serverPath }));
           toast.success("Image uploaded! Remember to save your changes.");
         } else {

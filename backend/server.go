@@ -24,7 +24,10 @@ type Backend struct {
 func appCreateNewServer(db *gorm.DB, sec SecretHolder, address string) *Backend {
     secret := sec.Password
     rand_t := rand.New(rand.NewSource(time.Now().UnixNano()))
-    engine := NewDynamicEngine("./static/", ".html")
+    engine := NewDynamicEngine([]string{
+        "./static-hidden/",
+        "./static/",
+}, ".html")
     app := fiber.New(fiber.Config{
         AppName: "Webinar-RPL Backend",
         Views: engine,
@@ -51,11 +54,18 @@ func appMakeRouteHandler(backend *Backend) {
         SigningKey: jwtware.SigningKey{Key: []byte(backend.pass)},
     }))
 
+    cookieJWT := api.Group("/c", jwtware.New(jwtware.Config{
+        SigningKey:  jwtware.SigningKey{Key: []byte(backend.pass)},
+        TokenLookup: "cookie:jwt",
+        ContextKey:  "user",
+    }))
+
     app.Static("/static", "./static")
 
     // USER STUFF
     appHandleLogin(backend, api)
     appHandleRegister(backend, api)
+    appHandleUserResetPass(backend, api)
 
     appHandleUserInfo(backend, protected)
     appHandleUserInfoAll(backend, protected)
@@ -66,6 +76,8 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleUserUploadImage(backend, protected)
     appHandleUserCount(backend, protected)
     appHandleRegisterAdmin(backend, protected)
+    appHandleUserLogOut(backend, protected)
+    appHandleUserLogOut(backend, cookieJWT)
 
     // EVENT STUFF
     appHandleEventInfoAll(backend, protected)
@@ -90,6 +102,12 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertEdit(backend, protected)
     appHandleCertUploadTemplate(backend, protected)
 
+    appHandleCertNewDumb(backend, protected)
+
+    appHandleCertEditor(backend, cookieJWT)
+    appHandleCertEditorUploadImage(backend, cookieJWT)
+    appHandleCertEditorUploadHtml(backend , cookieJWT)
+
     // EVENT PARTICIPANT STUFF
     appHandleEventParticipateRegister(backend, protected)
     appHandleEventParticipateInfoOf(backend, protected)
@@ -103,9 +121,6 @@ func appMakeRouteHandler(backend *Backend) {
     // OTP STUFF
     appHandleGenOTP(backend, api)
     appHandleCleanupOTP(backend, protected)
-
-    // MISC STUFF
-    appHandleCertEditor(backend, protected)
 
     app.Get("/", func(c *fiber.Ctx) error {
         return c.SendString("Server is running.")

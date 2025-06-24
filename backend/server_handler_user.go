@@ -15,6 +15,97 @@ import (
 	"gorm.io/gorm"
 )
 
+// POST : api/user-reset-pass
+func appHandleUserResetPass(backend *Backend, route fiber.Router) {
+    route.Post("user-reset-pass", func (c *fiber.Ctx) error {
+        var body struct {
+            Email    string `json:"email"`
+            Password string `json:"pass"`
+            OtpCode  string `json:"otp_code"`
+        }
+
+        err := c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid request body, %v", err),
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        if body.Email == "" || body.Password == "" || body.OtpCode == "" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid request for email, password, otp.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var selUser table.User
+        var selOTP table.OTP
+        res := backend.db.Where("user_email = ? AND otp_code = ?", body.Email, body.OtpCode).First(&selOTP)
+        res2 := backend.db.Where("user_email = ?", body.Email).First(&selUser)
+
+        if (res.Error != nil || res2.Error != nil) {
+            if !errors.Is(res.Error, gorm.ErrRecordNotFound) && !errors.Is(res2.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Failed to fetch user or otp from the db.",
+                    "error_code": 3,
+                    "data": nil,
+                })
+            }
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "There is no otp or user with that email registered.",
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        // TODO: Check OTP
+        if IsOTPExpired(&selOTP) || selOTP.Used {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "The specified OTP is expired. Please request new code.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+
+        hashedPassword, err := HashPassword(body.Password)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to hash the password.",
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
+        selUser.UserPassword = hashedPassword
+        res = backend.db.Save(&selUser)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to update user password, %v", res.Error),
+                "error_code": 7,
+                "data": nil,
+            })
+        }
+        selOTP.Used = true
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "successfully logged in.",
+            "data": nil,
+            "error_code": 0,
+        })
+    })
+}
+
 // POST : api/login
 func appHandleLogin(backend *Backend, route fiber.Router) {
     route.Post("login", func (c *fiber.Ctx) error {
@@ -90,6 +181,15 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
+
+        c.Cookie(&fiber.Cookie{
+            Name:     "jwt",
+            Value:    t,
+            HTTPOnly: true,
+            Secure:   false,
+            SameSite: "Lax",
+            Expires:  time.Now().Add(72 * time.Hour),
+        })
 
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
@@ -364,21 +464,29 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                 updates["user_password"] = hashedPassword
             }
 
-            result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
-            if result.Error != nil {
-                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                    "success": false,
-                    "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
-                    "error_code": 3,
-                    "data": nil,
-                })
-            }
-            return c.Status(fiber.StatusOK).JSON(fiber.Map{
-                "success": true,
-                "message": "Data modified.",
-                "error_code": 0,
-                "data": nil,
-            })
+	    result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
+	    if result.Error != nil {
+    		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+        	    "success": false,
+        	    "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
+        	    "error_code": 3,
+        	    "data": nil,
+    	        })
+	    }
+	    if result.RowsAffected == 0 {
+    		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+        	    "success": false,
+            	    "message": "User not found or no changes made.",
+        	    "error_code": 5,
+        	    "data": nil,
+    	        })
+	    }
+	    return c.Status(fiber.StatusOK).JSON(fiber.Map{
+    		    "success": true,
+    	 	    "message": "Data modified.",
+    		    "error_code": 0,
+    	  	    "data": nil,            
+    	    })
         } else {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -680,7 +788,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
             })
         }
 
-        if IsOTPExpired(&selOTP) {
+        if IsOTPExpired(&selOTP) || selOTP.Used {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "The specified OTP is expired. Please request new code.",
@@ -718,6 +826,8 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
+
+        selOTP.Used = true
 
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
@@ -800,6 +910,7 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
             Password string `json:"pass"`
             Instance string `json:"instance"`
             Picture  string `json:"picture"`
+            UserRole *int   `json:"user_role"`
         }
 
         err:= c.BodyParser(&body)
@@ -860,13 +971,18 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
             })
         }
 
+        useMe := 1
+        if body.UserRole != nil {
+            useMe = *body.UserRole
+        }
+
         newUser := table.User {
             UserFullName: body.FullName,
             UserEmail: body.Email,
             UserPassword: hashedPassword,
             UserPicture: body.Picture,
             UserInstance: body.Instance,
-            UserRole: 1,
+            UserRole: useMe,
             UserCreatedAt: time.Now(),
         }
 
@@ -883,6 +999,30 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "successfully created new user",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
+// NOTE: Call this to logout (eg. delete the cookie)
+// POST : api/c/logout
+// POST : api/protected/logout
+func appHandleUserLogOut(backend *Backend, route fiber.Router) {
+    route.Post("logout", func (c *fiber.Ctx) error {
+        _, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to access this api.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+        c.ClearCookie("jwt")
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "successfully logged out.",
             "error_code": 0,
             "data": nil,
         })

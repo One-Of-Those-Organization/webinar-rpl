@@ -3,10 +3,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import LoginPage from "@/pages/auth/login";
 import RegisterPage from "@/pages/auth/register";
 import IndexPage from "@/pages/index";
-import LupaPassword from "@/pages/auth/lupa_password";
-import LupaPasswordOTP from "@/pages/auth/otp_lupa_password";
 import AboutPage from "@/pages/about";
-import InputOTP from "@/pages/auth/input_otp";
 
 // Authorize Page
 import DashboardPage from "@/pages/dashboard";
@@ -38,6 +35,7 @@ export default function App() {
       <Route path="/about" element={<AboutPage />} />
 
       {/* Guest Only Routes */}
+      {/* Login Page */}
       <Route
         path="/login"
         element={
@@ -47,38 +45,12 @@ export default function App() {
         }
       />
 
+      {/* Register Page */}
       <Route
         path="/register"
         element={
           <GuestOnlyRoute>
             <RegisterPage />
-          </GuestOnlyRoute>
-        }
-      />
-
-      <Route
-        path="/lupa_password"
-        element={
-          <GuestOnlyRoute>
-            <LupaPassword />
-          </GuestOnlyRoute>
-        }
-      />
-
-      <Route
-        path="/otp_lupa_password"
-        element={
-          <GuestOnlyRoute>
-            <LupaPasswordOTP />
-          </GuestOnlyRoute>
-        }
-      />
-
-      <Route
-        path="/input_otp"
-        element={
-          <GuestOnlyRoute>
-            <InputOTP />
           </GuestOnlyRoute>
         }
       />

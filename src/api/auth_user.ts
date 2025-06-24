@@ -12,12 +12,14 @@
 // 8. Get User by Email (Admin Only) ✅
 // 9. Get User Count (Admin Only) ✅
 // 10. Get Current User Info (User Only) ✅
+// 11. User Reset Password (User Only) ✅
 
 import {
   BaseResponse,
   UserEditData,
   UserImage,
   RegisterAdmin,
+  UserResetPassword,
 } from "./interface.ts";
 
 const API_URL = "http://localhost:3000";
@@ -257,6 +259,27 @@ export const auth_user = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+      });
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
+      };
+    }
+  },
+
+  // API User Reset Password
+  user_reset_password: async (
+    data: UserResetPassword
+  ): Promise<BaseResponse> => {
+    try {
+      const response = await fetch(`${API_URL}/api/user-reset-pass`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
       return await response.json();
     } catch (error) {
