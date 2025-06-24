@@ -3,8 +3,7 @@ import { button as buttonStyles } from "@heroui/theme";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import { useEffect, useState } from "react";
-
-// Default page for the application
+import { WebinarIcon } from "@/components/icons";
 
 export default function IndexPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -18,25 +17,33 @@ export default function IndexPage() {
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center min-h-[65vh] text-center">
         <div className="flex flex-col items-center mb-8">
-          <span className={title({ size: "lg" })}>Discover Amazing</span>
-          <span className={title({ color: "violet", size: "lg" })}>
-            WEBINARS
-          </span>
-          <span className={title({ size: "sm" })}>Learn. Connect. Grow.</span>
+          <WebinarIcon />
+          <h1 className={title({ size: "lg" })}>Discover Amazing</h1>
+          <h2 className={title({ color: "violet", size: "lg" })}>WEBINARS</h2>
+          <p className={title({ size: "sm" })}>Learn. Connect. Grow.</p>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col items-center gap-2">
           <Link
-            className={buttonStyles({
-              color: "secondary",
-              radius: "full",
-              variant: "solid",
-              size: "lg",
-            })}
+            className={
+              buttonStyles({
+                color: "secondary",
+                radius: "full",
+                variant: "solid",
+                size: "lg",
+              }) + " transition-transform hover:scale-105"
+            }
             href={isLoggedIn ? "/dashboard" : "/login"}
+            aria-label="Get started with webinars"
           >
             Get Started
           </Link>
+          {/* Optional subtext for extra guidance */}
+          <span className="text-gray-400 text-sm mt-1">
+            {isLoggedIn
+              ? "Go to your dashboard and explore webinars."
+              : "No account? Register free after clicking!"}
+          </span>
         </div>
       </section>
     </DefaultLayout>

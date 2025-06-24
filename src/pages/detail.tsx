@@ -22,7 +22,9 @@ export default function DetailPage() {
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [isSubmittingAttendance, setIsSubmittingAttendance] = useState(false);
+  const [isCommittee, setIsCommittee] = useState(false);
 
+  // Load webinar details when component mounts or id changes
   useEffect(() => {
     async function loadWebinarDetail() {
       if (!id) {
@@ -31,14 +33,19 @@ export default function DetailPage() {
       }
 
       try {
-        const result = await auth_webinar.get_webinar_by_id(parseInt(id));
+        const eventId = parseInt(id);
+
+        const result = await auth_webinar.get_webinar_by_id(eventId);
 
         if (result.success && result.data) {
           const webinarData = Webinar.fromApiResponse(result.data);
           setWebinar(webinarData);
 
           // Check registration status dari API
-          await checkRegistrationStatus(parseInt(id));
+          await checkRegistrationStatus(eventId);
+
+          // Check committee status setelah data webinar berhasil didapat
+          await handleCheckCommittee(eventId);
         } else {
           toast.error(result.message || "Failed to load webinar details");
         }
@@ -52,7 +59,7 @@ export default function DetailPage() {
     loadWebinarDetail();
   }, [id]);
 
-  // New function to check registration status
+  // function to check registration status
   const checkRegistrationStatus = async (eventId: number) => {
     setIsCheckingStatus(true);
     try {
@@ -97,6 +104,15 @@ export default function DetailPage() {
     return now >= startDate && now <= endDate;
   };
 
+  // Check if webinar has finished
+  const isWebinarFinished = () => {
+    if (!webinar?.dend) return false;
+    const now = new Date();
+    const endDate = new Date(webinar.dend);
+    return now > endDate;
+  };
+
+  // Handle registration button click
   const handleRegister = async () => {
     if (!webinar) return;
 
@@ -106,8 +122,6 @@ export default function DetailPage() {
         id: webinar.id,
         role: "normal",
       });
-
-      console.log("🔍 DEBUG REGISTRATION RESULT:", result);
 
       if (result.success) {
         setIsRegistered(true);
@@ -122,32 +136,26 @@ export default function DetailPage() {
     }
   };
 
-  const handleAttendanceClick = () => {
-    console.log("🔍 DEBUG ATTENDANCE:");
-    console.log("- isRegistered:", isRegistered);
-    console.log("- hasAttended:", hasAttended);
-    console.log("- isWebinarLive():", isWebinarLive());
-    console.log("- webinar dates:", {
-      start: webinar?.dstart,
-      end: webinar?.dend,
-      now: new Date().toISOString(),
+  // Handle materials click
+  const handleMaterialsClick = () => {
+    toast.info("Materials feature is not implemented yet", {
+      toastId: "materials-info",
     });
+  };
 
+  // Handle QR scan for attendance
+  const handleQRScan = () => {
     if (!isRegistered) {
-      toast.warning("You must register first before taking attendance");
-      return;
-    }
-
-    if (!isWebinarLive()) {
-      toast.warning(
-        "Attendance can only be taken when the webinar is currently running"
-      );
+      toast.info("You must register first before taking attendance", {
+        toastId: "attendance-info",
+      });
       return;
     }
 
     setIsQRScannerOpen(true);
   };
 
+  // Handle QR scan success
   const handleQRScanSuccess = async (code: string) => {
     if (!webinar) return;
 
@@ -157,6 +165,14 @@ export default function DetailPage() {
         id: webinar.id,
         code: code,
       });
+
+      if (!isWebinarLive()) {
+        toast.info(
+          "Attendance can only be taken when the webinar is currently running",
+          { toastId: "attendance-not-live" }
+        );
+        return;
+      }
 
       if (result.success) {
         setHasAttended(true);
@@ -173,23 +189,66 @@ export default function DetailPage() {
     }
   };
 
+  // Handle absence QR generation (WIP)
+  const handleGenerateQRAbsence = () => {
+    toast.info("Generate QR Still WIP");
+  };
+
+  // Handle absence QR success (WIP)
+  const handleGenerateQRAbsenceSuccess = () => {
+    toast.info("Check QR Still WIP");
+  };
+
+  // Handle certificate click (WIP)
+  const handleCertificateClick = () => {
+    toast.info("Certificate feature is not implemented yet", {
+      toastId: "certificate-info",
+    });
+  };
+
+  // Get webinar link with proper URL formatting
+  const getWebinarLink = (link?: string) => {
+    if (!link) return "#";
+    return link.startsWith("http://") || link.startsWith("https://")
+      ? link
+      : `https://${link}`;
+  };
+
+  // Change committee check to use auth_participants
+  const handleCheckCommittee = async (eventId: number) => {
+    try {
+      const result = await auth_participants.event_participate_info(eventId);
+
+      if (
+        result.success &&
+        result.data &&
+        result.data.EventPRole === "committee"
+      ) {
+        setIsCommittee(true);
+      } else {
+        setIsCommittee(false);
+      }
+    } catch (error) {
+      setIsCommittee(false);
+      toast.error("Failed to check committee status. Please try again later.");
+    }
+  };
+
   return (
     <DefaultLayout>
       <section>
         <div>
           {/* Image container with relative positioning */}
-          <div className="relative">
+          <div className="relative flex justify-center mb-6">
             <Image
               alt="Webinar banner"
-              className="object-cover rounded-xl"
+              className="object-cover rounded-xl mx-auto"
               src={
                 webinar?.imageUrl ||
                 "https://heroui.com/images/hero-card-complete.jpeg"
               }
-              width="100%"
-              height="100mm"
+              height={300}
             />
-
             {/* Live indicator positioned absolutely in top-right corner */}
             {isWebinarLive() && (
               <div className="absolute top-4 right-4 z-10">
@@ -208,22 +267,11 @@ export default function DetailPage() {
                 variant: "bordered",
                 size: "lg",
               })}
-              href={webinar?.att || "#"}
+              isDisabled={!isRegistered}
+              onClick={handleMaterialsClick}
               target={webinar?.att ? "_blank" : undefined}
             >
               Materials
-            </Link>
-            <Link
-              className={buttonStyles({
-                color: "secondary",
-                radius: "full",
-                variant: "ghost",
-                size: "lg",
-              })}
-              href={webinar?.link || "#"}
-              target={webinar?.link ? "_blank" : undefined}
-            >
-              Join Link
             </Link>
 
             {/* Registration Button with dynamic functionality */}
@@ -238,45 +286,75 @@ export default function DetailPage() {
                 <Spinner size="sm" />
               </Button>
             ) : (
-              <Button
-                color={isRegistered ? "success" : "secondary"}
-                radius="full"
-                variant={isRegistered ? "flat" : "bordered"}
-                size="lg"
-                onClick={handleRegister}
-                isDisabled={isRegistered || isRegistering}
-                isLoading={isRegistering}
-              >
-                {isRegistered ? "✓ Registered" : "Register"}
-              </Button>
+              !isCommittee && (
+                <Button
+                  color={isRegistered ? "success" : "secondary"}
+                  radius="full"
+                  variant={isRegistered ? "flat" : "bordered"}
+                  size="lg"
+                  onClick={handleRegister}
+                  isDisabled={isRegistered || isRegistering}
+                  isLoading={isRegistering}
+                >
+                  {isRegistered ? "✓ Registered" : "Register"}
+                </Button>
+              )
             )}
 
             {/* Attendance Button with QR Scanner */}
-            <Button
-              color={hasAttended ? "success" : "secondary"}
-              radius="full"
-              variant={hasAttended ? "flat" : "bordered"}
-              size="lg"
-              onClick={handleAttendanceClick}
-              isDisabled={
-                !isRegistered || hasAttended || isSubmittingAttendance
-              }
-              isLoading={isSubmittingAttendance}
-            >
-              {hasAttended ? "✓ Attended" : "Check-in"}
-            </Button>
+            {!isCommittee ? (
+              <Button
+                color={hasAttended ? "success" : "secondary"}
+                radius="full"
+                variant={hasAttended ? "flat" : "bordered"}
+                size="lg"
+                isDisabled={
+                  !isRegistered || hasAttended || isSubmittingAttendance
+                }
+                isLoading={isSubmittingAttendance}
+                onClick={handleGenerateQRAbsence}
+              >
+                {hasAttended ? "✓ Attended" : "Check-in"}
+              </Button>
+            ) : (
+              <Button
+                className={buttonStyles({
+                  color: "secondary",
+                  radius: "full",
+                  variant: "bordered",
+                  size: "lg",
+                })}
+                onClick={handleQRScan}
+              >
+                Scan QR
+              </Button>
+            )}
 
-            <Link
+            <Button
               className={buttonStyles({
                 color: "secondary",
                 radius: "full",
                 variant: "bordered",
                 size: "lg",
               })}
-              href="#"
+              isDisabled={!isRegistered || !isWebinarFinished()}
+              onClick={handleCertificateClick}
             >
               Certificate
-            </Link>
+            </Button>
+
+            {isCommittee && (
+              <Button
+                className={buttonStyles({
+                  color: "primary",
+                  radius: "full",
+                  variant: "solid",
+                  size: "lg",
+                })}
+              >
+                List Peserta
+              </Button>
+            )}
           </div>
         </div>
 
@@ -303,9 +381,22 @@ export default function DetailPage() {
           </div>
 
           <div className="font-bold text-xl">
-            Venue:{" "}
+            {webinar?.att === "online" ? "Venue" : "Lokasi"}:{" "}
             <span className="text-[#B6A3E8] font-bold">
-              {webinar?.att || "Online"}
+              {webinar?.link ? (
+                <a
+                  href={getWebinarLink(webinar.link)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#B6A3E8] font-bold hover:underline"
+                >
+                  {webinar.link}
+                </a>
+              ) : webinar?.att === "offline" ? (
+                webinar?.att || "Offline Event"
+              ) : (
+                "No location specified"
+              )}
             </span>
           </div>
 

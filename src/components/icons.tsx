@@ -15,6 +15,44 @@ export const Logo: React.FC<IconSvgProps> = ({
   />
 );
 
+export const EmptyWebinarIcon: React.FC<IconSvgProps> = ({
+  size = 60,
+  height,
+  ...props
+}) => (
+  <svg
+    width={size || height}
+    height={size || height}
+    viewBox="0 0 60 60"
+    fill="none"
+    className="mb-3"
+    {...props}
+  >
+    <rect x={7} y={20} width={46} height={24} rx={4} fill="#e1d8f7" />
+    <rect x={18} y={31} width={24} height={4} rx={2} fill="#C1B1E7" />
+    <circle cx={30} cy={41} r={3} fill="#C1B1E7" />
+  </svg>
+);
+
+export const WebinarIcon: React.FC<IconSvgProps> = ({
+  size = 64,
+  height,
+  ...props
+}) => (
+  <svg
+    width={size || height}
+    height={size || height}
+    viewBox="0 0 64 64"
+    fill="none"
+    className="mb-4"
+    {...props}
+  >
+    <rect x="8" y="16" width="48" height="32" rx="4" fill="#B6A3E8" />
+    <rect x="20" y="28" width="24" height="8" rx="2" fill="#fff" />
+    <circle cx="32" cy="44" r="4" fill="#fff" />
+  </svg>
+);
+
 export const PlusIcon = ({
   size = 24,
   width,

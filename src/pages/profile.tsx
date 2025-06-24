@@ -253,7 +253,13 @@ export default function ProfilPage() {
   };
 
   const handleChangePassword = () => {
-    toast.info("Change password feature is not implemented yet");
+    if (!isEditing || isSaving || imageUploading) return;
+    toast.info(
+      "Password change functionality is not implemented yet. Please contact support.",
+      {
+        toastId: "change-password-not-implemented",
+      }
+    );
   };
 
   if (initialLoading) {
@@ -350,16 +356,20 @@ export default function ProfilPage() {
           </div>
 
           <Button
-            className={buttonStyles({
-              color: "secondary",
-              radius: "full",
-              variant: isEditing ? "solid" : "bordered",
-              size: "sm",
-            })}
+            className={
+              buttonStyles({
+                color: "danger",
+                radius: "full",
+                variant: "solid",
+                size: "sm",
+              }) +
+              " " +
+              (!isEditing ? "invisible pointer-events-none" : "")
+            }
             onClick={handleRemoveImage}
-            disabled={!isEditing || imageUploading}
+            isDisabled={imageUploading}
           >
-            Remove
+            Remove Image
           </Button>
 
           <div className="w-full">
@@ -455,7 +465,7 @@ export default function ProfilPage() {
                   size: "sm",
                 })}
                 onClick={handleCancelClick}
-                disabled={isSaving || imageUploading}
+                isDisabled={isSaving || imageUploading}
               >
                 Cancel
               </Button>
@@ -468,7 +478,7 @@ export default function ProfilPage() {
                   size: "sm",
                 })}
                 onClick={handleEditClick}
-                disabled={imageUploading}
+                isDisabled={imageUploading}
               >
                 Edit Profile
               </Button>
@@ -483,7 +493,6 @@ export default function ProfilPage() {
               })}
               onClick={handleSave}
               isLoading={isSaving}
-              disabled={!isEditing || isSaving || imageUploading}
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
@@ -492,14 +501,19 @@ export default function ProfilPage() {
               className={buttonStyles({
                 color: "secondary",
                 radius: "full",
-                variant: "bordered",
+                variant: isEditing ? "solid" : "bordered",
                 size: "sm",
               })}
-              disabled
               onClick={handleChangePassword}
             >
               Change Password
             </Button>
+
+            {!isEditing && (
+              <span className="text-xs text-gray-500 ml-2 self-center">
+                Enter edit mode to enable
+              </span>
+            )}
           </div>
         </div>
         <ToastContainer />

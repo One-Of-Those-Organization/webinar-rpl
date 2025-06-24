@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardBody, Image, Link } from "@heroui/react";
 import { Webinar } from "@/api/interface";
+import { auth_participants } from "@/api/auth_participants";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -16,6 +17,11 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
     minutes: number;
     seconds: number;
   } | null>(null);
+
+  // State to track registration status
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [isCommittee, setIsCommittee] = useState<boolean>(false);
 
   // Countdown effect for upcoming webinars
   useEffect(() => {
@@ -47,6 +53,43 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
 
     return () => clearInterval(interval);
   }, [webinar.dstart]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchStatus() {
+      setStatusLoading(true);
+      try {
+        const result = await auth_participants.event_participate_info(
+          webinar.id
+        );
+
+        if (!cancelled) {
+          setIsRegistered(result.success && !!result.data);
+
+          if (
+            result.success &&
+            result.data &&
+            result.data.EventPRole === "committee"
+          ) {
+            setIsCommittee(true);
+          } else {
+            setIsCommittee(false);
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setIsRegistered(false);
+          setIsCommittee(false);
+        }
+      } finally {
+        if (!cancelled) setStatusLoading(false);
+      }
+    }
+    fetchStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [webinar.id]);
 
   // Format date for display
   const formatDate = (dateStr: string | undefined) => {
@@ -103,6 +146,25 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
               onLoad={() => setIsLoading(false)}
               onError={() => setIsLoading(false)}
             />
+
+            {/* Badge label: ONLINE/OFFLINE/whatever */}
+            <div className="absolute top-2 left-2 z-10">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold shadow
+                ${
+                  webinar.att === "online"
+                    ? "bg-[#22C55E] text-white"
+                    : "bg-[#F97316] text-white"
+                }`}
+              >
+                {webinar.att === "online"
+                  ? "ONLINE"
+                  : webinar.att === "offline"
+                    ? "OFFLINE"
+                    : (webinar.att || "LABEL").toUpperCase()}
+              </span>
+            </div>
+
             {isLive() && (
               <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
                 🔴 LIVE
@@ -111,6 +173,7 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
           </div>
         </CardBody>
 
+        {/* Card Header */}
         <CardHeader className="pb-2 pt-2 px-4 flex-col items-start">
           <h4
             className="font-bold text-large line-clamp-2"
@@ -177,6 +240,26 @@ export function CardView({ webinar }: CardViewProps): React.ReactElement {
             </div>
           )}
         </CardHeader>
+        {/* Status Registrasi */}
+        <div className="flex justify-center">
+          {statusLoading ? (
+            <div className="p-3 bg-gray-200 text-gray-500 rounded-lg text-center font-semibold shadow animate-pulse w-[140px]">
+              Checking...
+            </div>
+          ) : isCommittee ? (
+            <div className="p-3 bg-blue-700 text-white rounded-lg text-center font-semibold shadow">
+              Committee
+            </div>
+          ) : isRegistered ? (
+            <div className="p-3 bg-blue-600 text-white rounded-lg text-center font-semibold shadow">
+              Sudah Terdaftar
+            </div>
+          ) : (
+            <div className="p-3 bg-gray-300 text-gray-700 rounded-lg text-center font-semibold shadow">
+              Belum Terdaftar
+            </div>
+          )}
+        </div>
       </Card>
     </Link>
   );

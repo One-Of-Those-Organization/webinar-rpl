@@ -472,7 +472,6 @@ export default function WebinarPage() {
           <div className="mt-8">{bottomContent}</div>
         )}
 
-        {/* 🔥 Enhanced Delete Confirmation Modal */}
         <Modal
           isOpen={isDeleteModalOpen}
           onClose={handleCloseDeleteModal}

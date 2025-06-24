@@ -9,15 +9,16 @@ import {
 import DefaultLayout from "@/layouts/default_admin";
 import { Image } from "@heroui/react";
 import { Input } from "@heroui/input";
+import { EyeFilledIcon, EyeSlashFilledIcon } from "@/components/icons";
 import { FaCamera } from "react-icons/fa";
 import { useState, useRef, useCallback } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { auth_user } from "@/api/auth_user";
-import { auth } from "@/api/auth";
 import { RegisterAdmin } from "@/api/interface";
 
 export default function AddUserPage() {
+  // State untuk form fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [instance, setInstance] = useState("");
@@ -25,6 +26,10 @@ export default function AddUserPage() {
   const [profile, setProfile] = useState("");
   const [userRole, setUserRole] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => setIsPasswordVisible((v) => !v);
 
   // Regex patterns
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,6 +38,9 @@ export default function AddUserPage() {
 
   // Ref untuk input file
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if label already filled
+  const isFormFilled = name && email && instance && password;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -190,7 +198,7 @@ export default function AddUserPage() {
         result = await auth_user.register_admin(registerData);
       } else {
         // Register regular user
-        result = await auth.register({
+        result = await auth_user.register_admin({
           ...registerData,
         });
       }
@@ -351,11 +359,26 @@ export default function AddUserPage() {
             <Input
               color="secondary"
               label="Password"
-              type="password"
+              type={isPasswordVisible ? "text" : "password"}
               variant="flat"
               className="w-full"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              endContent={
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  aria-label="Toggle password visibility"
+                  className="focus:outline-none"
+                  tabIndex={-1}
+                >
+                  {isPasswordVisible ? (
+                    <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                  ) : (
+                    <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                  )}
+                </button>
+              }
             />
 
             <div className="w-full">
@@ -395,7 +418,7 @@ export default function AddUserPage() {
                 className={buttonStyles({
                   color: "secondary",
                   radius: "full",
-                  variant: "bordered",
+                  variant: "solid",
                   size: "sm",
                 })}
                 onClick={() => (window.location.href = "/admin/user")}
@@ -409,11 +432,11 @@ export default function AddUserPage() {
                 className={buttonStyles({
                   color: "secondary",
                   radius: "full",
-                  variant: "solid",
+                  variant: !isFormFilled ? "bordered" : "solid",
                   size: "sm",
                 })}
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={loading || !isFormFilled}
                 isLoading={loading}
                 type="submit"
               >
@@ -421,6 +444,11 @@ export default function AddUserPage() {
                   ? "Adding..."
                   : `Add ${userRole === 1 ? "Admin" : "Regular"} User`}
               </Button>
+              {!isFormFilled && (
+                <div className="mt-2 text-xs text-gray-500">
+                  <p>Please fill in all required fields.</p>
+                </div>
+              )}
             </div>
           </form>
         </div>

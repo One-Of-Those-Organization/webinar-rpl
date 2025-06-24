@@ -33,6 +33,16 @@ export default function LoginPage() {
   const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] =
     useState(false);
 
+  function isStrongPassword(password: string): boolean {
+    return (
+      password.length >= 8 &&
+      /[A-Z]/.test(password) && // Ada huruf besar
+      /[a-z]/.test(password) && // Ada huruf kecil
+      /[0-9]/.test(password) && // Ada angka
+      /[^A-Za-z0-9]/.test(password) // Ada simbol
+    );
+  }
+
   // General error/loading
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -114,6 +124,17 @@ export default function LoginPage() {
 
   const handleResetPassword = async (e: any) => {
     e.preventDefault();
+
+    if (!isStrongPassword(newPass)) {
+      setError(
+        "Password must be at least 8 characters, include uppercase, lowercase, and a number."
+      );
+      toast.warn(
+        "Password must be at least 8 characters, include uppercase, lowercase, and a number."
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await auth_user.user_reset_password({
