@@ -108,6 +108,10 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleCertEditorUploadImage(backend, cookieJWT)
     appHandleCertEditorUploadHtml(backend , cookieJWT)
 
+    appHandleCertEditor(backend, protected)
+    appHandleCertEditorUploadImage(backend, protected)
+    appHandleCertEditorUploadHtml(backend , protected)
+
     // EVENT PARTICIPANT STUFF
     appHandleEventParticipateRegister(backend, protected)
     appHandleEventParticipateInfoOf(backend, protected)
