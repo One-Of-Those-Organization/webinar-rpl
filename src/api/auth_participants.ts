@@ -11,7 +11,11 @@
 // 7. Get Participant Count by Event ✅
 // 8. Get Event Participation by User ❌ - Low Priority, but can implemented it last
 
-import { BaseResponse, EventPartisipantRegister } from "./interface";
+import {
+  BaseResponse,
+  EventPartisipantAbsence,
+  EventPartisipantRegister,
+} from "./interface";
 
 const API_URL = "http://localhost:3000";
 
@@ -152,10 +156,9 @@ export const auth_participants = {
   },
 
   // API untuk mengatur kehadiran partisipan
-  event_participate_absence: async (data: {
-    id: number;
-    code: string;
-  }): Promise<BaseResponse> => {
+  event_participate_absence: async (
+    data: EventPartisipantAbsence
+  ): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -227,5 +230,5 @@ export const auth_participants = {
         message: "Failed to connect to server",
       };
     }
-  }
+  },
 };
