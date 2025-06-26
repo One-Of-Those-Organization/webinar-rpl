@@ -86,7 +86,8 @@ export interface RegisterAdmin {
   name: string;
   pass: string;
   instance: string;
-  picture?: string;
+  picture: string;
+  user_role: number; // 1 for Admin, 0 for User
 }
 
 // == Webinar Data Interfaces ==

@@ -1,4 +1,3 @@
-import { Link } from "@heroui/link";
 import { button as buttonStyles } from "@heroui/theme";
 import DefaultLayout from "@/layouts/default";
 import { Image, Button, Spinner } from "@heroui/react";
@@ -260,7 +259,7 @@ export default function DetailPage() {
           </div>
 
           <div className="flex flex-row gap-2 px-4 py-2 justify-center flex-wrap">
-            <Link
+            <Button
               className={buttonStyles({
                 color: "secondary",
                 radius: "full",
@@ -272,7 +271,7 @@ export default function DetailPage() {
               target={webinar?.att ? "_blank" : undefined}
             >
               Materials
-            </Link>
+            </Button>
 
             {/* Registration Button with dynamic functionality */}
             {isLoading || isCheckingStatus ? (
@@ -317,17 +316,29 @@ export default function DetailPage() {
                 {hasAttended ? "✓ Attended" : "Check-in"}
               </Button>
             ) : (
-              <Button
-                className={buttonStyles({
-                  color: "secondary",
-                  radius: "full",
-                  variant: "bordered",
-                  size: "lg",
-                })}
-                onClick={handleQRScan}
-              >
-                Scan QR
-              </Button>
+              <>
+                <Button
+                  className={buttonStyles({
+                    color: "secondary",
+                    radius: "full",
+                    variant: "bordered",
+                    size: "lg",
+                  })}
+                  onClick={handleQRScan}
+                >
+                  Scan QR
+                </Button>
+                <Button
+                  className={buttonStyles({
+                    color: "secondary",
+                    radius: "full",
+                    variant: "bordered",
+                    size: "lg",
+                  })}
+                >
+                  View Participants
+                </Button>
+              </>
             )}
 
             <Button

@@ -14,7 +14,6 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@heroui/react";
-import { Link } from "@heroui/link";
 import { button as buttonStyles } from "@heroui/theme";
 import DefaultLayout from "@/layouts/default_admin";
 import { useState, useEffect } from "react";
@@ -797,7 +796,7 @@ export default function EditWebinarPage() {
           <div className="flex flex-row gap-2 px-4 py-4 justify-center">
             {!isEditMode ? (
               <>
-                <Link
+                <Button
                   className={buttonStyles({
                     color: "secondary",
                     radius: "full",
@@ -807,10 +806,10 @@ export default function EditWebinarPage() {
                   href="#"
                 >
                   Materials
-                </Link>
+                </Button>
 
                 {webinarData.att === "online" && (
-                  <Link
+                  <Button
                     className={buttonStyles({
                       color: "secondary",
                       radius: "full",
@@ -822,10 +821,10 @@ export default function EditWebinarPage() {
                     rel="noopener noreferrer"
                   >
                     Link
-                  </Link>
+                  </Button>
                 )}
 
-                <Link
+                <Button
                   className={buttonStyles({
                     color: "secondary",
                     radius: "full",
@@ -835,7 +834,29 @@ export default function EditWebinarPage() {
                   href="#"
                 >
                   Certificate
-                </Link>
+                </Button>
+                <Button
+                  className={buttonStyles({
+                    color: "secondary",
+                    radius: "full",
+                    variant: "bordered",
+                    size: "lg",
+                  })}
+                  href="#"
+                >
+                  Scan QR
+                </Button>
+                <Button
+                  className={buttonStyles({
+                    color: "secondary",
+                    radius: "full",
+                    variant: "bordered",
+                    size: "lg",
+                  })}
+                  href="#"
+                >
+                  View Participants
+                </Button>
                 <Button
                   color="secondary"
                   radius="full"
