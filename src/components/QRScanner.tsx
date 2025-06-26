@@ -165,13 +165,13 @@ export function QRScanner({ isOpen, onClose }: QRScannerProps) {
                 <div className="absolute inset-0 flex items-center justify-center bg-black/70">
                   <Spinner color="primary" size="lg" />
                   <span className="ml-2 text-white font-semibold">
-                    Mengirim absensi...
+                    Sending timesheets...
                   </span>
                 </div>
               )}
             </div>
             <p className="text-gray-600 text-sm mt-3 text-center">
-              Arahkan kamera ke QR code peserta di dalam frame.
+              Point the camera at the participant's QR code in the frame.
             </p>
             {cameraError && (
               <div className="text-red-600 mt-3 text-center">{cameraError}</div>

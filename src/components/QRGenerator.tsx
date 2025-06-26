@@ -42,7 +42,7 @@ export function QRGenerator({ isOpen, onClose, eventId }: QRGeneratorProps) {
     <Modal isOpen={isOpen} onClose={onClose} size="md" placement="center">
       <ModalContent>
         <ModalHeader>
-          <h3 className="text-lg font-semibold">QR Code Absensi</h3>
+          <h3 className="text-lg font-semibold">Attendance QR Code</h3>
         </ModalHeader>
         <ModalBody>
           <div className="flex flex-col items-center gap-3">
@@ -59,7 +59,7 @@ export function QRGenerator({ isOpen, onClose, eventId }: QRGeneratorProps) {
                   includeMargin={true}
                 />
                 <p className="text-gray-600 text-sm text-center mt-2">
-                  Tunjukkan QR ini ke panitia untuk di-scan saat absensi.
+                  Show this QR to the committee to be scanned during attendance.
                 </p>
               </>
             )}
