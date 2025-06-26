@@ -20,7 +20,7 @@ export default function DetailPage() {
   const [hasAttended, setHasAttended] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
-  const [isSubmittingAttendance, setIsSubmittingAttendance] = useState(false);
+  const [isSubmittingAttendance, _] = useState(false);
   const [isCommittee, setIsCommittee] = useState(false);
 
   // Load webinar details when component mounts or id changes
@@ -142,32 +142,13 @@ export default function DetailPage() {
     });
   };
 
-  // Handle Scan QR Absence
+  // Handle Scan QR Absence (committee action: open scanner)
   const handleQRScan = () => {
-    if (!isRegistered) {
-      toast.info("You must register first before taking attendance", {
-        toastId: "attendance-info",
-      });
-      return;
-    }
-
-    setIsSubmittingAttendance(true);
-
-    try {
-    } catch (error) {
-    } finally {
-      setIsSubmittingAttendance(false);
-    }
-
     setIsQRScannerOpen(true);
   };
 
   // Handle Generate QR Absence(WIP)
   const handleGenerateQRAbsence = () => {
-    try {
-    } catch (error) {
-    } finally {
-    }
     toast.info("Generate QR Still WIP");
   };
 
@@ -273,7 +254,7 @@ export default function DetailPage() {
               )
             )}
 
-            {/* Attendance Button with QR Scanner */}
+            {/* Attendance Button with QR Generator */}
             {!isCommittee ? (
               <Button
                 color={hasAttended ? "success" : "secondary"}
