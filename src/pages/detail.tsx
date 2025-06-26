@@ -142,7 +142,7 @@ export default function DetailPage() {
     });
   };
 
-  // Handle QR scan for attendance
+  // Handle Scan QR Absence
   const handleQRScan = () => {
     if (!isRegistered) {
       toast.info("You must register first before taking attendance", {
@@ -151,51 +151,24 @@ export default function DetailPage() {
       return;
     }
 
-    setIsQRScannerOpen(true);
-  };
-
-  // Handle QR scan success
-  const handleQRScanSuccess = async (code: string) => {
-    if (!webinar) return;
-
     setIsSubmittingAttendance(true);
+
     try {
-      const result = await auth_participants.submitAttendance({
-        id: webinar.id,
-        code: code,
-      });
-
-      if (!isWebinarLive()) {
-        toast.info(
-          "Attendance can only be taken when the webinar is currently running",
-          { toastId: "attendance-not-live" }
-        );
-        return;
-      }
-
-      if (result.success) {
-        setHasAttended(true);
-        toast.success(
-          "Attendance successful! Thank you for attending the webinar."
-        );
-      } else {
-        toast.error(result.message || "Failed to submit attendance");
-      }
     } catch (error) {
-      toast.error("Failed to submit attendance. Please try again later.");
     } finally {
       setIsSubmittingAttendance(false);
     }
+
+    setIsQRScannerOpen(true);
   };
 
-  // Handle absence QR generation (WIP)
+  // Handle Generate QR Absence(WIP)
   const handleGenerateQRAbsence = () => {
+    try {
+    } catch (error) {
+    } finally {
+    }
     toast.info("Generate QR Still WIP");
-  };
-
-  // Handle absence QR success (WIP)
-  const handleGenerateQRAbsenceSuccess = () => {
-    toast.info("Check QR Still WIP");
   };
 
   // Handle certificate click (WIP)
@@ -450,8 +423,6 @@ export default function DetailPage() {
       <QRScanner
         isOpen={isQRScannerOpen}
         onClose={() => setIsQRScannerOpen(false)}
-        onScanSuccess={handleQRScanSuccess}
-        webinarId={webinar?.id || 0}
       />
 
       <ToastContainer />
