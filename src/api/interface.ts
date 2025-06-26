@@ -201,6 +201,9 @@ export interface EventPartisipantRegister {
   email?: string;
 }
 
+// Event Participant Absence Data (POST)
+// Used for Admin or Committee to mark participant absence
+// And Used for User to Generate QR Code
 export interface EventPartisipantAbsence {
   id: number;
   code: string;

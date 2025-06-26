@@ -8,6 +8,7 @@ import { auth_participants } from "@/api/auth_participants";
 import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import { QRScanner } from "@/components/QRScanner";
+import { QRGenerator } from "@/components/QRGenerator";
 
 // Webinar Detail Page
 
@@ -20,7 +21,7 @@ export default function DetailPage() {
   const [hasAttended, setHasAttended] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
-  const [isSubmittingAttendance, _] = useState(false);
+  const [isQRGeneratorOpen, setIsQRGeneratorOpen] = useState(false);
   const [isCommittee, setIsCommittee] = useState(false);
 
   // Load webinar details when component mounts or id changes
@@ -147,12 +148,12 @@ export default function DetailPage() {
     setIsQRScannerOpen(true);
   };
 
-  // Handle Generate QR Absence(WIP)
+  // Handle Generate QR Absence
   const handleGenerateQRAbsence = () => {
-    toast.info("Generate QR Still WIP");
+    setIsQRGeneratorOpen(true);
   };
 
-  // Handle certificate click (WIP)
+  // Handle certificate click
   const handleCertificateClick = () => {
     toast.info("Certificate feature is not implemented yet", {
       toastId: "certificate-info",
@@ -261,10 +262,8 @@ export default function DetailPage() {
                 radius="full"
                 variant={hasAttended ? "flat" : "bordered"}
                 size="lg"
-                isDisabled={
-                  !isRegistered || hasAttended || isSubmittingAttendance
-                }
-                isLoading={isSubmittingAttendance}
+                isDisabled={!isRegistered || hasAttended || !isWebinarLive}
+                isLoading={false}
                 onClick={handleGenerateQRAbsence}
               >
                 {hasAttended ? "✓ Attended" : "Check-in"}
@@ -404,6 +403,13 @@ export default function DetailPage() {
       <QRScanner
         isOpen={isQRScannerOpen}
         onClose={() => setIsQRScannerOpen(false)}
+      />
+
+      {/* QR Generator Modal */}
+      <QRGenerator
+        isOpen={isQRGeneratorOpen}
+        onClose={() => setIsQRGeneratorOpen(false)}
+        eventId={webinar?.id || 0}
       />
 
       <ToastContainer />

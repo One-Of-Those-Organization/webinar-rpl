@@ -23,19 +23,34 @@ export function QRScanner({ isOpen, onClose }: QRScannerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const scanIdRef = useRef<number | null>(null);
+
+  // Helper untuk mematikan kamera
+  const closeCamera = () => {
+    if (scanIdRef.current) cancelAnimationFrame(scanIdRef.current);
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-    let scanId: number;
+    let active = true;
 
     const startCamera = async () => {
       setCameraError(null);
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        const localStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
         });
+        if (!active) {
+          localStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        setStream(localStream);
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          videoRef.current.srcObject = localStream;
           videoRef.current.setAttribute("playsinline", "true");
           await videoRef.current.play();
         }
@@ -63,18 +78,17 @@ export function QRScanner({ isOpen, onClose }: QRScannerProps) {
         handleResult(code.data);
         return;
       }
-      scanId = requestAnimationFrame(scan);
+      scanIdRef.current = requestAnimationFrame(scan);
     };
 
     if (isOpen) startCamera();
 
     return () => {
-      if (scanId) cancelAnimationFrame(scanId);
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-      if (videoRef.current) videoRef.current.srcObject = null;
+      active = false;
+      closeCamera();
+      setStream(null);
     };
+    // eslint-disable-next-line
   }, [isOpen, isSubmitting]);
 
   const handleResult = async (raw: string) => {
@@ -85,11 +99,13 @@ export function QRScanner({ isOpen, onClose }: QRScannerProps) {
     } catch {
       toast.error("QR Code format invalid.");
       setIsSubmitting(false);
+      closeCamera();
       return;
     }
     if (!data.id || !data.code) {
       toast.error("QR Code missing required fields.");
       setIsSubmitting(false);
+      closeCamera();
       return;
     }
 
@@ -100,19 +116,35 @@ export function QRScanner({ isOpen, onClose }: QRScannerProps) {
       } as EventPartisipantAbsence);
       if (response.success) {
         toast.success("Attendance marked successfully!");
-        setTimeout(onClose, 800);
+        setTimeout(() => {
+          onClose();
+          closeCamera();
+        }, 800);
+        closeCamera();
       } else {
-        toast.error("Failed to mark attendance. Please try again.");
+        toast.error("Failed to mark attendance. Please try again.", {
+          toastId: "attendance-error",
+        });
         setIsSubmitting(false);
+        closeCamera();
       }
     } catch (error) {
       toast.error("Failed to scan QR code. Please try again.");
       setIsSubmitting(false);
+      closeCamera();
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl" placement="center">
+    <Modal
+      isOpen={isOpen}
+      onClose={() => {
+        onClose();
+        closeCamera();
+      }}
+      size="2xl"
+      placement="center"
+    >
       <ModalContent>
         <ModalHeader>
           <h3 className="text-lg font-semibold">Scan Attendance QR Code</h3>
@@ -150,7 +182,10 @@ export function QRScanner({ isOpen, onClose }: QRScannerProps) {
           <Button
             color="danger"
             variant="light"
-            onClick={onClose}
+            onClick={() => {
+              onClose();
+              closeCamera();
+            }}
             disabled={isSubmitting}
           >
             Tutup

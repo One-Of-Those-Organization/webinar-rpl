@@ -1,12 +1,12 @@
 package main
 
 import (
-    "strconv"
+	"strconv"
 	"fmt"
 	"webrpl/table"
 	"errors"
 
-    "gorm.io/gorm"
+	"gorm.io/gorm"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -682,7 +682,7 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
             })
         }
 
-        // Check if the requestee is a committee
+	// Check if the requestee is a committee
         if userEventPart.EventPRole != "committee" && admin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
@@ -691,8 +691,8 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
-
-        res = backend.db.Where("eventp_code = ?", body.Secret).First(&userEventPart)
+        var absenTarget table.EventParticipant
+        res = backend.db.Where("eventp_code = ?", body.Secret).First(&absenTarget)
         if res.Error != nil {
             if errors.Is(res.Error, gorm.ErrRecordNotFound) {
                 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -710,8 +710,8 @@ func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
             })
         }
 
-        userEventPart.EventPCome = true
-        res = backend.db.Save(&userEventPart)
+        absenTarget.EventPCome = true
+        res = backend.db.Save(&absenTarget)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
