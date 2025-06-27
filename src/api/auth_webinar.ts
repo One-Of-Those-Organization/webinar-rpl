@@ -83,13 +83,12 @@ export const auth_webinar = {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data }),
       });
 
       const result = await response.json();
       if (result.success && result.token) {
         localStorage.setItem("token", result.token);
-        localStorage.setItem("user_data", JSON.stringify(result.data));
       }
       return result;
     } catch (error) {

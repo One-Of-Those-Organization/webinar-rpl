@@ -17,7 +17,7 @@ import {
 import { button as buttonStyles } from "@heroui/theme";
 import DefaultLayout from "@/layouts/default_admin";
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { auth_webinar } from "@/api/auth_webinar";
 import { auth_user } from "@/api/auth_user";
 import { auth_participants } from "@/api/auth_participants";
@@ -26,6 +26,7 @@ import { WebinarEdit } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import { FaExclamationTriangle } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
+import { QRScanner } from "@/components/QRScanner";
 
 // Fungsi untuk mendapatkan tanggal hari ini dalam format YYYY-MM-DD
 const getTodayDate = (): string => {
@@ -76,6 +77,9 @@ export default function EditWebinarPage() {
     "https://heroui.com/images/hero-card-complete.jpeg"
   );
 
+  // QR Scanner state
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+
   // Confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState({
     isOpen: false,
@@ -94,6 +98,7 @@ export default function EditWebinarPage() {
     timeStart: "",
     dateEnd: "",
     timeEnd: "",
+    att: "",
     link: "",
     imageUrl: "",
     max: 0,
@@ -134,6 +139,7 @@ export default function EditWebinarPage() {
             timeStart: webinar.dstart ? extractTime(webinar.dstart) : "",
             dateEnd: webinar.dend ? extractDate(webinar.dend) : "",
             timeEnd: webinar.dend ? extractTime(webinar.dend) : "",
+            att: webinar.att || "",
             link: webinar.link || "",
             imageUrl: webinar.img || "",
             max: webinar.max || 0,
@@ -259,14 +265,8 @@ export default function EditWebinarPage() {
   };
 
   // Combine date and time into ISO string
-  const combineDateAndTime = (
-    date: string,
-    time: string,
-    timezone = "UTC"
-  ): string => {
-    if (!date || !time) return "";
-    const dateTime = new Date(`${date}T${time}:00`);
-    return timezone === "UTC" ? dateTime.toISOString() : dateTime.toString();
+  const combineDateAndTime = (date: string, time: string): string => {
+    return new Date(`${date}T${time}:00Z`).toISOString();
   };
 
   // Handle webinar image upload
@@ -280,7 +280,9 @@ export default function EditWebinarPage() {
     const maxSizeInBytes = 3 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       setError("Image size must be less than 3MB");
-      toast.info("Image size must be less than 3MB");
+      toast.info("Image size must be less than 3MB", {
+        toastId: "imageSizeError",
+      });
       event.target.value = "";
       return;
     }
@@ -289,13 +291,15 @@ export default function EditWebinarPage() {
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       setError("Only JPG, JPEG, PNG, and WebP images are allowed");
-      toast.info("Only JPG, JPEG, PNG, and WebP images are allowed");
+      toast.info("Only JPG, JPEG, PNG, and WebP images are allowed", {
+        toastId: "imageTypeError",
+      });
       event.target.value = "";
       return;
     }
 
     setIsImageLoading(true);
-    toast.info("Uploading Webinar Image...");
+    toast.info("Uploading Webinar Image...", { toastId: "uploadingImage" });
     const reader = new FileReader();
 
     reader.onloadend = async () => {
@@ -502,7 +506,9 @@ export default function EditWebinarPage() {
       !editForm.description ||
       editForm.max <= 0
     ) {
-      toast.info("Please fill in all required fields");
+      toast.info("Please fill in all required fields", {
+        toastId: "requiredFields",
+      });
       return;
     }
 
@@ -517,24 +523,22 @@ export default function EditWebinarPage() {
     const startDate = new Date(fullStartDateTime);
     const endDate = new Date(fullEndDateTime);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time untuk perbandingan tanggal saja
 
     // Validasi tanggal tidak boleh sebelum hari ini
-    if (startDate < today) {
+    if (startDate <= today) {
       setError("Start date cannot be before today");
       toast.error("Start date cannot be before today");
       return;
-    }
-
-    if (endDate < today) {
+    } else if (endDate <= today) {
       setError("End date cannot be before today");
       toast.error("End date cannot be before today");
       return;
-    }
-
-    if (startDate >= endDate) {
+    } else if (startDate >= endDate) {
+      setError("End date must be after start date");
       toast.error("End date must be after start date");
       return;
+    } else {
+      setError("");
     }
 
     try {
@@ -544,7 +548,10 @@ export default function EditWebinarPage() {
       const newCommitteeMembers = getNewCommitteeMembers();
       if (newCommitteeMembers.length > 0) {
         toast.info(
-          `Registering ${newCommitteeMembers.length} new committee members...`
+          `Registering ${newCommitteeMembers.length} new committee members...`,
+          {
+            toastId: "registeringCommittee",
+          }
         );
 
         let successCount = 0;
@@ -601,7 +608,7 @@ export default function EditWebinarPage() {
         link: editForm.link.trim(),
         img: editForm.imageUrl.trim(),
         max: editForm.max,
-        att: webinarData.att || "",
+        att: editForm.att,
         event_mat_id: editForm.eventmId,
         cert_template_id: editForm.certId,
       };
@@ -621,7 +628,7 @@ export default function EditWebinarPage() {
       );
 
       if (!hasWebinarChanges && newCommitteeMembers.length === 0) {
-        toast.info("No changes detected");
+        toast.info("No changes detected", { toastId: "noChanges" });
         setIsEditing(false);
         return;
       }
@@ -681,6 +688,7 @@ export default function EditWebinarPage() {
       timeStart: webinarData.dstart ? extractTime(webinarData.dstart) : "",
       dateEnd: webinarData.dend ? extractDate(webinarData.dend) : "",
       timeEnd: webinarData.dend ? extractTime(webinarData.dend) : "",
+      att: webinarData.att || "",
       link: webinarData.link || "",
       imageUrl: webinarData.img || "",
       max: webinarData.max || 0,
@@ -692,7 +700,7 @@ export default function EditWebinarPage() {
     setPreviewImage(
       webinarData.img || "https://heroui.com/images/hero-card-complete.jpeg"
     );
-    toast.info("Edit cancelled, changes reverted");
+    toast.info("Edit cancelled, changes reverted", { toastId: "cancelEdit" });
     setError("");
     setIsEditMode(false);
   };
@@ -702,14 +710,32 @@ export default function EditWebinarPage() {
     setIsEditMode(!isEditMode);
   };
 
+  // Handle materials click
+  const handleMaterialsClick = () => {
+    toast.info("Materials feature is not implemented yet", {
+      toastId: "materials-info",
+    });
+  };
+
+  const handleQRScan = () => {
+    setIsQRScannerOpen(true);
+  };
+
+  // Handle certificate click
+  const handleCertificateClick = () => {
+    toast.info("Certificate feature is not implemented yet", {
+      toastId: "certificate-info",
+    });
+  };
+
   // Get participant count for webinar
   const get_webinar_count = async (eventId: number) => {
     const response = await auth_participants.event_participate_count(eventId);
     try {
       if (response.success) {
-        const count = response.data.count || 0;
-        setParticipantCount(count);
-        return count;
+        setParticipantCount(
+          typeof response.data === "number" ? response.data : 0
+        );
       } else {
         toast.error("Failed to fetch participant count");
         return 0;
@@ -803,26 +829,34 @@ export default function EditWebinarPage() {
                     variant: "bordered",
                     size: "lg",
                   })}
-                  href="#"
+                  onClick={handleMaterialsClick}
                 >
                   Materials
                 </Button>
 
-                {webinarData.att === "online" && (
-                  <Button
-                    className={buttonStyles({
-                      color: "secondary",
-                      radius: "full",
-                      variant: "ghost",
-                      size: "lg",
-                    })}
-                    href={webinarData.link || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Link
-                  </Button>
-                )}
+                <Button
+                  className={buttonStyles({
+                    color: "secondary",
+                    radius: "full",
+                    variant: "bordered",
+                    size: "lg",
+                  })}
+                  onClick={handleQRScan}
+                >
+                  Scan QR
+                </Button>
+
+                <Link
+                  className={buttonStyles({
+                    color: "secondary",
+                    radius: "full",
+                    variant: "bordered",
+                    size: "lg",
+                  })}
+                  to={"/"} // STILL DUMMY LINK
+                >
+                  View Participants
+                </Link>
 
                 <Button
                   className={buttonStyles({
@@ -831,32 +865,11 @@ export default function EditWebinarPage() {
                     variant: "bordered",
                     size: "lg",
                   })}
-                  href="#"
+                  onClick={handleCertificateClick}
                 >
                   Certificate
                 </Button>
-                <Button
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
-                    variant: "bordered",
-                    size: "lg",
-                  })}
-                  href="#"
-                >
-                  Scan QR
-                </Button>
-                <Button
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
-                    variant: "bordered",
-                    size: "lg",
-                  })}
-                  href="#"
-                >
-                  View Participants
-                </Button>
+
                 <Button
                   color="secondary"
                   radius="full"
@@ -898,15 +911,13 @@ export default function EditWebinarPage() {
           {!isEditMode ? (
             /* View mode display */
             <>
-              <div className="mb-4">
-                <h1 className="font-bold text-4xl mb-2">
-                  {webinarData.name || "Webinar Series"}
-                </h1>
-              </div>
+              <h1 className="font-bold text-4xl">
+                {webinarData.name || "Webinar Series"}
+              </h1>
 
-              <div className="space-y-3 mb-6">
+              <div>
                 <div className="font-bold text-xl">
-                  Speaker :{" "}
+                  Speaker Name :{" "}
                   <span className="text-[#B6A3E8] font-bold">
                     {webinarData.speaker || "Speaker not available"}
                   </span>
@@ -927,14 +938,14 @@ export default function EditWebinarPage() {
                 </div>
 
                 <div className="font-bold text-xl">
-                  {webinarData.att === "online" ? "Tempat" : "Lokasi Webinar"} :{" "}
+                  {webinarData.att === "online" ? "Link" : "Webinar Location"} :{" "}
                   <span className="text-[#B6A3E8] font-bold">
                     {webinarData.att === "online" ? "Online" : webinarData.link}
                   </span>
                 </div>
 
                 <div className="font-bold text-xl">
-                  Max Participants :{" "}
+                  Participants :{" "}
                   <span
                     className={`font-bold ${
                       participantCount >= (webinarData.max || 0) * 0.9
@@ -950,7 +961,7 @@ export default function EditWebinarPage() {
                 </div>
 
                 <div className="font-bold text-xl">
-                  Current Attendees :{" "}
+                  Attendance Type :{" "}
                   <span className="text-[#B6A3E8] font-bold">
                     {webinarData.att || "0"}
                   </span>
@@ -1011,7 +1022,7 @@ export default function EditWebinarPage() {
               </div>
 
               <div>
-                <h2 className="font-bold text-xl mb-2">Description :</h2>
+                <h2 className="font-bold text-xl">Description :</h2>
                 <p className="text-justify text-lg leading-relaxed">
                   {webinarData.desc || "Description not available"}
                 </p>
@@ -1030,7 +1041,7 @@ export default function EditWebinarPage() {
                 {/* Basic info fields */}
                 <Input
                   color="secondary"
-                  label="Webinar Name *"
+                  label="Webinar Name"
                   placeholder="Enter webinar name"
                   value={editForm.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
@@ -1039,7 +1050,7 @@ export default function EditWebinarPage() {
 
                 <Input
                   color="secondary"
-                  label="Speaker *"
+                  label="Speaker Namezz"
                   placeholder="Enter speaker name"
                   value={editForm.speaker}
                   onChange={(e) => handleInputChange("speaker", e.target.value)}
@@ -1175,7 +1186,7 @@ export default function EditWebinarPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
-                    label="Start Date *"
+                    label="Start Date"
                     type="date"
                     min={todayDate}
                     value={editForm.dateStart}
@@ -1186,7 +1197,7 @@ export default function EditWebinarPage() {
                   />
                   <Input
                     color="secondary"
-                    label="Start Time *"
+                    label="Start Time"
                     type="time"
                     value={editForm.timeStart}
                     onChange={(e) => handleTimeChange("start", e.target.value)}
@@ -1197,7 +1208,7 @@ export default function EditWebinarPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
-                    label="End Date *"
+                    label="End Date"
                     type="date"
                     min={editForm.dateStart || todayDate}
                     value={editForm.dateEnd}
@@ -1208,7 +1219,7 @@ export default function EditWebinarPage() {
                   />
                   <Input
                     color="secondary"
-                    label="End Time *"
+                    label="End Time"
                     type="time"
                     value={editForm.timeEnd}
                     onChange={(e) => handleTimeChange("end", e.target.value)}
@@ -1216,16 +1227,32 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
-                {/* Additional fields */}
+                <Select
+                  color="secondary"
+                  label="Attendance Type"
+                  selectedKeys={[editForm.att]}
+                  onSelectionChange={(keys) => {
+                    const [value] = Array.from(keys);
+                    setEditForm((prev) => ({
+                      ...prev,
+                      att: value as string,
+                    }));
+                  }}
+                  className="w-full"
+                  variant="bordered"
+                  isRequired
+                >
+                  <SelectItem key="online">Online</SelectItem>
+                  <SelectItem key="offline">Offline</SelectItem>
+                </Select>
+
                 <Input
                   color="secondary"
                   label={
-                    webinarData.att === "online" ? "Webinar Link" : "Location"
+                    editForm.att === "online" ? "Webinar Link" : "Location"
                   }
                   placeholder={
-                    webinarData.att === "online"
-                      ? "https://..."
-                      : "Enter location"
+                    editForm.att === "online" ? "https://..." : "Enter location"
                   }
                   value={editForm.link}
                   onChange={(e) => handleInputChange("link", e.target.value)}
@@ -1243,7 +1270,7 @@ export default function EditWebinarPage() {
 
                 <Input
                   color="secondary"
-                  label="Maximum Participants *"
+                  label="Maximum Participants"
                   type="number"
                   placeholder="Enter maximum number of participants"
                   value={editForm.max === 0 ? "" : editForm.max.toString()}
@@ -1301,7 +1328,7 @@ export default function EditWebinarPage() {
                 {/* Description field */}
                 <Textarea
                   color="secondary"
-                  label="Description *"
+                  label="Description"
                   placeholder="Enter webinar description"
                   value={editForm.description}
                   onChange={(e) =>
@@ -1362,6 +1389,11 @@ export default function EditWebinarPage() {
           </div>
         )}
       </section>
+      {/* QR Scanner Modal */}
+      <QRScanner
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+      />
       <ToastContainer />
     </DefaultLayout>
   );

@@ -7,7 +7,7 @@
 // 3. Edit Participant from Event ✅
 // 4. Delete Participant from Event ✅
 // 5. Get Event Participation Info by Event ✅
-// 6. Set Participant Absence ❌ - Later for Participant Check In
+// 6. Set Participant Absence ✅
 // 7. Get Participant Count by Event ✅
 // 8. Get Event Participation by User ❌ - Low Priority, but can implemented it last
 
@@ -205,13 +205,11 @@ export const auth_participants = {
   },
 
   // API untuk mendapatkan partisipasi event berdasarkan user
-  event_participate_by_user: async (
-    userEmail?: string
-  ): Promise<BaseResponse> => {
+  event_participate_by_user: async (data: {
+    UserEmail: string;
+  }): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
-      const body = userEmail ? { email: userEmail } : {};
-
       const response = await fetch(
         `${API_URL}/api/protected/event-participate-of-user`,
         {
@@ -220,7 +218,7 @@ export const auth_participants = {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify(data),
         }
       );
       return await response.json();

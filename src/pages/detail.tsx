@@ -153,10 +153,24 @@ export default function DetailPage() {
     setIsQRGeneratorOpen(true);
   };
 
+  // Handle participants click (committee action: view participants)
+  const handleParticipantsClick = async () => {
+    toast.info("Participants feature is not implemented yet", {
+      toastId: "participants-info",
+    });
+  };
+
   // Handle certificate click
   const handleCertificateClick = () => {
     toast.info("Certificate feature is not implemented yet", {
       toastId: "certificate-info",
+    });
+  };
+
+  // Handle edit webinar click (committee action)
+  const handleEditWebinarClick = () => {
+    toast.info("Edit Webinar feature is not implemented yet", {
+      toastId: "edit-webinar-info",
     });
   };
 
@@ -193,7 +207,7 @@ export default function DetailPage() {
       <section>
         <div>
           {/* Image container with relative positioning */}
-          <div className="relative flex justify-center mb-6">
+          <div className="relative flex justify-center mb-2">
             <Image
               alt="Webinar banner"
               className="object-cover rounded-xl mx-auto"
@@ -288,6 +302,7 @@ export default function DetailPage() {
                     variant: "bordered",
                     size: "lg",
                   })}
+                  onClick={handleParticipantsClick}
                 >
                   View Participants
                 </Button>
@@ -310,13 +325,14 @@ export default function DetailPage() {
             {isCommittee && (
               <Button
                 className={buttonStyles({
-                  color: "primary",
+                  color: "secondary",
                   radius: "full",
                   variant: "solid",
                   size: "lg",
                 })}
+                onClick={handleEditWebinarClick}
               >
-                List Peserta
+                Edit Webinar
               </Button>
             )}
           </div>

@@ -26,6 +26,7 @@ import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
 import EditAdminPage from "@/pages/admin/edit_user";
 import AddUserPage from "@/pages/admin/add_user";
+import ParticipantsPage from "@/pages/participants";
 
 export default function App() {
   return (
@@ -58,6 +59,7 @@ export default function App() {
       {/* BATAS Akses untuk Tamu / Pengguna */}
 
       {/* Protected Routes - User Only */}
+      {/* Dashboard Page */}
       <Route
         path="/dashboard"
         element={
@@ -67,6 +69,7 @@ export default function App() {
         }
       />
 
+      {/* Detail Page */}
       <Route
         path="/detail/:id"
         element={
@@ -76,6 +79,7 @@ export default function App() {
         }
       />
 
+      {/* Profile Page */}
       <Route
         path="/profile"
         element={
@@ -85,11 +89,22 @@ export default function App() {
         }
       />
 
+      {/* Sertifikat Page */}
       <Route
         path="/sertifikat"
         element={
           <ProtectedRoute>
             <SertifikatUserPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Participants Page */}
+      <Route
+        path="/participants/:UserEmail"
+        element={
+          <ProtectedRoute>
+            <ParticipantsPage />
           </ProtectedRoute>
         }
       />
