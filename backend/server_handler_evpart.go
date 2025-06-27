@@ -598,8 +598,12 @@ func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
             })
 		}
 
-		var eventList[] table.Event
-		res = backend.db.Preload("Event").Where("user_id = ?", selectedUser.ID).Find(&eventList)
+        // NOTE: Just display the one that registered as normal only for now...
+        // If there is an issue it can fetch everything instead.
+        var eventList[] table.Event
+        res = backend.db.Model(&table.EventParticipant{}).Joins("JOIN events ON events.id = event_participants.event_id").
+        Where("event_participants.user_id = ? AND event_participants.eventp_role = ?", selectedUser.ID, "normal").
+        Select("events.*").Find(&eventList)
 		if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
