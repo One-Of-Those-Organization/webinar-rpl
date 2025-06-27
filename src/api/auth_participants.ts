@@ -205,22 +205,21 @@ export const auth_participants = {
   },
 
   // API untuk mendapatkan partisipasi event berdasarkan user
-  event_participate_by_user: async (data: {
-    UserEmail: string;
-  }): Promise<BaseResponse> => {
+  event_participate_by_user: async (
+    userEmail: string
+  ): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${API_URL}/api/protected/event-participate-of-user`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(data),
-        }
-      );
+      let url = `${API_URL}/api/protected/event-participate-of-user`;
+      if (userEmail) {
+        url += `?email=${encodeURIComponent(userEmail)}`;
+      }
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return await response.json();
     } catch (error) {
       return {

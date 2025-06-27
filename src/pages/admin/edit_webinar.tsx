@@ -266,7 +266,7 @@ export default function EditWebinarPage() {
 
   // Combine date and time into ISO string
   const combineDateAndTime = (date: string, time: string): string => {
-    return new Date(`${date}T${time}:00Z`).toISOString();
+    return new Date(`${date}T${time}:00`).toISOString();
   };
 
   // Handle webinar image upload
@@ -1050,7 +1050,7 @@ export default function EditWebinarPage() {
 
                 <Input
                   color="secondary"
-                  label="Speaker Namezz"
+                  label="Speaker Name"
                   placeholder="Enter speaker name"
                   value={editForm.speaker}
                   onChange={(e) => handleInputChange("speaker", e.target.value)}

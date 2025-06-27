@@ -138,9 +138,16 @@ export default function DetailPage() {
 
   // Handle materials click
   const handleMaterialsClick = () => {
-    toast.info("Materials feature is not implemented yet", {
-      toastId: "materials-info",
-    });
+    if (!isRegistered) {
+      toast.info("You must register first", {
+        toastId: "materials-register-info",
+      });
+      return;
+    } else {
+      toast.info("Materials feature is not implemented yet", {
+        toastId: "materials-info",
+      });
+    }
   };
 
   // Handle Scan QR Absence (committee action: open scanner)
@@ -150,7 +157,19 @@ export default function DetailPage() {
 
   // Handle Generate QR Absence
   const handleGenerateQRAbsence = () => {
-    setIsQRGeneratorOpen(true);
+    if (!isRegistered) {
+      toast.info("You must register first", {
+        toastId: "qr-absence-register-info",
+      });
+      return;
+    } else if (!isWebinarLive()) {
+      toast.info("The webinar is not live, you cannot generate QR code.", {
+        toastId: "qr-absence-live-info",
+      });
+      return;
+    } else {
+      setIsQRGeneratorOpen(true);
+    }
   };
 
   // Handle participants click (committee action: view participants)
@@ -162,9 +181,30 @@ export default function DetailPage() {
 
   // Handle certificate click
   const handleCertificateClick = () => {
-    toast.info("Certificate feature is not implemented yet", {
-      toastId: "certificate-info",
-    });
+    if (!isRegistered) {
+      toast.info("You must register first", {
+        toastId: "certificate-info",
+      });
+      return;
+    } else if (!hasAttended) {
+      toast.info(
+        "You must attend the webinar and it must be finished to get the certificate.",
+        { toastId: "certificate-info" }
+      );
+      return;
+    } else if (!isWebinarFinished()) {
+      toast.info(
+        "Webinar has not finished yet, certificate is not available.",
+        {
+          toastId: "certificate-info",
+        }
+      );
+      return;
+    } else {
+      toast.info("Certificate feature is not implemented yet", {
+        toastId: "certificate-info",
+      });
+    }
   };
 
   // Handle edit webinar click (committee action)
@@ -232,7 +272,7 @@ export default function DetailPage() {
               className={buttonStyles({
                 color: "secondary",
                 radius: "full",
-                variant: "bordered",
+                variant: isRegistered ? "solid" : "bordered",
                 size: "lg",
               })}
               isDisabled={!isRegistered}
@@ -258,11 +298,11 @@ export default function DetailPage() {
                 <Button
                   color={isRegistered ? "success" : "secondary"}
                   radius="full"
-                  variant={isRegistered ? "flat" : "bordered"}
+                  variant={isRegistered ? "solid" : "bordered"}
                   size="lg"
                   onClick={handleRegister}
-                  isDisabled={isRegistered || isRegistering}
                   isLoading={isRegistering}
+                  isDisabled={isRegistered}
                 >
                   {isRegistered ? "✓ Registered" : "Register"}
                 </Button>
@@ -274,9 +314,8 @@ export default function DetailPage() {
               <Button
                 color={hasAttended ? "success" : "secondary"}
                 radius="full"
-                variant={hasAttended ? "flat" : "bordered"}
+                variant={isWebinarLive() ? "solid" : "bordered"}
                 size="lg"
-                isDisabled={!isRegistered || hasAttended || !isWebinarLive}
                 isLoading={false}
                 onClick={handleGenerateQRAbsence}
               >
@@ -313,10 +352,10 @@ export default function DetailPage() {
               className={buttonStyles({
                 color: "secondary",
                 radius: "full",
-                variant: "bordered",
+                variant: isWebinarFinished() ? "solid" : "bordered",
                 size: "lg",
               })}
-              isDisabled={!isRegistered || !isWebinarFinished()}
+              isDisabled={!isRegistered}
               onClick={handleCertificateClick}
             >
               Certificate
