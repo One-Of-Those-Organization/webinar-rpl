@@ -21,6 +21,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { auth_webinar } from "@/api/auth_webinar";
 import { auth_user } from "@/api/auth_user";
 import { auth_participants } from "@/api/auth_participants";
+import { auth_material } from "@/api/auth_material";
 import { UserData } from "@/api/interface";
 import { WebinarEdit } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
@@ -102,9 +103,9 @@ export default function EditWebinarPage() {
     link: "",
     imageUrl: "",
     max: 0,
-    eventmId: 0,
     certId: 0,
     panitia: [] as string[],
+    materialLink: "",
   });
 
   const todayDate = getTodayDate();
@@ -143,9 +144,9 @@ export default function EditWebinarPage() {
             link: webinar.link || "",
             imageUrl: webinar.img || "",
             max: webinar.max || 0,
-            eventmId: webinar.event_mat_id || 1,
             certId: webinar.cert_template_id || 1,
             panitia: webinar.panitia || [],
+            materialLink: webinar.event_attach || "",
           });
 
           await loadExistingCommittee(parseInt(id));
@@ -609,7 +610,7 @@ export default function EditWebinarPage() {
         img: editForm.imageUrl.trim(),
         max: editForm.max,
         att: editForm.att,
-        event_mat_id: editForm.eventmId,
+        material_link: editForm.materialLink.trim(),
         cert_template_id: editForm.certId,
       };
 
@@ -623,11 +624,14 @@ export default function EditWebinarPage() {
         editData.dstart == webinarData.dstart &&
         editData.dend == webinarData.dend &&
         editData.desc == webinarData.desc &&
-        editData.event_mat_id == webinarData.event_mat_id &&
         editData.cert_template_id == webinarData.cert_template_id
       );
 
-      if (!hasWebinarChanges && newCommitteeMembers.length === 0) {
+      if (
+        !hasWebinarChanges &&
+        newCommitteeMembers.length === 0 &&
+        !editForm.materialLink
+      ) {
         toast.info("No changes detected", { toastId: "noChanges" });
         setIsEditing(false);
         return;
@@ -650,7 +654,6 @@ export default function EditWebinarPage() {
             link: editForm.link.trim(),
             img: editForm.imageUrl.trim(),
             max: editForm.max,
-            event_mat_id: editForm.eventmId,
             cert_template_id: editForm.certId,
           });
 
@@ -658,6 +661,18 @@ export default function EditWebinarPage() {
         } else {
           toast.error("Failed to update webinar");
           return;
+        }
+      }
+
+      if (editForm.materialLink) {
+        const resp = await auth_material.add_material({
+          id: webinarData.id,
+          event_attach: editForm.materialLink,
+        });
+        if (resp.success) {
+          toast.success("Material link saved!");
+        } else {
+          toast.error("Failed to add/save material link");
         }
       }
 
@@ -692,9 +707,9 @@ export default function EditWebinarPage() {
       link: webinarData.link || "",
       imageUrl: webinarData.img || "",
       max: webinarData.max || 0,
-      eventmId: webinarData.event_mat_id || 1,
       certId: webinarData.cert_template_id || 1,
       panitia: existingCommittee.map((member) => member.User.UserEmail),
+      materialLink: webinarData.event_attach || "",
     });
 
     setPreviewImage(
@@ -708,13 +723,6 @@ export default function EditWebinarPage() {
   // Toggle edit mode
   const handleToggleEditMode = () => {
     setIsEditMode(!isEditMode);
-  };
-
-  // Handle materials click
-  const handleMaterialsClick = () => {
-    toast.info("Materials feature is not implemented yet", {
-      toastId: "materials-info",
-    });
   };
 
   const handleQRScan = () => {
@@ -822,18 +830,6 @@ export default function EditWebinarPage() {
           <div className="flex flex-row gap-2 px-4 py-4 justify-center">
             {!isEditMode ? (
               <>
-                <Button
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
-                    variant: "bordered",
-                    size: "lg",
-                  })}
-                  onClick={handleMaterialsClick}
-                >
-                  Materials
-                </Button>
-
                 <Button
                   className={buttonStyles({
                     color: "secondary",
@@ -993,9 +989,20 @@ export default function EditWebinarPage() {
                 </div>
 
                 <div className="font-bold text-xl">
-                  Event Material ID :{" "}
+                  Material Link :{" "}
                   <span className="text-[#B6A3E8] font-bold">
-                    {webinarData.event_mat_id || "0"}
+                    {webinarData.event_attach ? (
+                      <a
+                        href={webinarData.event_attach}
+                        className="underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {webinarData.event_attach}
+                      </a>
+                    ) : (
+                      "No material link"
+                    )}
                   </span>
                 </div>
 
@@ -1284,46 +1291,35 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* ID fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    color="secondary"
-                    label="Event Material ID"
-                    type="number"
-                    placeholder="1"
-                    min="1"
-                    value={
-                      editForm.eventmId === 0
-                        ? ""
-                        : editForm.eventmId.toString()
-                    }
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      handleInputChange(
-                        "eventmId",
-                        value === "" ? 1 : parseInt(value) || 1
-                      );
-                    }}
-                  />
+                {/* Certificate Template ID */}
+                <Input
+                  color="secondary"
+                  label="Certificate Template ID"
+                  type="number"
+                  placeholder="1"
+                  min="1"
+                  value={
+                    editForm.certId === 0 ? "" : editForm.certId.toString()
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleInputChange(
+                      "certId",
+                      value === "" ? 1 : parseInt(value) || 1
+                    );
+                  }}
+                />
 
-                  <Input
-                    color="secondary"
-                    label="Certificate Template ID"
-                    type="number"
-                    placeholder="1"
-                    min="1"
-                    value={
-                      editForm.certId === 0 ? "" : editForm.certId.toString()
-                    }
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      handleInputChange(
-                        "certId",
-                        value === "" ? 1 : parseInt(value) || 1
-                      );
-                    }}
-                  />
-                </div>
+                {/* Material Link */}
+                <Input
+                  color="secondary"
+                  label="Material (Google Drive Link, dsb)"
+                  placeholder="https://drive.google.com/..."
+                  value={editForm.materialLink}
+                  onChange={(e) =>
+                    handleInputChange("materialLink", e.target.value)
+                  }
+                />
 
                 {/* Description field */}
                 <Textarea

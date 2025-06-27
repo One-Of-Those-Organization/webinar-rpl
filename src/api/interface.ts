@@ -157,7 +157,7 @@ export class WebinarEdit {
   att?: string = "";
   img?: string = "";
   max?: number = 0;
-  event_mat_id?: number = 0;
+  event_attach?: string = "";
   cert_template_id?: number = 0;
   panitia?: string[] = [];
 
@@ -179,7 +179,7 @@ export class WebinarEdit {
       link: apiData.EventLink || "",
       img: apiData.EventImg || "",
       max: apiData.EventMax || 0,
-      event_mat_id: apiData.EventMatID || 0,
+      event_attach: apiData.EventMatID || "",
       cert_template_id: apiData.CertTemplateID || 0,
       panitia: apiData.EventPanitia || [],
     });
