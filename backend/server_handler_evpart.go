@@ -580,23 +580,11 @@ func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
         admin := claims["admin"].(float64)
         email := claims["email"].(string)
 
-        var body struct {
-            UserEmail *string `json:"email"`
-        }
-
-        err = c.BodyParser(&body)
-        if err != nil {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid request body.",
-                "error_code": 2,
-                "data": nil,
-            })
-        }
+        userEmail := c.Query("email")
 
         useThisEmail := email
-        if admin == 1 && body.UserEmail != nil && *body.UserEmail != "" {
-            useThisEmail = *body.UserEmail
+        if admin == 1 && userEmail != "" {
+            useThisEmail = userEmail
         }
 
 		var selectedUser table.User
