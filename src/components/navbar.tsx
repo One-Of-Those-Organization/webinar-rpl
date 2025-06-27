@@ -102,6 +102,15 @@ export const Navbar = () => {
           </DropdownItem>
         )}
 
+        {!isAdmin && (
+          <DropdownItem
+            key="History Webinar"
+            onClick={() => navigate("/participants/${email}")}
+          >
+            History Webinar
+          </DropdownItem>
+        )}
+
         <DropdownItem
           key="logout"
           color="danger"
