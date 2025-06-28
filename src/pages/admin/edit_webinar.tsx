@@ -25,7 +25,7 @@ import { auth_material } from "@/api/auth_material";
 import { UserData } from "@/api/interface";
 import { WebinarEdit } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
-import { FaExclamationTriangle } from "react-icons/fa";
+import { FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import { QRScanner } from "@/components/QRScanner";
 
@@ -63,6 +63,8 @@ export default function EditWebinarPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [materialInfo, setMaterialInfo] = useState("");
+  const [materialId, setMaterialId] = useState<number | null>(null);
   const [participantCount, setParticipantCount] = useState(0);
 
   // User and committee states
@@ -110,7 +112,7 @@ export default function EditWebinarPage() {
 
   const todayDate = getTodayDate();
 
-  // Load webinar data on component mount
+  // Use effect to load webinar data when component mounts
   useEffect(() => {
     const loadData = async () => {
       if (!id) {
@@ -121,40 +123,54 @@ export default function EditWebinarPage() {
 
       try {
         setIsLoading(true);
+
+        // 1. Get webinar data
         const result = await auth_webinar.get_webinar_by_id(parseInt(id));
-
-        if (result.success) {
-          const webinar = WebinarEdit.fromApiResponse(result.data);
-          setWebinarData(webinar);
-
-          setPreviewImage(
-            webinar.img || "https://heroui.com/images/hero-card-complete.jpeg"
-          );
-
-          // Initialize form with webinar data
-          setEditForm({
-            name: webinar.name || "",
-            description: webinar.desc || "",
-            speaker: webinar.speaker || "",
-            dateStart: webinar.dstart ? extractDate(webinar.dstart) : "",
-            timeStart: webinar.dstart ? extractTime(webinar.dstart) : "",
-            dateEnd: webinar.dend ? extractDate(webinar.dend) : "",
-            timeEnd: webinar.dend ? extractTime(webinar.dend) : "",
-            att: webinar.att || "",
-            link: webinar.link || "",
-            imageUrl: webinar.img || "",
-            max: webinar.max || 0,
-            certId: webinar.cert_template_id || 1,
-            panitia: webinar.panitia || [],
-            materialLink: webinar.event_attach || "",
-          });
-
-          await loadExistingCommittee(parseInt(id));
-          await get_webinar_count(parseInt(id));
-        } else {
+        if (!result.success) {
           toast.error("Failed to load webinar data");
           navigate("/admin/webinar");
+          return;
         }
+
+        const webinar = WebinarEdit.fromApiResponse(result.data);
+        setWebinarData(webinar);
+
+        setPreviewImage(
+          webinar.img || "https://heroui.com/images/hero-card-complete.jpeg"
+        );
+
+        // Load Existing Committee Members and Webinar Count
+        await loadExistingCommittee(parseInt(id));
+        await get_webinar_count(parseInt(id));
+
+        // Load Material info
+        const matRes = await auth_material.get_material(parseInt(id));
+        let mat_parse = "";
+        let mat_id: number | null = null;
+        if (matRes.success && matRes.data) {
+          mat_parse = matRes.data.EventMatAttachment || "";
+          mat_id = matRes.data.ID || null;
+        }
+        setMaterialInfo(mat_parse);
+        setMaterialId(mat_id);
+
+        // Set initial form data
+        setEditForm({
+          name: webinar.name || "",
+          description: webinar.desc || "",
+          speaker: webinar.speaker || "",
+          dateStart: webinar.dstart ? extractDate(webinar.dstart) : "",
+          timeStart: webinar.dstart ? extractTime(webinar.dstart) : "",
+          dateEnd: webinar.dend ? extractDate(webinar.dend) : "",
+          timeEnd: webinar.dend ? extractTime(webinar.dend) : "",
+          att: webinar.att || "",
+          link: webinar.link || "",
+          imageUrl: webinar.img || "",
+          max: webinar.max || 0,
+          certId: webinar.cert_template_id || 1,
+          panitia: webinar.panitia || [],
+          materialLink: mat_parse || "",
+        });
       } catch (error) {
         toast.error("There was an error loading the webinar data");
         navigate("/admin/webinar");
@@ -249,10 +265,9 @@ export default function EditWebinarPage() {
 
   // Handle form input changes
   const handleInputChange = (field: string, value: string | number) => {
-    const sanitizedValue = typeof value === "string" ? value.trim() : value;
     setEditForm((prev) => ({
       ...prev,
-      [field]: sanitizedValue,
+      [field]: value,
     }));
   };
 
@@ -528,15 +543,17 @@ export default function EditWebinarPage() {
     // Validasi tanggal tidak boleh sebelum hari ini
     if (startDate <= today) {
       setError("Start date cannot be before today");
-      toast.error("Start date cannot be before today");
+      toast.info("Start date cannot be before today", {
+        toastId: "date-info",
+      });
       return;
     } else if (endDate <= today) {
       setError("End date cannot be before today");
-      toast.error("End date cannot be before today");
+      toast.info("End date cannot be before today", { toastId: "date-info" });
       return;
     } else if (startDate >= endDate) {
       setError("End date must be after start date");
-      toast.error("End date must be after start date");
+      toast.info("End date must be after start date", { toastId: "date-info" });
       return;
     } else {
       setError("");
@@ -601,16 +618,16 @@ export default function EditWebinarPage() {
       // Update webinar data
       const editData = {
         id: webinarData.id || 0,
-        name: editForm.name.trim(),
-        desc: editForm.description.trim(),
-        speaker: editForm.speaker.trim(),
+        name: editForm.name,
+        desc: editForm.description,
+        speaker: editForm.speaker,
         dstart: fullStartDateTime,
         dend: fullEndDateTime,
-        link: editForm.link.trim(),
-        img: editForm.imageUrl.trim(),
+        link: editForm.link,
+        img: editForm.imageUrl,
         max: editForm.max,
         att: editForm.att,
-        material_link: editForm.materialLink.trim(),
+        material_link: editForm.materialLink,
         cert_template_id: editForm.certId,
       };
 
@@ -646,14 +663,15 @@ export default function EditWebinarPage() {
           // Update local webinar data
           const updatedWebinar = new WebinarEdit({
             ...webinarData,
-            name: editForm.name.trim(),
-            desc: editForm.description.trim(),
-            speaker: editForm.speaker.trim(),
+            name: editForm.name,
+            desc: editForm.description,
+            speaker: editForm.speaker,
             dstart: fullStartDateTime,
             dend: fullEndDateTime,
-            link: editForm.link.trim(),
-            img: editForm.imageUrl.trim(),
+            link: editForm.link,
+            img: editForm.imageUrl,
             max: editForm.max,
+            event_attach: editForm.materialLink,
             cert_template_id: editForm.certId,
           });
 
@@ -665,14 +683,18 @@ export default function EditWebinarPage() {
       }
 
       if (editForm.materialLink) {
-        const resp = await auth_material.add_material({
-          id: webinarData.id,
-          event_attach: editForm.materialLink,
-        });
-        if (resp.success) {
-          toast.success("Material link saved!");
+        if (materialId) {
+          await auth_material.edit_material({
+            id: materialId,
+            event_attach: editForm.materialLink,
+          });
+          toast.success("Material link updated!");
         } else {
-          toast.error("Failed to add/save material link");
+          await auth_material.add_material({
+            id: webinarData.id,
+            event_attach: editForm.materialLink,
+          });
+          toast.success("Material link saved!");
         }
       }
 
@@ -709,7 +731,7 @@ export default function EditWebinarPage() {
       max: webinarData.max || 0,
       certId: webinarData.cert_template_id || 1,
       panitia: existingCommittee.map((member) => member.User.UserEmail),
-      materialLink: webinarData.event_attach || "",
+      materialLink: materialInfo || "",
     });
 
     setPreviewImage(
@@ -720,11 +742,43 @@ export default function EditWebinarPage() {
     setIsEditMode(false);
   };
 
+  const handleDeleteMaterial = async () => {
+    if (!materialId) {
+      toast.error("No material to delete");
+      return;
+    }
+
+    setShowConfirmModal({
+      isOpen: true,
+      title: "Delete Material",
+      message: "Are you sure you want to delete this material?",
+      type: "danger",
+      onConfirm: async () => {
+        setShowConfirmModal((prev) => ({ ...prev, isOpen: false }));
+
+        try {
+          const response = await auth_material.delete_material(materialId);
+          if (response.success) {
+            setMaterialInfo("");
+            setMaterialId(null);
+            setEditForm((prev) => ({ ...prev, materialLink: "" }));
+            toast.success("Material deleted successfully");
+          } else {
+            toast.error("Failed to delete material");
+          }
+        } catch (error) {
+          toast.error("Error deleting material");
+        }
+      },
+    });
+  };
+
   // Toggle edit mode
   const handleToggleEditMode = () => {
     setIsEditMode(!isEditMode);
   };
 
+  // Handle QR scanner open
   const handleQRScan = () => {
     setIsQRScannerOpen(true);
   };
@@ -991,14 +1045,14 @@ export default function EditWebinarPage() {
                 <div className="font-bold text-xl">
                   Material Link :{" "}
                   <span className="text-[#B6A3E8] font-bold">
-                    {webinarData.event_attach ? (
+                    {materialInfo ? (
                       <a
-                        href={webinarData.event_attach}
+                        href={materialInfo}
                         className="underline"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {webinarData.event_attach}
+                        {materialInfo}
                       </a>
                     ) : (
                       "No material link"
@@ -1310,16 +1364,30 @@ export default function EditWebinarPage() {
                   }}
                 />
 
-                {/* Material Link */}
-                <Input
-                  color="secondary"
-                  label="Material (Google Drive Link, dsb)"
-                  placeholder="https://drive.google.com/..."
-                  value={editForm.materialLink}
-                  onChange={(e) =>
-                    handleInputChange("materialLink", e.target.value)
-                  }
-                />
+                <div className="relative w-full">
+                  <Input
+                    color="secondary"
+                    label="Material (Google Drive Link, dsb)"
+                    placeholder="https://drive.google.com/..."
+                    value={editForm.materialLink}
+                    onChange={(e) =>
+                      handleInputChange("materialLink", e.target.value)
+                    }
+                    className="w-full pr-12" // beri padding kanan untuk icon
+                  />
+                  {materialId && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteMaterial}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow"
+                      disabled={isEditing}
+                      aria-label="Delete material"
+                      style={{ zIndex: 10 }}
+                    >
+                      <FaTrash className="text-lg" />
+                    </button>
+                  )}
+                </div>
 
                 {/* Description field */}
                 <Textarea

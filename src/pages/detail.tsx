@@ -59,6 +59,12 @@ export default function DetailPage() {
     loadWebinarDetail();
   }, [id]);
 
+  useEffect(() => {
+    if (webinar?.name) {
+      document.title = `${webinar.name} | Webinar Detail`;
+    }
+  }, [webinar]);
+
   // function to check registration status
   const checkRegistrationStatus = async (eventId: number) => {
     setIsCheckingStatus(true);
@@ -116,6 +122,13 @@ export default function DetailPage() {
   const handleRegister = async () => {
     if (!webinar) return;
 
+    if (isWebinarFinished()) {
+      toast.info("Webinar has already finished, registration is closed.", {
+        toastId: "registration-closed",
+      });
+      return;
+    }
+
     setIsRegistering(true);
     try {
       const result = await auth_participants.event_participate_register({
@@ -125,7 +138,9 @@ export default function DetailPage() {
 
       if (result.success) {
         setIsRegistered(true);
-        toast.success("Successfully registered for webinar!");
+        toast.success("Successfully registered for webinar!", {
+          toastId: "registration-success",
+        });
       } else {
         toast.error("Failed to register for webinar");
       }
@@ -138,9 +153,14 @@ export default function DetailPage() {
 
   // Handle materials click
   const handleMaterialsClick = () => {
-    if (!isRegistered) {
+    if (!isRegistered && isWebinarFinished()) {
+      toast.info("Webinar has finished, registration is closed.", {
+        toastId: "registration-closed",
+      });
+      return;
+    } else if (!isRegistered) {
       toast.info("You must register first", {
-        toastId: "materials-register-info",
+        toastId: "registration-info",
       });
       return;
     } else {
@@ -157,14 +177,24 @@ export default function DetailPage() {
 
   // Handle Generate QR Absence
   const handleGenerateQRAbsence = () => {
-    if (!isRegistered) {
+    if (!isRegistered && isWebinarFinished()) {
+      toast.info("Webinar has finished, registration is closed.", {
+        toastId: "registration-closed",
+      });
+      return;
+    } else if (isRegistered && isWebinarFinished()) {
+      toast.info("Webinar has finished, you cannot generate QR code.", {
+        toastId: "qr-absence-info",
+      });
+      return;
+    } else if (!isRegistered) {
       toast.info("You must register first", {
-        toastId: "qr-absence-register-info",
+        toastId: "registration-info",
       });
       return;
     } else if (!isWebinarLive()) {
       toast.info("The webinar is not live, you cannot generate QR code.", {
-        toastId: "qr-absence-live-info",
+        toastId: "qr-absence-info",
       });
       return;
     } else {
@@ -181,15 +211,20 @@ export default function DetailPage() {
 
   // Handle certificate click
   const handleCertificateClick = () => {
-    if (!isRegistered) {
+    if (!isRegistered && isWebinarFinished()) {
+      toast.info("Webinar has finished, registration is closed.", {
+        toastId: "registration-closed",
+      });
+      return;
+    } else if (!isRegistered) {
       toast.info("You must register first", {
-        toastId: "certificate-info",
+        toastId: "registration-info",
       });
       return;
     } else if (!hasAttended) {
       toast.info(
         "You must attend the webinar and it must be finished to get the certificate.",
-        { toastId: "certificate-info" }
+        { toastId: "attended-info" }
       );
       return;
     } else if (!isWebinarFinished()) {
@@ -246,25 +281,33 @@ export default function DetailPage() {
     <DefaultLayout>
       <section>
         <div>
-          {/* Image container with relative positioning */}
-          <div className="relative flex justify-center mb-2">
-            <Image
-              alt="Webinar banner"
-              className="object-cover rounded-xl mx-auto"
-              src={
-                webinar?.imageUrl ||
-                "https://heroui.com/images/hero-card-complete.jpeg"
-              }
-              height={300}
-            />
-            {/* Live indicator positioned absolutely in top-right corner */}
-            {isWebinarLive() && (
-              <div className="absolute top-4 right-4 z-10">
-                <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                  🔴 LIVE
-                </span>
+          <div className="flex flex-col items-center mb-2">
+            {/* Banner info, lebar sama dengan gambar */}
+            {isWebinarFinished() && (
+              <div className="w-full max-w-md bg-[#B6A3E8]/20 text-[#B6A3E8] font-semibold px-4 py-2 mb-3 rounded text-center">
+                This webinar has already finished.
               </div>
             )}
+
+            {/* Image container */}
+            <div className="relative flex justify-center w-full max-w-md">
+              <Image
+                alt="Webinar banner"
+                className="object-cover rounded-xl mx-auto"
+                src={
+                  webinar?.imageUrl ||
+                  "https://heroui.com/images/hero-card-complete.jpeg"
+                }
+                height={300}
+              />
+              {isWebinarLive() && (
+                <div className="absolute top-4 right-4 z-10">
+                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                    🔴 LIVE
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-row gap-2 px-4 py-2 justify-center flex-wrap">
@@ -275,7 +318,6 @@ export default function DetailPage() {
                 variant: isRegistered ? "solid" : "bordered",
                 size: "lg",
               })}
-              isDisabled={!isRegistered}
               onClick={handleMaterialsClick}
               target={webinar?.att ? "_blank" : undefined}
             >
@@ -317,6 +359,7 @@ export default function DetailPage() {
                 variant={isWebinarLive() ? "solid" : "bordered"}
                 size="lg"
                 isLoading={false}
+                isDisabled={hasAttended}
                 onClick={handleGenerateQRAbsence}
               >
                 {hasAttended ? "✓ Attended" : "Check-in"}
@@ -352,10 +395,10 @@ export default function DetailPage() {
               className={buttonStyles({
                 color: "secondary",
                 radius: "full",
-                variant: isWebinarFinished() ? "solid" : "bordered",
+                variant:
+                  hasAttended && isWebinarFinished() ? "solid" : "bordered",
                 size: "lg",
               })}
-              isDisabled={!isRegistered}
               onClick={handleCertificateClick}
             >
               Certificate

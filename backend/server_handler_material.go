@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
-	"webrpl/table"
+    "fmt"
+    "strconv"
+    "webrpl/table"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
+    "github.com/gofiber/fiber/v2"
+    "github.com/golang-jwt/jwt/v5"
 )
 
 // POST : api/protected/material-register
@@ -108,7 +108,7 @@ func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
             })
         }
 
-        infoOf := c.Query("id")
+        infoOf := c.Query("event_id")
         var infoOfInt int
 
         if infoOf == "" {
@@ -120,7 +120,7 @@ func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
             })
         }
         infoOfInt, err := strconv.Atoi(infoOf)
-        if err != nil {
+        if err != nil { 
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Invalid Query : %v", err),
@@ -130,9 +130,9 @@ func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
         }
 
         var eventMat table.EventMaterial
-        res := backend.db.Where("eventm_id = ?", infoOfInt).First(&eventMat)
+        res := backend.db.Where("event_id = ?", infoOfInt).First(&eventMat)
         if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch event material from db.",
                 "error_code": 5,
@@ -248,14 +248,14 @@ func appHandleMaterialEdit(backend *Backend, route fiber.Router) {
 
         eventMaterial := table.EventMaterial{}
         result := backend.db.First(&eventMaterial, body.Id)
-		if result.Error != nil {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"message": fmt.Sprintf("Event Material not found with ID: %d", body.EventId),
-				"error_code": 4,
-				"data": nil,
-			})
-		}
+        if result.Error != nil {
+            return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Event Material not found with ID: %d", body.EventId),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
         if body.EventId != nil {
             eventMaterial.EventId = *body.EventId
         }
@@ -264,14 +264,14 @@ func appHandleMaterialEdit(backend *Backend, route fiber.Router) {
             eventMaterial.EventMatAttachment = *body.EventAttach
         }
 
-		result = backend.db.Save(&eventMaterial)
+        result = backend.db.Save(&eventMaterial)
         if result.Error != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"success": false,
-				"message": fmt.Sprintf("Failed to update event: %v", result.Error),
-				"error_code": 5,
-				"data": nil,
-			})
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to update event: %v", result.Error),
+                "error_code": 5,
+                "data": nil,
+            })
         }
 
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
