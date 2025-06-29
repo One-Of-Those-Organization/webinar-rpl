@@ -1,3 +1,12 @@
+// API Material Usage List :
+
+// 4/4 Completed ✅
+
+// 1. Add Material ✅
+// 2. Get Material by Event ✅
+// 3. Delete Material ✅
+// 4. Edit Material ✅
+
 import { BaseResponse, AddMaterial, EditMaterial } from "./interface";
 
 const API_URL = "http://localhost:3000";

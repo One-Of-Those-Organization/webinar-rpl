@@ -209,6 +209,12 @@ export interface EventPartisipantAbsence {
   code: string;
 }
 
+export interface EventPartisipantEdit {
+  event_id: number;
+  event_role?: string;
+  email?: string;
+}
+
 // == Material Interfaces ==
 
 // Add Material Data (POST)

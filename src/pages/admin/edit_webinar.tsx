@@ -25,6 +25,7 @@ import { auth_material } from "@/api/auth_material";
 import { UserData } from "@/api/interface";
 import { WebinarEdit } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
+import { VerticalDotsIcon } from "@/components/icons";
 import { FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import { QRScanner } from "@/components/QRScanner";
@@ -38,31 +39,12 @@ const getTodayDate = (): string => {
   return `${year}-${month}-${day}`;
 };
 
-// Dropdown menu icon
-const VerticalDotsIcon = () => (
-  <svg
-    fill="none"
-    height="24"
-    viewBox="0 0 24 24"
-    width="24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 12c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-      fill="currentColor"
-    />
-  </svg>
-);
-
 export default function EditWebinarPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Webinar data states
+  // Webinar Data and related states
   const [webinarData, setWebinarData] = useState<WebinarEdit | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [materialInfo, setMaterialInfo] = useState("");
   const [materialId, setMaterialId] = useState<number | null>(null);
   const [participantCount, setParticipantCount] = useState(0);
@@ -70,15 +52,22 @@ export default function EditWebinarPage() {
   // User and committee states
   const [panitiaData, setPanitiaData] = useState<any[]>([]);
   const [existingCommittee, setExistingCommittee] = useState<any[]>([]);
+
+  // Loading States
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingCommittee, setIsLoadingCommittee] = useState(false);
 
   // Image upload states
-  const [error, setError] = useState("");
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string>(
     "https://heroui.com/images/hero-card-complete.jpeg"
   );
+
+  // Error state
+  const [error, setError] = useState("");
 
   // QR Scanner state
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
@@ -565,12 +554,12 @@ export default function EditWebinarPage() {
       // Register new committee members first
       const newCommitteeMembers = getNewCommitteeMembers();
       if (newCommitteeMembers.length > 0) {
-        toast.info(
-          `Registering ${newCommitteeMembers.length} new committee members...`,
-          {
-            toastId: "registeringCommittee",
-          }
-        );
+        // toast.info(
+        //   `Registering ${newCommitteeMembers.length} new committee members...`,
+        //   {
+        //     toastId: "registeringCommittee",
+        //   }
+        // );
 
         let successCount = 0;
         let failCount = 0;
@@ -658,7 +647,9 @@ export default function EditWebinarPage() {
         const response = await auth_webinar.edit_webinar(editData);
 
         if (response.success) {
-          toast.success("Webinar updated successfully!");
+          toast.success("Webinar updated successfully!", {
+            toastId: "update-webinar",
+          });
 
           // Update local webinar data
           const updatedWebinar = new WebinarEdit({
@@ -688,13 +679,17 @@ export default function EditWebinarPage() {
             id: materialId,
             event_attach: editForm.materialLink,
           });
-          toast.success("Material link updated!");
+          if (materialInfo !== editForm.materialLink) {
+            toast.success("Material link updated!", {
+              toastId: "update-webinar",
+            });
+          }
         } else {
           await auth_material.add_material({
             id: webinarData.id,
             event_attach: editForm.materialLink,
           });
-          toast.success("Material link saved!");
+          toast.success("Material link saved!", { toastId: "update-webinar" });
         }
       }
 
@@ -959,12 +954,13 @@ export default function EditWebinarPage() {
         {/* Main content */}
         <div className="px-4 py-2">
           {!isEditMode ? (
-            /* View mode display */
             <>
+              {/* Webinar Name */}
               <h1 className="font-bold text-4xl">
                 {webinarData.name || "Webinar Series"}
               </h1>
 
+              {/* Webinar Speaker */}
               <div>
                 <div className="font-bold text-xl">
                   Speaker Name :{" "}
@@ -973,6 +969,7 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
+                {/* Webinar Start Date */}
                 <div className="font-bold text-xl">
                   Start Time :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -980,6 +977,7 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
+                {/* Webinar End Date */}
                 <div className="font-bold text-xl">
                   End Time :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -987,13 +985,29 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
+                {/* Webinar Precise Location */}
                 <div className="font-bold text-xl">
-                  {webinarData.att === "online" ? "Link" : "Webinar Location"} :{" "}
+                  {webinarData.att === "online"
+                    ? "Webinar Link"
+                    : "Webinar Location"}{" "}
+                  :{" "}
                   <span className="text-[#B6A3E8] font-bold">
-                    {webinarData.att === "online" ? "Online" : webinarData.link}
+                    {webinarData.att === "online" ? (
+                      <a
+                        href={webinarData.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-[#6F2DBD]"
+                      >
+                        Link
+                      </a>
+                    ) : (
+                      "Location not specified"
+                    )}
                   </span>
                 </div>
 
+                {/* Webinar Participants Count */}
                 <div className="font-bold text-xl">
                   Participants :{" "}
                   <span
@@ -1010,10 +1024,15 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
+                {/* Webinar Attendance Type */}
                 <div className="font-bold text-xl">
                   Attendance Type :{" "}
                   <span className="text-[#B6A3E8] font-bold">
-                    {webinarData.att || "0"}
+                    {webinarData.att === "online"
+                      ? "Online"
+                      : webinarData.att === "offline"
+                        ? "Offline"
+                        : "Hybrid"}
                   </span>
                 </div>
 
@@ -1042,6 +1061,7 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
+                {/* Webinar material link display */}
                 <div className="font-bold text-xl">
                   Material Link :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -1052,7 +1072,7 @@ export default function EditWebinarPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {materialInfo}
+                        Material
                       </a>
                     ) : (
                       "No material link"
@@ -1060,28 +1080,16 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
+                {/* Webinar Certificate */}
                 <div className="font-bold text-xl">
                   Certificate Template ID :{" "}
                   <span className="text-[#B6A3E8] font-bold">
                     {webinarData.cert_template_id || "0"}
                   </span>
                 </div>
-
-                {webinarData.link && webinarData.att === "online" && (
-                  <div className="font-bold text-xl">
-                    Webinar Link :{" "}
-                    <a
-                      href={webinarData.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#B6A3E8] font-bold hover:underline"
-                    >
-                      {webinarData.link}
-                    </a>
-                  </div>
-                )}
               </div>
 
+              {/* Webinar Description section */}
               <div>
                 <h2 className="font-bold text-xl">Description :</h2>
                 <p className="text-justify text-lg leading-relaxed">
@@ -1099,7 +1107,7 @@ export default function EditWebinarPage() {
                   <div className="text-red-500 text-sm mb-4">{error}</div>
                 )}
 
-                {/* Basic info fields */}
+                {/* Edit Webinar Name */}
                 <Input
                   color="secondary"
                   label="Webinar Name"
@@ -1109,6 +1117,7 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
+                {/* Edit Webinar Speaker Name */}
                 <Input
                   color="secondary"
                   label="Speaker Name"
@@ -1244,6 +1253,7 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
+                {/* Edit Webinar Start Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -1256,6 +1266,7 @@ export default function EditWebinarPage() {
                     }
                     isRequired
                   />
+                  {/* Edit Webinar Start Time */}
                   <Input
                     color="secondary"
                     label="Start Time"
@@ -1266,6 +1277,7 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
+                {/* Edit Webinar End Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -1278,6 +1290,7 @@ export default function EditWebinarPage() {
                     }
                     isRequired
                   />
+                  {/* Edit Webinar End Time */}
                   <Input
                     color="secondary"
                     label="End Time"
@@ -1288,6 +1301,7 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
+                {/* Edit Webinar Attendance Type */}
                 <Select
                   color="secondary"
                   label="Attendance Type"
@@ -1307,6 +1321,7 @@ export default function EditWebinarPage() {
                   <SelectItem key="offline">Offline</SelectItem>
                 </Select>
 
+                {/* Edit Webinar Precise Location */}
                 <Input
                   color="secondary"
                   label={
@@ -1319,6 +1334,7 @@ export default function EditWebinarPage() {
                   onChange={(e) => handleInputChange("link", e.target.value)}
                 />
 
+                {/* Edit Webinar Poster */}
                 <Input
                   color="secondary"
                   label="Webinar Image"
@@ -1329,6 +1345,7 @@ export default function EditWebinarPage() {
                   description="Maximum file size: 3MB. Supported formats: JPG, PNG, WebP"
                 />
 
+                {/* Edit Webinar Maximum Participants */}
                 <Input
                   color="secondary"
                   label="Maximum Participants"
@@ -1345,7 +1362,7 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Certificate Template ID */}
+                {/* Edit Webinar Certificate */}
                 <Input
                   color="secondary"
                   label="Certificate Template ID"
@@ -1364,6 +1381,7 @@ export default function EditWebinarPage() {
                   }}
                 />
 
+                {/* Edit Webinar Material */}
                 <div className="relative w-full">
                   <Input
                     color="secondary"
@@ -1389,7 +1407,7 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
-                {/* Description field */}
+                {/* Edit Webinar Description */}
                 <Textarea
                   color="secondary"
                   label="Description"
@@ -1425,17 +1443,6 @@ export default function EditWebinarPage() {
               <p className="text-gray-600 mb-6">{showConfirmModal.message}</p>
               <div className="flex gap-3 justify-end">
                 <Button
-                  color="default"
-                  radius="full"
-                  variant="bordered"
-                  size="sm"
-                  onPress={() =>
-                    setShowConfirmModal((prev) => ({ ...prev, isOpen: false }))
-                  }
-                >
-                  Cancel
-                </Button>
-                <Button
                   color={
                     showConfirmModal.type === "danger" ? "danger" : "warning"
                   }
@@ -1448,16 +1455,29 @@ export default function EditWebinarPage() {
                     ? "Remove"
                     : "Change Role"}
                 </Button>
+                <Button
+                  color="default"
+                  radius="full"
+                  variant="bordered"
+                  size="sm"
+                  onPress={() =>
+                    setShowConfirmModal((prev) => ({ ...prev, isOpen: false }))
+                  }
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           </div>
         )}
       </section>
+
       {/* QR Scanner Modal */}
       <QRScanner
         isOpen={isQRScannerOpen}
         onClose={() => setIsQRScannerOpen(false)}
       />
+
       <ToastContainer />
     </DefaultLayout>
   );

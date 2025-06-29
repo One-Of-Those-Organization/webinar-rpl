@@ -9,12 +9,13 @@
 // 5. Get Event Participation Info by Event ✅
 // 6. Set Participant Absence ✅
 // 7. Get Participant Count by Event ✅
-// 8. Get Event Participation by User ❌ - Low Priority, but can implemented it last
+// 8. Get Event Participation by User ✅
 
 import {
   BaseResponse,
   EventPartisipantAbsence,
   EventPartisipantRegister,
+  EventPartisipantEdit,
 } from "./interface";
 
 const API_URL = "http://localhost:3000";
@@ -70,11 +71,9 @@ export const auth_participants = {
   },
 
   // API untuk edit participant dari event
-  event_participate_edit: async (data: {
-    event_id: number;
-    email: string;
-    event_role: string;
-  }): Promise<BaseResponse> => {
+  event_participate_edit: async (
+    data: EventPartisipantEdit
+  ): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
