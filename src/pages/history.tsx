@@ -12,6 +12,8 @@ import { EmptyWebinarIcon } from "@/components/icons";
 // Pagination options
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 15];
 
+// History Webinar Page
+
 export default function ParticipantsPage() {
   // State
   const [isLoading, setIsLoading] = useState(true);

@@ -10,6 +10,7 @@ import DashboardPage from "@/pages/dashboard";
 import DetailPage from "@/pages/detail";
 import ProfilePage from "@/pages/profile";
 import SertifikatUserPage from "@/pages/sertifikat";
+import HistoryPage from "@/pages/history";
 
 // Firewall / Route
 import ProtectedRoute from "@/components/firewall/protectedroute";
@@ -26,7 +27,6 @@ import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
 import EditAdminPage from "@/pages/admin/edit_user";
 import AddUserPage from "@/pages/admin/add_user";
-import ParticipantsPage from "@/pages/participants";
 
 export default function App() {
   return (
@@ -99,15 +99,18 @@ export default function App() {
         }
       />
 
-      {/* Participants Page */}
+      {/* History Webinar for User Page */}
       <Route
-        path="/participants/:UserEmail"
+        path="/history/:UserEmail"
         element={
           <ProtectedRoute>
-            <ParticipantsPage />
+            <HistoryPage />
           </ProtectedRoute>
         }
       />
+
+      {/* List Partisipant Page */}
+      <Route />
 
       {/* BATAS Akses untuk User / Admin */}
 
