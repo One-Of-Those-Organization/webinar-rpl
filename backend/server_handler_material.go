@@ -120,7 +120,7 @@ func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
             })
         }
         infoOfInt, err := strconv.Atoi(infoOf)
-        if err != nil { 
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Invalid Query : %v", err),

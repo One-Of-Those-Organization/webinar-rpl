@@ -65,7 +65,6 @@ func appHandleUserResetPass(backend *Backend, route fiber.Router) {
             })
         }
 
-        // TODO: Check OTP
         if IsOTPExpired(&selOTP) || selOTP.Used {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
