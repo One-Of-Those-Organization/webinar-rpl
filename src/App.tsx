@@ -11,6 +11,7 @@ import DetailPage from "@/pages/detail";
 import ProfilePage from "@/pages/profile";
 import SertifikatUserPage from "@/pages/sertifikat";
 import HistoryPage from "@/pages/history";
+import ListPartisipantPage from "./pages/list_partisipant";
 
 // Firewall / Route
 import ProtectedRoute from "@/components/firewall/protectedroute";
@@ -110,7 +111,14 @@ export default function App() {
       />
 
       {/* List Partisipant Page */}
-      <Route />
+      <Route
+        path="/list-partisipant/:eventId"
+        element={
+          <ProtectedRoute>
+            <ListPartisipantPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* BATAS Akses untuk User / Admin */}
 
