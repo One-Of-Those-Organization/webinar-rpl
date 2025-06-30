@@ -600,7 +600,7 @@
             const params = new URLSearchParams(window.location.search);
             const id = params.get("event_id");
             let a = await fetch(
-                "http://localhost:3000/api/c/-cert-editor-upload-image",
+                "{{ .APIPath }}/api/c/-cert-editor-upload-image",
                 {
                     method: "POST",
                     credentials: "include",
@@ -624,7 +624,7 @@
             const params = new URLSearchParams(window.location.search);
             const id = params.get("event_id");
             let a = await fetch(
-                "http://localhost:3000/api/c/-cert-editor-upload-html",
+                "{{ .APIPath }}/api/c/-cert-editor-upload-html",
                 {
                     method: "POST",
                     credentials: "include",

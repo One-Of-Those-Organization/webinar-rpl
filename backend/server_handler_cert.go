@@ -658,7 +658,9 @@ func appHandleCertEditor(backend *Backend, route fiber.Router) {
         }
 
         backend.engine.ClearCache()
-        return c.Render("editor", fiber.Map{})
+        return c.Render("editor", fiber.Map{
+            "APIPath": fmt.Sprintf("%s://%s", backend.mode, backend.address),
+        })
     })
 }
 

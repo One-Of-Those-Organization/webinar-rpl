@@ -231,10 +231,18 @@ func appHandleUserInfoOf(backend *Backend, route fiber.Router) {
         var specifiedUser table.User
         res := backend.db.Where("user_email = ?", queriedEmail).First(&specifiedUser)
         if res.Error != nil {
+            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "The email specified is not registered.",
+                    "error_code": 3,
+                    "data": nil,
+                })
+            }
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "The email specified is not registered.",
-                "error_code": 3,
+                "message": fmt.Sprintf("There is an error with the db, %v", res.Error),
+                "error_code": 4,
                 "data": nil,
             })
         }
@@ -327,7 +335,7 @@ func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
 
         result := backend.db.Model(&table.User{}).Where("user_email = ?", body.Email).Updates(updates)
         if result.Error != nil {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
                 "error_code": 6,
