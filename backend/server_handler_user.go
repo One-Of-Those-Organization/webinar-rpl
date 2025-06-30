@@ -458,7 +458,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                 updates["user_picture"] = body.Picture
             }
 
-            if body.Password != nil && *body.Password == "" {
+            if body.Password != nil && *body.Password != "" {
                 hashedPassword, err := HashPassword(*body.Password)
                 if err != nil {
                     return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -470,6 +470,15 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                 }
                 updates["user_password"] = hashedPassword
             }
+
+            if *body.Password == "" || len(*body.Password) <= 0 {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Invalid Password.",
+                    "error_code": 6,
+                    "data": nil,
+                })
+            } 
 
 	    result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
 	    if result.Error != nil {

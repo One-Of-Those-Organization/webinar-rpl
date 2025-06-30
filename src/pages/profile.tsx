@@ -10,6 +10,7 @@ import { UserData } from "@/api/interface";
 import { auth_user } from "@/api/auth_user";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 export default function ProfilPage() {
   const [initialLoading, setInitialLoading] = useState(true);
@@ -18,6 +19,8 @@ export default function ProfilPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [email, setEmail] = useState("");
+  const navigate = useNavigate();
 
   // Current data state
   const [userData, setUserData] = useState({
@@ -82,6 +85,7 @@ export default function ProfilPage() {
           createdAt: user_data_object.UserCreatedAt,
         };
 
+        setEmail(user_data_object.UserEmail);
         setUserData(initData);
         setOriginalData(initData);
       } else {
@@ -254,14 +258,16 @@ export default function ProfilPage() {
     toast.success("Profile picture will be removed when you save changes");
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!isEditing || isSaving || imageUploading) return;
     toast.info(
       "Password change functionality is not implemented yet. Please contact support.",
       {
         toastId: "change-password-not-implemented",
       }
+      // Implement API here later ... (WIP)
     );
+    navigate("/change-password/:" + email);
   };
 
   if (initialLoading) {
