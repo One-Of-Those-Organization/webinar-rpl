@@ -1,10 +1,12 @@
 import TestApi
+import utils
 
-admin_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6MSwiZW1haWwiOiJjb21tcmFkZUBleGFtcGxlLmNvbSIsImV4cCI6MTc1MDYwNzI4NH0.aACYo6XIx0iOf3NRjZlPBnUov18uqo4Yvmd9aRT1bL0"
-user_token = ""
 debug = TestApi.TestApi
 
 if __name__ == "__main__":
+
+    admin_token = utils.login("admin@wowadmin.com", "secret")
+    # user_token  = utils.login("bombardino@example.com", "")
 
     # -- START RESET PASS TEST -- #
 
@@ -160,7 +162,94 @@ if __name__ == "__main__":
 
     # -- START USER INFO OF TEST -- #
 
+    # NOTE: Error 1 is not tested because it will 100% work.
+    # NOTE: Error 4 is not possible to test without database error.
+
+    iftest1 = debug(
+        "protected/user-info-of",
+        method="GET",
+        headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
+        desc="Test the info of api with empty email field, it should return error_code 2.",
+    )
+    iftest1.test(2)
+
+    iftest2 = debug(
+        "protected/user-info-of?email=notregsitered@woho.com",
+        method="GET",
+        headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
+        desc="Test the info of api with not regsitered email field, it should return error_code 3.",
+    )
+    iftest2.test(3)
+
+    iftest3 = debug(
+        "protected/user-info-of?email=commrade@example.com",
+        method="GET",
+        headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
+        desc="Test the info of api with regsitered email, it should return error_code 0.",
+    )
+    iftest3.test(0)
+
     # -- END USER INFO OF TEST -- #
+
+    # -- START USER EDIT ADMIN TEST -- #
+
+    euatest1 = debug(
+        "protected/edit-admin-user",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload={
+            "email": "commrade@example.com",
+            "instance": "Updated Instance",
+            "picture": "https://example.com/avatar.png",
+        },
+        desc="Test the edit admin user api with valid arguments, it should return error_code 0.",
+    )
+    euatest1.test(0)
+
+    euatest2 = debug(
+        "protected/edit-admin-user",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload="not a json",
+        desc="Test the edit admin user api with invalid JSON body. Should return error_code 3.",
+    )
+    euatest2.test(3)
+
+    euatest3 = debug(
+        "protected/edit-admin-user",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload={
+            "name": "No Email",
+        },
+        desc="Test the edit admin user api with missing email field. Should return error_code 4.",
+    )
+    euatest3.test(4)
+
+    edit_admin_user_not_found = debug(
+        "protected/edit-admin-user",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload={
+            "email": "notfound@example.com",
+        },
+        desc="Test the edit admin user api with user not found or no changes made. Should return error_code 7.",
+    )
+    edit_admin_user_not_found.test(7)
+
+    # -- END USER EDIT ADMIN TEST -- #
+
+    # -- START USER DEL ADMIN TEST -- #
+
+    # -- END USER DEL ADMIN TEST -- #
 
     # admin_register_success = debug(
     #     "protected/register-admin",
