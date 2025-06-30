@@ -26,6 +26,17 @@ export default function ChangePassword() {
   const [newPass, setNewPass] = useState<string>("");
   const [confirmNewPass, setConfirmNewPass] = useState<string>("");
 
+  // Check if the new password is strong
+  function isStrongPassword(password: string): boolean {
+    return (
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password) &&
+      /[^A-Za-z0-9]/.test(password)
+    );
+  }
+
   // Toggle Invisible / Visible Password
   const [isOldPasswordVisible, setIsOldPasswordVisible] =
     useState<boolean>(false);
@@ -37,28 +48,62 @@ export default function ChangePassword() {
   const toggleConfirmNewPasswordVisibility = () =>
     setIsConfirmNewPasswordVisible((v) => !v);
 
+  // Handle Change Password
   const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       if (!parsedEmail) {
         setError("Invalid email address.");
-        toast.error("Invalid email address.");
+        toast.error("Invalid email address.", {
+          toastId: "change-password-error",
+        });
         return;
+      } else if (!oldPass || !newPass || !confirmNewPass) {
+        setError("All fields are required.");
+        toast.warning("All fields are required.", {
+          toastId: "change-password-warning",
+        });
+        return;
+      } else if (!isStrongPassword(newPass)) {
+        setError(
+          "New password must be at least 8 characters long, contain uppercase letters, lowercase letters, numbers, and symbols."
+        );
+        toast.warning(
+          "New password must be at least 8 characters long, contain uppercase letters, lowercase letters, numbers, and symbols.",
+          { toastId: "change-password-warning" }
+        );
+        return;
+      } else if (newPass !== confirmNewPass) {
+        setError("New password and confirm password do not match.");
+        toast.warning("New password and confirm password do not match.", {
+          toastId: "change-password-warning",
+        });
+        return;
+      } else {
+        setError("");
       }
-
-      console.log("Changing password for:", parsedEmail);
 
       setIsLoading(true);
-      e.preventDefault();
-      setError("");
 
+      // Call the API to change the password
       const response = await auth_user.user_edit({ password: newPass });
       if (response.success) {
+        toast.success("Password changed successfully!", {
+          toastId: "change-password-success",
+        });
+        navigate("/profile");
+      } else {
+        setError("Failed to change password. Please try again.");
+        toast.error("Failed to change password. Please try again.", {
+          toastId: "change-password-error",
+        });
       }
-
       toast.info("Changing password...", { toastId: "change-password" });
     } catch (error) {
       setError("An unexpected error occurred. Please try again later.");
-      toast.error("An unexpected error occurred. Please try again later.");
+      toast.error("An unexpected error occurred. Please try again later.", {
+        toastId: "change-password-error",
+      });
       return;
     } finally {
       setIsLoading(false);
@@ -101,7 +146,7 @@ export default function ChangePassword() {
               {/* Old Password Label */}
               <Input
                 color="secondary"
-                label="New Password"
+                label="Old Password"
                 type={isOldPasswordVisible ? "text" : "password"}
                 variant="flat"
                 value={oldPass}

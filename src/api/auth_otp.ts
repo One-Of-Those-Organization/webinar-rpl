@@ -1,6 +1,5 @@
 import { BaseResponse } from "./interface";
-
-const API_URL = "http://localhost:3000";
+import { API_URL } from "@/api/endpoint";
 
 export const auth_otp = {
   // API untuk mengirim OTP

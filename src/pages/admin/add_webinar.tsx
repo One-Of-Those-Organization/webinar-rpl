@@ -6,6 +6,7 @@ import { useState } from "react";
 import { auth_webinar } from "@/api/auth_webinar";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { API_URL } from "@/api/endpoint";
 import {
   Dropdown,
   DropdownTrigger,
@@ -164,8 +165,6 @@ export default function CreateWebinar() {
     }
   };
 
-  // TODO: This is the issue all along i debuged this and this function will set it as is.
-  // Function to handle time change for start and end times
   const handleTimeChange = (field: "dstart" | "dend", value: string) => {
     const dateValue = webinarInput[field].split("T")[0];
     const newDate = `${dateValue}T${value}`;
@@ -220,7 +219,7 @@ export default function CreateWebinar() {
 
           serverPath = serverPath.replace(
             /^https?:\/\/[^/]+:3000/,
-            "http://localhost:3000"
+            API_URL
           );
 
           const staticUrl = serverPath;

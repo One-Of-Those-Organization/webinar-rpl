@@ -11,14 +11,13 @@
 // 7. Get Participant Count by Event ✅
 // 8. Get Event Participation by User ✅
 
+import { API_URL } from "@/api/endpoint";
 import {
   BaseResponse,
   EventPartisipantAbsence,
   EventPartisipantRegister,
   EventPartisipantEdit,
 } from "./interface";
-
-const API_URL = "http://localhost:3000";
 
 export const auth_participants = {
   // API Participant Register
