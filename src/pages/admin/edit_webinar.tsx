@@ -20,6 +20,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { auth_webinar } from "@/api/auth_webinar";
 import { auth_user } from "@/api/auth_user";
+import { auth_cert } from "@/api/auth_cert";
 import { auth_participants } from "@/api/auth_participants";
 import { auth_material } from "@/api/auth_material";
 import { UserData } from "@/api/interface";
@@ -780,13 +781,13 @@ export default function EditWebinarPage() {
   };
 
   // Handle certificate click
-  const handleCertificateClick = () => {
-    // TODO: IP BACKEND
-    navigate("/");
-
-    toast.info("Certificate feature is not implemented yet", {
-      toastId: "certificate-info",
-    });
+  const handleCertificateClick = async () => {
+    const token = localStorage.getItem("token");
+    const response = await auth_cert.create_cert(id);
+    document.cookie = `jwt=${token}; path=/; Secure`;
+    window.location.href = `${API_URL}/api/c/cert-editor?event_id=${id}`;
+    // TODO: Call this on logout.
+    // document.cookie = `jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; Secure`;
   };
 
   // Get participant count for webinar
