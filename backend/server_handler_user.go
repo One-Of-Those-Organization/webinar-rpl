@@ -472,7 +472,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
                 updates["user_password"] = hashedPassword
             }
 
-            if (*body.Password == "" || len(*body.Password) <= 0) && (*body.OldPassword == "" || len(*body.OldPassword) <= 0) {
+            if (body.Password != nil && *body.Password == "" || len(*body.Password) <= 0) && (body.OldPassword != nil && *body.OldPassword == "" || len(*body.OldPassword) <= 0) {
                 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                     "success": false,
                     "message": "Invalid Password or old Password or both.",
