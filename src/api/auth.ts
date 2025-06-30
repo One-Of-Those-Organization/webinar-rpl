@@ -6,8 +6,7 @@
 // 2. Login User ✅
 
 import { BaseResponse, RegisterData, LoginData } from "./interface.ts";
-
-const API_URL = "http://localhost:3000";
+import { API_URL } from "@/api/endpoint";
 
 // Fungsi untuk menghubungkan ke API
 export const auth = {

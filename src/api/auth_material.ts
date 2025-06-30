@@ -8,8 +8,7 @@
 // 4. Edit Material ✅
 
 import { BaseResponse, AddMaterial, EditMaterial } from "./interface";
-
-const API_URL = "http://localhost:3000";
+import { API_URL } from "@/api/endpoint";
 
 export const auth_material = {
   // API untuk menambahkan materi

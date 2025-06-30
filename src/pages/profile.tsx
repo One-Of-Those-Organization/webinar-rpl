@@ -8,6 +8,7 @@ import { FaCamera, FaExclamationTriangle, FaSpinner } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
 import { auth_user } from "@/api/auth_user";
+import { API_URL } from "@/api/endpoint";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -228,7 +229,7 @@ export default function ProfilPage() {
           let serverPath = response.data?.filename || "";
           serverPath = serverPath.replace(
             /^https?:\/\/[^/]+:3000/,
-            "http://localhost:3000"
+            API_URL
           );
           setUserData((prev) => ({ ...prev, profile: serverPath }));
           toast.success("Image uploaded! Remember to save your changes.");

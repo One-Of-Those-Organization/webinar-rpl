@@ -10,14 +10,13 @@
 // 6. Post Webinar Image ✅
 // 7. Get Total Webinar ✅
 
+import { API_URL } from "@/api/endpoint";
 import {
   BaseResponse,
   WebinarInput,
   WebinarImage,
   WebinarEdit,
 } from "./interface.ts";
-
-const API_URL = "http://localhost:3000";
 
 // Fungsi untuk menghubungkan ke API
 export const auth_webinar = {

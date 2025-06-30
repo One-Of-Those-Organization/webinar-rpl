@@ -29,6 +29,7 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import { QRScanner } from "@/components/QRScanner";
+import { API_URL } from "@/api/endpoint";
 
 // Fungsi untuk mendapatkan tanggal hari ini dalam format YYYY-MM-DD
 const getTodayDate = (): string => {
@@ -780,6 +781,9 @@ export default function EditWebinarPage() {
 
   // Handle certificate click
   const handleCertificateClick = () => {
+    // TODO: IP BACKEND
+    navigate("/");
+
     toast.info("Certificate feature is not implemented yet", {
       toastId: "certificate-info",
     });

@@ -14,6 +14,7 @@
 // 10. Get Current User Info (User Only) ✅
 // 11. User Reset Password (User Only) ✅
 
+import { API_URL } from "@/api/endpoint";
 import {
   BaseResponse,
   UserEditData,
@@ -21,8 +22,6 @@ import {
   RegisterAdmin,
   UserResetPassword,
 } from "./interface.ts";
-
-const API_URL = "http://localhost:3000";
 
 // Fungsi untuk menghubungkan ke API
 export const auth_user = {
