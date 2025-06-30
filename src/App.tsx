@@ -1,4 +1,9 @@
 import { Route, Routes, Navigate } from "react-router-dom";
+// Firewall / Route
+import ProtectedRoute from "@/components/firewall/protectedroute";
+import GuestOnlyRoute from "@/components/firewall/guestonlyroute";
+import AdminOnlyRoute from "@/components/firewall/adminonlyroute";
+
 // Guest Page
 import LoginPage from "@/pages/auth/login";
 import RegisterPage from "@/pages/auth/register";
@@ -12,11 +17,7 @@ import ProfilePage from "@/pages/profile";
 import SertifikatUserPage from "@/pages/sertifikat";
 import HistoryPage from "@/pages/history";
 import ListPartisipantPage from "./pages/list_partisipant";
-
-// Firewall / Route
-import ProtectedRoute from "@/components/firewall/protectedroute";
-import GuestOnlyRoute from "@/components/firewall/guestonlyroute";
-import AdminOnlyRoute from "@/components/firewall/adminonlyroute";
+import ChangePassword from "./pages/auth/change_password";
 
 // Admin
 import DasboardAdminPage from "@/pages/admin/index";
@@ -116,6 +117,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ListPartisipantPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/change-password/:email"
+        element={
+          <ProtectedRoute>
+            <ChangePassword />
           </ProtectedRoute>
         }
       />
