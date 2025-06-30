@@ -116,6 +116,7 @@ export const Navbar = () => {
           color="danger"
           onClick={async () => {
             localStorage.clear();
+            document.cookie = `jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; Secure`;
             navigate("/", { state: { logoutSuccess: true } });
           }}
         >
