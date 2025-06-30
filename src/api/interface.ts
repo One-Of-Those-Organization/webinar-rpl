@@ -48,6 +48,7 @@ export interface UserEditData {
   instance?: string;
   picture?: string;
   password?: string;
+  old_password?: string; // Optional, used for changing password
 }
 
 // User Image Data (POST)

@@ -90,10 +90,14 @@ export default function ProfilPage() {
         setUserData(initData);
         setOriginalData(initData);
       } else {
-        toast.error(response.message || "Failed to fetch user data");
+        toast.error(response.message || "Failed to fetch user data", {
+          toastId: "profile-error",
+        });
       }
     } catch (error) {
-      toast.error("Unexpected error while fetching user data!");
+      toast.error("Unexpected error while fetching user data!", {
+        toastId: "profile-fetch-error",
+      });
     } finally {
       setInitialLoading(false);
     }
@@ -110,22 +114,26 @@ export default function ProfilPage() {
     const trimmedInstance = userData.instance.trim();
 
     if (!trimmedName) {
-      toast.error("Name cannot be empty");
+      toast.info("Name cannot be empty", { toastId: "profile-info" });
       return;
     }
 
     if (trimmedName.length < 2) {
-      toast.error("Name must be at least 2 characters long");
+      toast.info("Name must be at least 2 characters long", {
+        toastId: "profile-info",
+      });
       return;
     }
 
     if (!trimmedInstance) {
-      toast.error("Instance cannot be empty");
+      toast.info("Instance cannot be empty", { toastId: "profile-info" });
       return;
     }
 
     if (!hasUnsavedChanges) {
-      toast.info("No changes detected, nothing to save");
+      toast.info("No changes detected, nothing to save", {
+        toastId: "profile-info",
+      });
       setIsEditing(false);
       return;
     }
@@ -139,14 +147,19 @@ export default function ProfilPage() {
       });
 
       if (response.success) {
-        toast.success("Profile updated successfully!");
-        await fetchUserData();
+        toast.success("Profile updated successfully!", {
+          toastId: "profile-success",
+        });
         setIsEditing(false);
       } else {
-        toast.error(response.message || "Failed to update profile");
+        toast.error(response.message || "Failed to update profile", {
+          toastId: "profile-error",
+        });
       }
     } catch (error) {
-      toast.error("Network error. Please try again.");
+      toast.error("Network error. Please try again.", {
+        toastId: "profile-error-network",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -169,7 +182,7 @@ export default function ProfilPage() {
     } else {
       setIsEditing(false);
       toast.info("Edit cancelled, no changes were made.", {
-        toastId: "edit-cancelled",
+        toastId: "edit-canelled",
       });
     }
   };
@@ -179,7 +192,9 @@ export default function ProfilPage() {
     setUserData(originalData);
     setIsEditing(false);
     setShowCancelConfirm(false);
-    toast.info("Changes discarded, reverting to original data");
+    toast.info("Changes discarded, reverting to original data", {
+      toastId: "changes-discarded",
+    });
   };
 
   // Handle edit button click
@@ -193,7 +208,7 @@ export default function ProfilPage() {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isEditing || imageUploading) {
       toast.warning(
-        "Please enter edit mode first to change your profile picture"
+        "Please enter edit mode first to change your profile picture",
       );
       e.target.value = "";
       return;
@@ -227,10 +242,7 @@ export default function ProfilPage() {
 
         if (response.success) {
           let serverPath = response.data?.filename || "";
-          serverPath = serverPath.replace(
-            /^https?:\/\/[^/]+:3000/,
-            API_URL
-          );
+          serverPath = serverPath.replace(/^https?:\/\/[^/]+:3000/, API_URL);
           setUserData((prev) => ({ ...prev, profile: serverPath }));
           toast.success("Image uploaded! Remember to save your changes.");
         } else {
@@ -250,7 +262,7 @@ export default function ProfilPage() {
   const handleRemoveImage = async () => {
     if (!isEditing || imageUploading) {
       toast.warning(
-        "Please enter edit mode first to remove your profile picture"
+        "Please enter edit mode first to remove your profile picture",
       );
       return;
     }
@@ -265,7 +277,7 @@ export default function ProfilPage() {
       "Password change functionality is not implemented yet. Please contact support.",
       {
         toastId: "change-password-not-implemented",
-      }
+      },
       // Implement API here later ... (WIP)
     );
     navigate("/change-password/:" + email);

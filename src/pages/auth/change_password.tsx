@@ -66,11 +66,11 @@ export default function ChangePassword() {
         return;
       } else if (!isStrongPassword(newPass)) {
         setError(
-          "New password must be at least 8 characters long, contain uppercase letters, lowercase letters, numbers, and symbols."
+          "New password must be at least 8 characters long, contain uppercase letters, lowercase letters, numbers, and symbols.",
         );
         toast.warning(
           "New password must be at least 8 characters long, contain uppercase letters, lowercase letters, numbers, and symbols.",
-          { toastId: "change-password-warning" }
+          { toastId: "change-password-warning" },
         );
         return;
       } else if (newPass !== confirmNewPass) {
@@ -86,8 +86,17 @@ export default function ChangePassword() {
       setIsLoading(true);
 
       // Call the API to change the password
-      const response = await auth_user.user_edit({ password: newPass });
+      const response = await auth_user.user_edit({
+        old_password: oldPass,
+        password: newPass,
+      });
+      console.log("Change Password Response:", response);
       if (response.success) {
+        if (oldPass != OldPassword) {
+          toast.warning("Old password is incorrect.", {
+            toastId: "change-password-warning",
+          });
+        }
         toast.success("Password changed successfully!", {
           toastId: "change-password-success",
         });
