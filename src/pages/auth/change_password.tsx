@@ -92,18 +92,14 @@ export default function ChangePassword() {
       });
       console.log("Change Password Response:", response);
       if (response.success) {
-        if (oldPass != OldPassword) {
-          toast.warning("Old password is incorrect.", {
-            toastId: "change-password-warning",
-          });
-        }
         toast.success("Password changed successfully!", {
           toastId: "change-password-success",
         });
         navigate("/profile");
       } else {
-        setError("Failed to change password. Please try again.");
-        toast.error("Failed to change password. Please try again.", {
+        const aa = response.message || "Failed to change password.";
+        setError(aa);
+        toast.error(aa, {
           toastId: "change-password-error",
         });
       }
