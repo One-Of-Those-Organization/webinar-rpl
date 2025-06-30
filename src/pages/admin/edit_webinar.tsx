@@ -783,11 +783,10 @@ export default function EditWebinarPage() {
   // Handle certificate click
   const handleCertificateClick = async () => {
     const token = localStorage.getItem("token");
-    const response = await auth_cert.create_cert(id);
+    const _ = await auth_cert.create_cert(id);
     document.cookie = `jwt=${token}; path=/; Secure`;
-    window.location.href = `${API_URL}/api/c/cert-editor?event_id=${id}`;
-    // TODO: Call this on logout.
-    // document.cookie = `jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; Secure`;
+    const link = `${API_URL}/api/c/cert-editor?event_id=${id}`;
+    window.open(link, "_blank", "noopener,noreferrer");
   };
 
   // Get participant count for webinar
