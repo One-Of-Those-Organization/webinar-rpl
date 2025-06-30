@@ -422,118 +422,114 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
 // POST: api/protected/user-edit
 func appHandleUserEdit(backend *Backend, route fiber.Router) {
     route.Post("/user-edit", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid JWT tokens.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        email := claims["email"].(string)
+
         var body struct {
-            FullName    string  `json:"name"`
-            Instance    string  `json:"instance"`
-            Picture     string  `json:"picture"`
+            FullName    *string  `json:"name"`
+            Instance    *string  `json:"instance"`
+            Picture     *string  `json:"picture"`
             Password    *string `json:"password"`
             OldPassword *string `json:"old_password"`
         }
 
-        user := c.Locals("user").(*jwt.Token)
-        if user != nil {
-            claims := user.Claims.(jwt.MapClaims)
-            email := claims["email"].(string)
-            err:= c.BodyParser(&body)
-            if err != nil {
-                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                    "success": false,
-                    "message": "Invalid Body Request",
-                    "error_code": 1,
-                    "data": nil,
-                })
-            }
-
-            updates := make(map[string]any)
-            // updates := make(map[string]interface{})
-
-            if body.FullName != "" {
-                updates["user_full_name"] = body.FullName
-            }
-
-            if body.Instance != "" {
-                updates["user_instance"] = body.Instance
-            }
-
-            if body.Picture != "" {
-                updates["user_picture"] = body.Picture
-            }
-
-            if (body.Password != nil && *body.Password != "") && (body.OldPassword != nil && *body.OldPassword != "") {
-                hashedPassword, err := HashPassword(*body.Password)
-                if err != nil {
-                    return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                        "success": false,
-                        "message": "Failed to hash the new password.",
-                        "error_code": 2,
-                        "data": nil,
-                    })
-                }
-                updates["user_password"] = hashedPassword
-            }
-
-            if body.Password != nil && body.OldPassword != nil {
-                if (*body.Password == "" || len(*body.Password) <= 0) && (*body.OldPassword == "" || len(*body.OldPassword) <= 0) {
-                    return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                        "success": false,
-                        "message": "Invalid Password or old Password or both.",
-                        "error_code": 6,
-                        "data": nil,
-                    })
-                }
-                var CurrentUser table.User
-                res := backend.db.Where("user_email = ?", email).First(&CurrentUser)
-                if res.Error != nil {
-                    return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                        "success": false,
-                        "message": fmt.Sprintf("Failed to fetch the user with that id from the db, %v", res.Error),
-                        "error_code": 7,
-                        "data": nil,
-                    })
-                }
-
-                if CheckPassword(CurrentUser.UserPassword, *body.OldPassword) {
-                    return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                        "success": false,
-                        "message": "Failed to change password because your password is not match.",
-                        "error_code": 8,
-                        "data": nil,
-                    })
-                }
-            }
-
-            result := backend.db.Model(&table.User{}).Where("user_email = ?", email).Updates(updates)
-            if result.Error != nil {
-                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                    "success": false,
-                    "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
-                    "error_code": 3,
-                    "data": nil,
-                })
-            }
-
-            if result.RowsAffected == 0 {
-                return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-                    "success": false,
-                    "message": "User not found or no changes made.",
-                    "error_code": 5,
-                    "data": nil,
-                })
-            }
-            return c.Status(fiber.StatusOK).JSON(fiber.Map{
-                "success": true,
-                "message": "Data modified.",
-                "error_code": 0,
-                "data": nil,
-            })
-        } else {
+        err = c.BodyParser(&body)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid Body Request",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.User
+        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        if res.Error != nil {
+            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "The specified email is not registered.",
+                "error_code": 3,
+                "data": nil,
+            })
+            }
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("There is a problem on the backend when fetching the user, %v", res.Error),
                 "error_code": 4,
                 "data": nil,
             })
         }
+
+        if body.FullName != nil {
+            currentUser.UserFullName = *body.FullName
+        }
+
+        if body.Instance != nil {
+            currentUser.UserInstance = *body.Instance
+        }
+
+        if body.Picture != nil {
+            currentUser.UserPicture = *body.Picture
+        }
+
+        if (body.Password != nil && *body.Password != "") && (body.OldPassword != nil && *body.OldPassword != "") {
+
+            if CheckPassword(currentUser.UserPassword, *body.OldPassword) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Failed to change password because your password is not match.",
+                    "error_code": 6,
+                    "data": nil,
+                })
+            }
+
+            hashedPassword, err := HashPassword(*body.Password)
+            if err != nil {
+                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Failed to hash the new password.",
+                    "error_code": 5,
+                    "data": nil,
+                })
+            }
+            currentUser.UserPassword = hashedPassword
+        }
+
+        result := backend.db.Model(&table.User{}).Save(&currentUser)
+        if result.Error != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Error while updating the db, %v", result.Error),
+                "error_code": 7,
+                "data": nil,
+            })
+        }
+
+        if result.RowsAffected == 0 {
+            return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+                "success": false,
+                "message": "User not found or no changes made.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Data modified.",
+            "error_code": 0,
+            "data": nil,
+        })
     })
 }
 
