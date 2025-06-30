@@ -485,7 +485,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
 
         if (body.Password != nil && *body.Password != "") && (body.OldPassword != nil && *body.OldPassword != "") {
 
-            if CheckPassword(currentUser.UserPassword, *body.OldPassword) {
+            if !CheckPassword(currentUser.UserPassword, *body.OldPassword) {
                 return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                     "success": false,
                     "message": "Failed to change password because your password is not match.",
@@ -506,7 +506,7 @@ func appHandleUserEdit(backend *Backend, route fiber.Router) {
             currentUser.UserPassword = hashedPassword
         }
 
-        result := backend.db.Model(&table.User{}).Save(&currentUser)
+        result := backend.db.Save(&currentUser)
         if result.Error != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
