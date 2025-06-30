@@ -9,20 +9,31 @@ import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import { QRScanner } from "@/components/QRScanner";
 import { QRGenerator } from "@/components/QRGenerator";
+import { useNavigate } from "react-router-dom";
+import { auth_material } from "@/api/auth_material";
 
 // Webinar Detail Page
 
 export default function DetailPage() {
+  // Get webinar ID from URL parameters
   const { id } = useParams<{ id: string }>();
+
+  // Webinar Data
   const [webinar, setWebinar] = useState<Webinar | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [hasAttended, setHasAttended] = useState(false);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
-  const [isQRGeneratorOpen, setIsQRGeneratorOpen] = useState(false);
-  const [isCommittee, setIsCommittee] = useState(false);
+
+  // Navigate hook for programmatic navigation
+  const navigate = useNavigate();
+
+  // State for loading, registration, attendance, and committee status
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRegistering, setIsRegistering] = useState<boolean>(false);
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  const [hasAttended, setHasAttended] = useState<boolean>(false);
+  const [isCommittee, setIsCommittee] = useState<boolean>(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState<boolean>(false);
+  const [isQRGeneratorOpen, setIsQRGeneratorOpen] = useState<boolean>(false);
+  const [materialLink, setMaterialLink] = useState<string>("");
 
   // Load webinar details when component mounts or id changes
   useEffect(() => {
@@ -46,6 +57,8 @@ export default function DetailPage() {
 
           // Check committee status setelah data webinar berhasil didapat
           await handleCheckCommittee(eventId);
+
+          await auth_material.get_material(eventId);
         } else {
           toast.error(result.message || "Failed to load webinar details");
         }
@@ -63,6 +76,17 @@ export default function DetailPage() {
     if (webinar?.name) {
       document.title = `${webinar.name} | Webinar Detail`;
     }
+  }, [webinar]);
+
+  useEffect(() => {
+    const fetchMaterial = async () => {
+      if (!webinar?.id) return;
+      const response = await auth_material.get_material(webinar.id);
+      if (response.success) {
+        setMaterialLink(response.data?.EventMatAttachment || "");
+      }
+    };
+    fetchMaterial();
   }, [webinar]);
 
   // function to check registration status
@@ -164,15 +188,20 @@ export default function DetailPage() {
       });
       return;
     } else {
-      toast.info("Materials feature is not implemented yet", {
-        toastId: "materials-info",
-      });
+      window.open(materialLink, "_blank", "noopener,noreferrer");
     }
   };
 
   // Handle Scan QR Absence (committee action: open scanner)
   const handleQRScan = () => {
-    setIsQRScannerOpen(true);
+    if (!isWebinarLive()) {
+      toast.info("The webinar is not live, you cannot scan QR code.", {
+        toastId: "qr-scan-info",
+      });
+      return;
+    } else {
+      setIsQRScannerOpen(true);
+    }
   };
 
   // Handle Generate QR Absence
@@ -203,10 +232,12 @@ export default function DetailPage() {
   };
 
   // Handle participants click (committee action: view participants)
-  const handleParticipantsClick = async () => {
-    toast.info("Participants feature is not implemented yet", {
-      toastId: "participants-info",
-    });
+  const handleListParticipantsClick = () => {
+    if (!id) {
+      toast.error("Webinar ID is not available."), { toastId: "detail-error" };
+      return;
+    }
+    navigate(`/list-partisipant/${id}`);
   };
 
   // Handle certificate click
@@ -221,10 +252,10 @@ export default function DetailPage() {
         toastId: "registration-info",
       });
       return;
-    } else if (!hasAttended) {
+    } else if (!hasAttended && !isCommittee) {
       toast.info(
         "You must attend the webinar and it must be finished to get the certificate.",
-        { toastId: "attended-info" }
+        { toastId: "attended-info" },
       );
       return;
     } else if (!isWebinarFinished()) {
@@ -232,7 +263,7 @@ export default function DetailPage() {
         "Webinar has not finished yet, certificate is not available.",
         {
           toastId: "certificate-info",
-        }
+        },
       );
       return;
     } else {
@@ -247,14 +278,6 @@ export default function DetailPage() {
     toast.info("Edit Webinar feature is not implemented yet", {
       toastId: "edit-webinar-info",
     });
-  };
-
-  // Get webinar link with proper URL formatting
-  const getWebinarLink = (link?: string) => {
-    if (!link) return "#";
-    return link.startsWith("http://") || link.startsWith("https://")
-      ? link
-      : `https://${link}`;
   };
 
   // Change committee check to use auth_participants
@@ -319,7 +342,6 @@ export default function DetailPage() {
                 size: "lg",
               })}
               onClick={handleMaterialsClick}
-              target={webinar?.att ? "_blank" : undefined}
             >
               Materials
             </Button>
@@ -370,7 +392,7 @@ export default function DetailPage() {
                   className={buttonStyles({
                     color: "secondary",
                     radius: "full",
-                    variant: "bordered",
+                    variant: isWebinarLive() ? "solid" : "bordered",
                     size: "lg",
                   })}
                   onClick={handleQRScan}
@@ -381,10 +403,10 @@ export default function DetailPage() {
                   className={buttonStyles({
                     color: "secondary",
                     radius: "full",
-                    variant: "bordered",
+                    variant: "solid",
                     size: "lg",
                   })}
-                  onClick={handleParticipantsClick}
+                  onClick={handleListParticipantsClick}
                 >
                   View Participants
                 </Button>
@@ -447,7 +469,7 @@ export default function DetailPage() {
             <span className="text-[#B6A3E8] font-bold">
               {webinar?.link ? (
                 <a
-                  href={getWebinarLink(webinar.link)}
+                  href={webinar.link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#B6A3E8] font-bold hover:underline"
