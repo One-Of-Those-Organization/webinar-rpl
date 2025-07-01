@@ -1,6 +1,14 @@
 import { button as buttonStyles } from "@heroui/theme";
 import DefaultLayout from "@/layouts/default";
-import { Image, Button, Spinner } from "@heroui/react";
+import {
+  Image,
+  Button,
+  Spinner,
+  Card,
+  CardBody,
+  Select,
+  SelectItem,
+} from "@heroui/react";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { auth_webinar } from "@/api/auth_webinar";
@@ -10,6 +18,10 @@ import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import { QRScanner } from "@/components/QRScanner";
 import { QRGenerator } from "@/components/QRGenerator";
+import { useNavigate } from "react-router-dom";
+import { auth_material } from "@/api/auth_material";
+import { Input, Textarea } from "@heroui/input";
+import { FaTrash } from "react-icons/fa";
 
 // Webinar Detail Page
 
@@ -19,6 +31,9 @@ export default function DetailPage() {
 
   // Navigate hook for programmatic navigation
   const navigate = useNavigate();
+
+  // Error State
+  const [error, setError] = useState<string>("");
 
   // Toggle Mode (Edit or View)
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -33,6 +48,32 @@ export default function DetailPage() {
   const [isQRScannerOpen, setIsQRScannerOpen] = useState<boolean>(false);
   const [isQRGeneratorOpen, setIsQRGeneratorOpen] = useState<boolean>(false);
   const [materialLink, setMaterialLink] = useState<string>("");
+
+  // Form data state
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    speaker: "",
+    dateStart: "",
+    timeStart: "",
+    dateEnd: "",
+    timeEnd: "",
+    att: "",
+    link: "",
+    imageUrl: "",
+    max: 0,
+    certId: 0,
+    panitia: [] as string[],
+    materialLink: "",
+  });
+
+  // Handle form input changes
+  const handleInputChange = (field: string, value: string | number) => {
+    setEditForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   // Load webinar details when component mounts or id changes
   useEffect(() => {
@@ -482,11 +523,200 @@ export default function DetailPage() {
 
           {/* EDIT MODE SECTION */}
           {isEditMode ? (
-            <div className="flex justify-center items-center h-screen">
-              <h1 className="text-2xl font-bold">
-                Edit Mode is not implemented yet
-              </h1>
-            </div>
+            <Card>
+              <CardBody className="space-y-4">
+                {error && (
+                  <div className="text-red-500 text-sm mb-4">{error}</div>
+                )}
+                {/* Edit Webinar Name */}
+                <Input
+                  color="secondary"
+                  label="Webinar Name"
+                  placeholder="Enter webinar name"
+                  value={editForm.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  isRequired
+                />
+
+                {/* Edit Webinar Speaker Name */}
+                <Input
+                  color="secondary"
+                  label="Speaker Name"
+                  placeholder="Enter speaker name"
+                  value={editForm.speaker}
+                  onChange={(e) => handleInputChange("speaker", e.target.value)}
+                  isRequired
+                />
+
+                {/* Edit Webinar Start Date */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    color="secondary"
+                    label="Start Date"
+                    type="date"
+                    // min={todayDate}
+                    // value={editForm.dateStart}
+                    // onChange={(e) =>
+                    //   handleInputChange("dateStart", e.target.value)
+                    // }
+                    isRequired
+                  />
+
+                  {/* Edit Webinar Start Time */}
+                  <Input
+                    color="secondary"
+                    label="Start Time"
+                    type="time"
+                    // value={editForm.timeStart}
+                    // onChange={(e) => handleTimeChange("start", e.target.value)}
+                    isRequired
+                  />
+                </div>
+
+                {/* Edit Webinar End Date */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    color="secondary"
+                    label="End Date"
+                    type="date"
+                    // min={editForm.dateStart || todayDate}
+                    // value={editForm.dateEnd}
+                    // onChange={(e) =>
+                    //   handleInputChange("dateEnd", e.target.value)
+                    // }
+                    isRequired
+                  />
+                  {/* Edit Webinar End Time */}
+                  <Input
+                    color="secondary"
+                    label="End Time"
+                    type="time"
+                    // value={editForm.timeEnd}
+                    // onChange={(e) => handleTimeChange("end", e.target.value)}
+                    isRequired
+                  />
+                </div>
+
+                {/* Edit Webinar Attendance Type */}
+                <Select
+                  color="secondary"
+                  label="Attendance Type"
+                  // selectedKeys={[editForm.att]}
+                  // onSelectionChange={(keys) => {
+                  //   const [value] = Array.from(keys);
+                  //   setEditForm((prev) => ({
+                  //     ...prev,
+                  //     att: value as string,
+                  //   }));
+                  // }}
+                  className="w-full"
+                  variant="bordered"
+                  isRequired
+                >
+                  <SelectItem key="online">Online</SelectItem>
+                  <SelectItem key="offline">Offline</SelectItem>
+                </Select>
+
+                {/* Edit Webinar Precise Location */}
+                <Input
+                  color="secondary"
+                  // label={
+                  //   editForm.att === "online" ? "Webinar Link" : "Location"
+                  // }
+                  // placeholder={
+                  //   editForm.att === "online" ? "https://..." : "Enter location"
+                  // }
+                  // value={editForm.link}
+                  // onChange={(e) => handleInputChange("link", e.target.value)}
+                />
+
+                {/* Edit Webinar Poster */}
+                <Input
+                  color="secondary"
+                  label="Webinar Image"
+                  type="file"
+                  accept="image/*"
+                  // onChange={handleWebinarImageUpload}
+                  // disabled={isImageLoading}
+                  description="Maximum file size: 3MB. Supported formats: JPG, PNG, WebP"
+                />
+
+                {/* Edit Webinar Maximum Participants */}
+                <Input
+                  color="secondary"
+                  label="Maximum Participants"
+                  type="number"
+                  placeholder="Enter maximum number of participants"
+                  // value={editForm.max === 0 ? "" : editForm.max.toString()}
+                  // onChange={(e) => {
+                  //   const value = e.target.value;
+                  //   handleInputChange(
+                  //     "max",
+                  //     value === "" ? 0 : parseInt(value) || 0,
+                  //   );
+                  // }}
+                  isRequired
+                />
+
+                {/* Edit Webinar Certificate */}
+                <Input
+                  color="secondary"
+                  label="Certificate Template ID"
+                  type="number"
+                  placeholder="1"
+                  min="1"
+                  // value={
+                  //   editForm.certId === 0 ? "" : editForm.certId.toString()
+                  // }
+                  // onChange={(e) => {
+                  //   const value = e.target.value;
+                  //   handleInputChange(
+                  //     "certId",
+                  //     value === "" ? 1 : parseInt(value) || 1,
+                  //   );
+                  // }}
+                />
+
+                {/* Edit Webinar Material */}
+                <div className="relative w-full">
+                  <Input
+                    color="secondary"
+                    label="Material (Google Drive Link, dsb)"
+                    placeholder="https://drive.google.com/..."
+                    // value={editForm.materialLink}
+                    // onChange={(e) =>
+                    //   handleInputChange("materialLink", e.target.value)
+                    // }
+                    className="w-full pr-12" // beri padding kanan untuk icon
+                  />
+                  {/* {materialId && (
+                    <button
+                      type="button"
+                      // onClick={handleDeleteMaterial}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow"
+                      // disabled={isEditing}
+                      aria-label="Delete material"
+                      style={{ zIndex: 10 }}
+                    >
+                      <FaTrash className="text-lg" />
+                    </button>
+                  )} */}
+
+                  {/* Edit Webinar Description */}
+                  <Textarea
+                    color="secondary"
+                    label="Description"
+                    placeholder="Enter webinar description"
+                    // value={editForm.description}
+                    // onChange={(e) =>
+                    //   handleInputChange("description", e.target.value)
+                    // }
+                    minRows={4}
+                    isRequired
+                  />
+                </div>
+              </CardBody>
+            </Card>
           ) : (
             <>
               <div className="px-4 py-2">
