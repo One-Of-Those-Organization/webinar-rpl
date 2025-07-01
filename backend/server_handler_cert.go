@@ -556,33 +556,33 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
         }
 
         var currentEvPart table.EventParticipant
-        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEvPart)
-        if res.Error != nil {
-            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+        if admin != 1 {
+            res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEvPart)
+            if res.Error != nil {
+                if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                    return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                        "success": false,
+                        "message": "User is not registered on event participant.",
+                        "error_code": 8,
+                        "data": nil,
+                    })
+                } else {
+                    return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                        "success": false,
+                        "message": fmt.Sprintf("There is a problem with the db, %v", res.Error),
+                        "error_code": 5,
+                        "data": nil,
+                    })
+                }
+            }
+            if currentEvPart.EventPRole != "committee" {
+                return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                     "success": false,
-                    "message": "User is not registered on event participant.",
-                    "error_code": 8,
+                    "message": "Invalid credentials for this function",
+                    "error_code": 6,
                     "data": nil,
                 })
             }
-            if admin != 1 {
-                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                    "success": false,
-                    "message": fmt.Sprintf("Failed to fetch event from db with the user_id: %d and event_id: %d, %v", currentUser.ID, body.EventID, res.Error),
-                    "error_code": 5,
-                    "data": nil,
-                })
-            }
-        }
-
-        if currentEvPart.EventPRole != "committee" && admin != 1 {
-            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid credentials for this function",
-                "error_code": 6,
-                "data": nil,
-            })
         }
 
         // straight up set the the cert path to nonexistance index.html
