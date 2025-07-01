@@ -24,6 +24,9 @@ export default function DetailPage() {
   // Navigate hook for programmatic navigation
   const navigate = useNavigate();
 
+  // Toggle Mode (Edit or View)
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+
   // State for loading, registration, attendance, and committee status
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
@@ -275,9 +278,13 @@ export default function DetailPage() {
 
   // Handle edit webinar click (committee action)
   const handleEditWebinarClick = () => {
-    toast.info("Edit Webinar feature is not implemented yet", {
-      toastId: "edit-webinar-info",
-    });
+    if (!isEditMode) {
+      toast.info("Entering edit mode...", { toastId: "edit-mode-info" });
+      setIsEditMode(true);
+    } else {
+      toast.info("Exiting edit mode...", { toastId: "exit-edit-mode-info" });
+      setIsEditMode(false);
+    }
   };
 
   // Change committee check to use auth_participants
@@ -333,72 +340,109 @@ export default function DetailPage() {
             </div>
           </div>
 
-          <div className="flex flex-row gap-2 px-4 py-2 justify-center flex-wrap">
-            <Button
-              className={buttonStyles({
-                color: "secondary",
-                radius: "full",
-                variant: isRegistered ? "solid" : "bordered",
-                size: "lg",
-              })}
-              onClick={handleMaterialsClick}
-            >
-              Materials
-            </Button>
-
-            {/* Registration Button with dynamic functionality */}
-            {isLoading || isCheckingStatus ? (
+          {/* View Mode */}
+          {!isEditMode ? (
+            <div className="flex flex-row gap-2 px-4 py-2 justify-center flex-wrap">
+              {/* Materials Webinar */}
               <Button
-                color="secondary"
-                radius="full"
-                variant="bordered"
-                size="lg"
-                isDisabled
+                className={buttonStyles({
+                  color: "secondary",
+                  radius: "full",
+                  variant: isRegistered ? "solid" : "bordered",
+                  size: "lg",
+                })}
+                onClick={handleMaterialsClick}
               >
-                <Spinner size="sm" />
+                Materials
               </Button>
-            ) : (
-              !isCommittee && (
+
+              {/* Registration Button with dynamic functionality */}
+              {isLoading || isCheckingStatus ? (
                 <Button
-                  color={isRegistered ? "success" : "secondary"}
+                  color="secondary"
                   radius="full"
-                  variant={isRegistered ? "solid" : "bordered"}
+                  variant="bordered"
                   size="lg"
-                  onClick={handleRegister}
-                  isLoading={isRegistering}
-                  isDisabled={isRegistered}
+                  isDisabled
                 >
-                  {isRegistered ? "✓ Registered" : "Register"}
+                  <Spinner size="sm" />
                 </Button>
-              )
-            )}
+              ) : (
+                // If not committee, show register button
+                !isCommittee && (
+                  <Button
+                    color={isRegistered ? "success" : "secondary"}
+                    radius="full"
+                    variant={isRegistered ? "solid" : "bordered"}
+                    size="lg"
+                    onClick={handleRegister}
+                    isLoading={isRegistering}
+                    isDisabled={isRegistered}
+                  >
+                    {isRegistered ? "✓ Registered" : "Register"}
+                  </Button>
+                )
+              )}
 
-            {/* Attendance Button with QR Generator */}
-            {!isCommittee ? (
-              <Button
-                color={hasAttended ? "success" : "secondary"}
-                radius="full"
-                variant={isWebinarLive() ? "solid" : "bordered"}
-                size="lg"
-                isLoading={false}
-                isDisabled={hasAttended}
-                onClick={handleGenerateQRAbsence}
-              >
-                {hasAttended ? "✓ Attended" : "Check-in"}
-              </Button>
-            ) : (
-              <>
+              {/* Attendance Button with QR Generator */}
+              {!isCommittee ? (
                 <Button
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
-                    variant: isWebinarLive() ? "solid" : "bordered",
-                    size: "lg",
-                  })}
-                  onClick={handleQRScan}
+                  color={hasAttended ? "success" : "secondary"}
+                  radius="full"
+                  variant={isWebinarLive() ? "solid" : "bordered"}
+                  size="lg"
+                  isLoading={false}
+                  isDisabled={hasAttended}
+                  onClick={handleGenerateQRAbsence}
                 >
-                  Scan QR
+                  {hasAttended ? "✓ Attended" : "Check-in"}
                 </Button>
+              ) : (
+                // If committee, show QR Scanner and Participants List
+                <>
+                  <Button
+                    className={buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: isWebinarLive() ? "solid" : "bordered",
+                      size: "lg",
+                    })}
+                    onClick={handleQRScan}
+                  >
+                    Scan QR
+                  </Button>
+
+                  {/* Show List Participants */}
+                  <Button
+                    className={buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: "solid",
+                      size: "lg",
+                    })}
+                    onClick={handleListParticipantsClick}
+                  >
+                    View Participants
+                  </Button>
+                </>
+              )}
+
+              {/* Generate Certificate */}
+              <Button
+                className={buttonStyles({
+                  color: "secondary",
+                  radius: "full",
+                  variant:
+                    hasAttended && isWebinarFinished() ? "solid" : "bordered",
+                  size: "lg",
+                })}
+                onClick={handleCertificateClick}
+              >
+                Certificate
+              </Button>
+
+              {/* Edit Webinar Button */}
+              {isCommittee && (
                 <Button
                   className={buttonStyles({
                     color: "secondary",
@@ -406,27 +450,29 @@ export default function DetailPage() {
                     variant: "solid",
                     size: "lg",
                   })}
-                  onClick={handleListParticipantsClick}
+                  onClick={handleEditWebinarClick}
                 >
-                  View Participants
+                  Edit Webinar
                 </Button>
-              </>
-            )}
+              )}
+            </div>
+          ) : (
+            // Edit Mode
+            <div className="flex justify-center items-center gap-2 mt-2 mb-4">
+              {/* Save Changes */}
+              <Button
+                className={buttonStyles({
+                  color: "secondary",
+                  radius: "full",
+                  variant: "solid",
+                  size: "lg",
+                })}
+                onClick={() => toast.info("Edit mode is not implemented yet")}
+              >
+                Save Changes
+              </Button>
 
-            <Button
-              className={buttonStyles({
-                color: "secondary",
-                radius: "full",
-                variant:
-                  hasAttended && isWebinarFinished() ? "solid" : "bordered",
-                size: "lg",
-              })}
-              onClick={handleCertificateClick}
-            >
-              Certificate
-            </Button>
-
-            {isCommittee && (
+              {/* Cancel Changes */}
               <Button
                 className={buttonStyles({
                   color: "secondary",
@@ -436,103 +482,115 @@ export default function DetailPage() {
                 })}
                 onClick={handleEditWebinarClick}
               >
-                Edit Webinar
+                Cancel
               </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="px-4 py-2">
-          <div>
-            <h1 className="font-bold text-4xl">
-              {isLoading ? (
-                <Spinner size="sm" />
-              ) : (
-                webinar?.name || "Webinar Series"
-              )}
-            </h1>
-          </div>
-
-          <div className="font-bold text-xl">
-            Date:{" "}
-            <span className="text-[#B6A3E8] font-bold">
-              {isLoading ? (
-                <Spinner size="sm" />
-              ) : (
-                formatDate(webinar?.dstart) || "No date specified"
-              )}
-            </span>
-          </div>
-
-          <div className="font-bold text-xl">
-            {webinar?.att === "online" ? "Venue" : "Lokasi"}:{" "}
-            <span className="text-[#B6A3E8] font-bold">
-              {webinar?.link ? (
-                <a
-                  href={webinar.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#B6A3E8] font-bold hover:underline"
-                >
-                  {webinar.link}
-                </a>
-              ) : webinar?.att === "offline" ? (
-                webinar?.att || "Offline Event"
-              ) : (
-                "No location specified"
-              )}
-            </span>
-          </div>
-
-          {/* Speaker info if available */}
-          {!isLoading && webinar?.speaker && (
-            <div className="font-bold text-xl">
-              Speaker:{" "}
-              <span className="text-[#B6A3E8] font-bold">
-                {webinar.speaker}
-              </span>
             </div>
           )}
 
-          {/* Max participants if available */}
-          {!isLoading && webinar?.max && webinar.max > 0 && (
-            <div className="font-bold text-xl">
-              Capacity:{" "}
-              <span className="text-[#B6A3E8] font-bold">
-                {webinar.max} participants
-              </span>
+          {/* EDIT MODE SECTION */}
+          {isEditMode ? (
+            <div className="flex justify-center items-center h-screen">
+              <h1 className="text-2xl font-bold">
+                Edit Mode is not implemented yet
+              </h1>
             </div>
-          )}
+          ) : (
+            <>
+              <div className="px-4 py-2">
+                <div>
+                  <h1 className="font-bold text-4xl">
+                    {isLoading ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      webinar?.name || "Webinar Series"
+                    )}
+                  </h1>
+                </div>
 
-          <div>
-            <h1 className="font-bold text-xl">Description:</h1>
-            <p className="text-justify text-lg">
-              {isLoading ? (
-                <Spinner size="sm" />
-              ) : webinar?.description && webinar.description.trim() !== "" ? (
-                webinar.description
-              ) : (
-                "No description available for this webinar."
-              )}
-            </p>
-          </div>
+                <div className="font-bold text-xl">
+                  Date:{" "}
+                  <span className="text-[#B6A3E8] font-bold">
+                    {isLoading ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      formatDate(webinar?.dstart) || "No date specified"
+                    )}
+                  </span>
+                </div>
+
+                <div className="font-bold text-xl">
+                  {webinar?.att === "online" ? "Venue" : "Lokasi"}:{" "}
+                  <span className="text-[#B6A3E8] font-bold">
+                    {webinar?.link ? (
+                      <a
+                        href={webinar.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#B6A3E8] font-bold hover:underline"
+                      >
+                        {webinar.link}
+                      </a>
+                    ) : webinar?.att === "offline" ? (
+                      webinar?.att || "Offline Event"
+                    ) : (
+                      "No location specified"
+                    )}
+                  </span>
+                </div>
+
+                {/* Speaker info if available */}
+                {!isLoading && webinar?.speaker && (
+                  <div className="font-bold text-xl">
+                    Speaker:{" "}
+                    <span className="text-[#B6A3E8] font-bold">
+                      {webinar.speaker}
+                    </span>
+                  </div>
+                )}
+
+                {/* Max participants if available */}
+                {!isLoading && webinar?.max && webinar.max > 0 && (
+                  <div className="font-bold text-xl">
+                    Capacity:{" "}
+                    <span className="text-[#B6A3E8] font-bold">
+                      {webinar.max} participants
+                    </span>
+                  </div>
+                )}
+
+                <div>
+                  <h1 className="font-bold text-xl">Description:</h1>
+                  <p className="text-justify text-lg">
+                    {isLoading ? (
+                      <Spinner size="sm" />
+                    ) : webinar?.description &&
+                      webinar.description.trim() !== "" ? (
+                      webinar.description
+                    ) : (
+                      "No description available for this webinar."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
+
+        {/* QR Scanner Modal */}
+        <QRScanner
+          isOpen={isQRScannerOpen}
+          onClose={() => setIsQRScannerOpen(false)}
+        />
+
+        {/* QR Generator Modal */}
+        <QRGenerator
+          isOpen={isQRGeneratorOpen}
+          onClose={() => setIsQRGeneratorOpen(false)}
+          eventId={webinar?.id || 0}
+        />
+
+        <ToastContainer />
       </section>
-
-      {/* QR Scanner Modal */}
-      <QRScanner
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
-      />
-
-      {/* QR Generator Modal */}
-      <QRGenerator
-        isOpen={isQRGeneratorOpen}
-        onClose={() => setIsQRGeneratorOpen(false)}
-        eventId={webinar?.id || 0}
-      />
-
-      <ToastContainer />
     </DefaultLayout>
   );
 }
