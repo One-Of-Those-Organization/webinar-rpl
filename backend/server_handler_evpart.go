@@ -143,13 +143,17 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             })
         }
 
+        var Absence = false
+        if body.Role == "committee" {
+            Absence = true
+        }
         random_strings := RandStringBytes(backend, fmt.Sprintf("%s-%d-%d-%d", currentUser.UserEmail, body.EventId, backend.rand.Int(), backend.rand.Int()))
 
         NewEventParticipate := table.EventParticipant{
             EventId: body.EventId,
             UserId: currentUser.ID,
             EventPRole: table.UserEventRoleEnum(body.Role),
-            EventPCome: false,
+            EventPCome: Absence,
             EventPCode: random_strings,
         }
 

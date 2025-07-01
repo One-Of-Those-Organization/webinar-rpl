@@ -4,6 +4,7 @@ import { Image, Button, Spinner } from "@heroui/react";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { auth_webinar } from "@/api/auth_webinar";
+import { API_URL } from "@/api/endpoint";
 import { auth_participants } from "@/api/auth_participants";
 import { Webinar } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
@@ -244,7 +245,7 @@ export default function DetailPage() {
   };
 
   // Handle certificate click
-  const handleCertificateClick = () => {
+  const handleCertificateClick = async () => {
     if (!isRegistered && isWebinarFinished()) {
       toast.info("Webinar has finished, registration is closed.", {
         toastId: "registration-closed",
@@ -270,9 +271,21 @@ export default function DetailPage() {
       );
       return;
     } else {
-      toast.info("Certificate feature is not implemented yet", {
-        toastId: "certificate-info",
-      });
+      if (!id) return;
+      const response = await auth_participants.event_participate_info(
+        parseInt(id),
+      );
+      if (!response.success) {
+        toast.info(
+          "An error occured when trying to fetch the event participants.",
+          {
+            toastId: "certificate-info",
+          },
+        );
+      }
+      const evpart = response.data;
+      const link = `${API_URL}/api/certificate/${evpart.EventPCode}`;
+      window.open(link, "_blank", "noopener,noreferrer");
     }
   };
 

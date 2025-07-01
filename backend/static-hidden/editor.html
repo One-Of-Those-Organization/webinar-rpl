@@ -599,13 +599,14 @@
         async function uploadToBackend(data) {
             const params = new URLSearchParams(window.location.search);
             const id = params.get("event_id");
+            const token = getCookie("jwt");
             let a = await fetch(
-                "{{ .APIPath }}/api/c/-cert-editor-upload-image",
+                "{{ .APIPath }}/api/protected/-cert-editor-upload-image",
                 {
                     method: "POST",
-                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
                     },
                     body: JSON.stringify(
                         {
@@ -623,13 +624,14 @@
         async function uploadCertTemp(data) {
             const params = new URLSearchParams(window.location.search);
             const id = params.get("event_id");
+            const token = getCookie("jwt");
             let a = await fetch(
-                "{{ .APIPath }}/api/c/-cert-editor-upload-html",
+                "{{ .APIPath }}/api/protected/-cert-editor-upload-html",
                 {
                     method: "POST",
-                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
                     },
                     body: JSON.stringify(
                         {
@@ -664,6 +666,15 @@
                     reader.readAsDataURL(file); // Reads as base64
                 }
             };
+        }
+
+        function getCookie(name) {
+          const cookies = document.cookie.split("; ");
+          for (const c of cookies) {
+            const [key, val] = c.split("=");
+            if (key === name) return decodeURIComponent(val);
+          }
+          return null;
         }
 
         function exportCanvas(bg_url) {
