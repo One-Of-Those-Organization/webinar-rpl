@@ -491,6 +491,16 @@ export default function DetailPage() {
         toastId: "registration-info",
       });
       return;
+    } else if (hasAttended) {
+      toast.info("You have already marked your attendance.", {
+        toastId: "already-attended",
+      });
+      return;
+    } else if (isWebinarFinished()) {
+      toast.info("The webinar has finished, you cannot generate QR code.", {
+        toastId: "webinar-finished",
+      });
+      return;
     } else if (!isWebinarLive()) {
       toast.info("The webinar is not live, you cannot generate QR code.", {
         toastId: "qr-absence-info",
@@ -871,7 +881,6 @@ export default function DetailPage() {
                       size="lg"
                       onClick={handleRegister}
                       isLoading={isRegistering}
-                      isDisabled={isRegistered}
                     >
                       {isRegistered ? "✓ Registered" : "Register"}
                     </Button>
@@ -881,26 +890,25 @@ export default function DetailPage() {
                   webinar?.att === "online" ? (
                     <Button
                       className={buttonStyles({
-                        color: "secondary",
+                        color: hasAttended ? "success" : "secondary",
                         radius: "full",
                         variant:
-                          !isWebinarLive() || hasAttended
+                          isWebinarLive() && isRegistered
                             ? "solid"
                             : "bordered",
                         size: "lg",
                       })}
                       onClick={handleAbsence}
                     >
-                      Absence
+                      {hasAttended ? "✓ Attended" : "Check-in"}
                     </Button>
                   ) : (
                     <Button
                       color={hasAttended ? "success" : "secondary"}
                       radius="full"
-                      variant="solid"
+                      variant={hasAttended ? "solid" : "bordered"}
                       size="lg"
                       isLoading={false}
-                      isDisabled={hasAttended}
                       onClick={handleGenerateQRAbsence}
                     >
                       {hasAttended ? "✓ Attended" : "Check-in"}

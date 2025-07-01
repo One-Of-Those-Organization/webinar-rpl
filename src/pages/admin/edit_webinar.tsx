@@ -1261,7 +1261,7 @@ export default function EditWebinarPage() {
                 <div className="relative w-full">
                   <Input
                     color="secondary"
-                    label="Material (Google Drive Link, dsb)"
+                    label="Material ("
                     placeholder="https://drive.google.com/..."
                     value={editForm.materialLink}
                     onChange={(e) =>

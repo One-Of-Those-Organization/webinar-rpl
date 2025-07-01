@@ -514,7 +514,7 @@ export default function EditUserPage() {
             />
           </div>
 
-          <div className="flex justify-center lg:justify-start gap-2 pt-4 w-full">
+          <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-2 sm:gap-4 pt-4 w-full">
             {isEditing ? (
               <Button
                 className={buttonStyles({
