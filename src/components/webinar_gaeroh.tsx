@@ -48,3 +48,12 @@ export const formatDateDisplay = (dateStr: string | undefined) => {
 export const combineDateAndTime = (date: string, time: string): string => {
   return new Date(`${date}T${time}:00`).toISOString();
 };
+
+// Fungsi untuk mendapatkan tanggal hari ini dalam format YYYY-MM-DD
+export const getTodayDate = (): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
