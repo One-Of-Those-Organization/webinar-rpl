@@ -229,3 +229,20 @@ export interface EditMaterial {
   event_id?: number;
   event_attach?: string;
 }
+
+// Certificate Template Data
+export interface CertificateTemplate {
+  ID: number;
+  EventId: number;
+  CertTemplate: string;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+}
+
+// Certificate Modal State
+export interface CertificateModalState {
+  isOpen: boolean;
+  hasTemplate: boolean;
+  templateId?: number;
+  eventId: number;
+}
