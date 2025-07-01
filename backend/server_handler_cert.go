@@ -1,16 +1,19 @@
 package main
 
 import (
-    "os"
-    "strings"
-    "strconv"
-    "fmt"
-    "encoding/base64"
-    "time"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 
-    "webrpl/table"
+	"webrpl/table"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 // IMPORTANT -- DEPRECATED SHOULD NO BE USED. --
@@ -464,7 +467,7 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
         }
 
         now := time.Now()
-        if evPart.Event.EventDEnd.Before(now) {
+        if evPart.Event.EventDEnd.After(now) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "The event is not done yet.",
@@ -555,12 +558,22 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
         var currentEvPart table.EventParticipant
         res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEvPart)
         if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to fetch event from db, %v", res.Error),
-                "error_code": 5,
-                "data": nil,
-            })
+            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "User is not registered on event participant.",
+                    "error_code": 8,
+                    "data": nil,
+                })
+            }
+            if admin != 1 {
+                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                    "success": false,
+                    "message": fmt.Sprintf("Failed to fetch event from db with the user_id: %d and event_id: %d, %v", currentUser.ID, body.EventID, res.Error),
+                    "error_code": 5,
+                    "data": nil,
+                })
+            }
         }
 
         if currentEvPart.EventPRole != "committee" && admin != 1 {
@@ -580,7 +593,7 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
             CertTemplate: cert_path,
         }
 
-        res = backend.db.Create(&newCertTemplate)
+        res = backend.db.Save(&newCertTemplate)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
