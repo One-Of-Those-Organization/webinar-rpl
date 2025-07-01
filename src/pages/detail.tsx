@@ -26,7 +26,10 @@ import { FaTrash } from "react-icons/fa";
 // Webinar Detail Page
 
 export default function DetailPage() {
+  // Get webinar ID from URL parameters
   const { id } = useParams<{ id: string }>();
+
+  // Webinar Data
   const [webinar, setWebinar] = useState<Webinar | null>(null);
 
   // Navigate hook for programmatic navigation
@@ -97,6 +100,8 @@ export default function DetailPage() {
 
           // Check committee status setelah data webinar berhasil didapat
           await handleCheckCommittee(eventId);
+
+          await auth_material.get_material(eventId);
         } else {
           toast.error(result.message || "Failed to load webinar details");
         }
@@ -114,6 +119,17 @@ export default function DetailPage() {
     if (webinar?.name) {
       document.title = `${webinar.name} | Webinar Detail`;
     }
+  }, [webinar]);
+
+  useEffect(() => {
+    const fetchMaterial = async () => {
+      if (!webinar?.id) return;
+      const response = await auth_material.get_material(webinar.id);
+      if (response.success) {
+        setMaterialLink(response.data?.EventMatAttachment || "");
+      }
+    };
+    fetchMaterial();
   }, [webinar]);
 
   // function to check registration status
@@ -215,15 +231,20 @@ export default function DetailPage() {
       });
       return;
     } else {
-      toast.info("Materials feature is not implemented yet", {
-        toastId: "materials-info",
-      });
+      window.open(materialLink, "_blank", "noopener,noreferrer");
     }
   };
 
   // Handle Scan QR Absence (committee action: open scanner)
   const handleQRScan = () => {
-    setIsQRScannerOpen(true);
+    if (!isWebinarLive()) {
+      toast.info("The webinar is not live, you cannot scan QR code.", {
+        toastId: "qr-scan-info",
+      });
+      return;
+    } else {
+      setIsQRScannerOpen(true);
+    }
   };
 
   // Handle Generate QR Absence
@@ -254,10 +275,12 @@ export default function DetailPage() {
   };
 
   // Handle participants click (committee action: view participants)
-  const handleParticipantsClick = async () => {
-    toast.info("Participants feature is not implemented yet", {
-      toastId: "participants-info",
-    });
+  const handleListParticipantsClick = () => {
+    if (!id) {
+      toast.error("Webinar ID is not available."), { toastId: "detail-error" };
+      return;
+    }
+    navigate(`/list-partisipant/${id}`);
   };
 
   // Handle certificate click
@@ -272,10 +295,10 @@ export default function DetailPage() {
         toastId: "registration-info",
       });
       return;
-    } else if (!hasAttended) {
+    } else if (!hasAttended && !isCommittee) {
       toast.info(
         "You must attend the webinar and it must be finished to get the certificate.",
-        { toastId: "attended-info" }
+        { toastId: "attended-info" },
       );
       return;
     } else if (!isWebinarFinished()) {
@@ -283,17 +306,20 @@ export default function DetailPage() {
         "Webinar has not finished yet, certificate is not available.",
         {
           toastId: "certificate-info",
-        }
+        },
       );
       return;
     } else {
-      const response = await auth_participants.event_participate_info(id)
+      if (!id) return;
+      const response = await auth_participants.event_participate_info(
+        parseInt(id),
+      );
       if (!response.success) {
         toast.info(
           "An error occured when trying to fetch the event participants.",
           {
             toastId: "certificate-info",
-          }
+          },
         );
       }
       const evpart = response.data;
@@ -311,14 +337,6 @@ export default function DetailPage() {
       toast.info("Exiting edit mode...", { toastId: "exit-edit-mode-info" });
       setIsEditMode(false);
     }
-  };
-
-  // Get webinar link with proper URL formatting
-  const getWebinarLink = (link?: string) => {
-    if (!link) return "#";
-    return link.startsWith("http://") || link.startsWith("https://")
-      ? link
-      : `https://${link}`;
   };
 
   // Change committee check to use auth_participants
@@ -481,7 +499,7 @@ export default function DetailPage() {
                   className={buttonStyles({
                     color: "secondary",
                     radius: "full",
-                    variant: "bordered",
+                    variant: "solid",
                     size: "lg",
                   })}
                   onClick={handleEditWebinarClick}
