@@ -744,7 +744,7 @@ func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", err),
+                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", res.Error),
                 "error_code": 10,
                 "data": nil,
             })
@@ -867,7 +867,7 @@ func appHandleCertEditorUploadHtml(backend *Backend, route fiber.Router) {
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to get the user with that email from the db, %v", err),
+                "message": fmt.Sprintf("Failed to get the user with that email from the db, %v", res.Error),
                 "error_code": 9,
                 "data": nil,
             })
@@ -893,7 +893,7 @@ func appHandleCertEditorUploadHtml(backend *Backend, route fiber.Router) {
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", err),
+                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", res.Error),
                 "error_code": 10,
                 "data": nil,
             })

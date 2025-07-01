@@ -720,7 +720,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generated Template</title>
+    <title>Certificate of {{ .UserName }}</title>
+    <script>
+        function PrintMe() {
+            const pbut = document.getElementById("pbut");
+            pbut.style.display = "none";
+            window.print();
+            pbut.style.display = "grid";
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -736,6 +744,21 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            flex-direction: column;
+        }
+
+        #pbut {
+            margin: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            background-color: #1e1e2e;
+        }
+
+        #pbut:hover {
+            color: white;
+            background-color: black;
         }
 
         .template-canvas {
@@ -768,7 +791,6 @@
                 background: white;
                 padding: 0;
             }
-            
             .template-canvas {
                 box-shadow: none;
             }
@@ -777,7 +799,9 @@
 </head>
 <body>
     <div class="template-canvas">
-${objectsHtml}    </div>
+${objectsHtml}
+    </div>
+    <button id="pbut" onclick="PrintMe()">Print Certificate</button>
 </body>
 </html>`;
             const base = btoa(exportedHtml);
