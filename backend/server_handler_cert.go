@@ -464,7 +464,7 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
         }
 
         now := time.Now()
-        if evPart.Event.EventDEnd.Before(now) {
+        if evPart.Event.EventDEnd.After(now) {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "The event is not done yet.",
@@ -580,7 +580,7 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
             CertTemplate: cert_path,
         }
 
-        res = backend.db.Create(&newCertTemplate)
+        res = backend.db.Save(&newCertTemplate)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
