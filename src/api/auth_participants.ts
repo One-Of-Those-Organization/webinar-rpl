@@ -22,7 +22,7 @@ import {
 export const auth_participants = {
   // API Participant Register
   event_participate_register: async (
-    data: EventPartisipantRegister
+    data: EventPartisipantRegister,
   ): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
@@ -35,7 +35,7 @@ export const auth_participants = {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(data),
-        }
+        },
       );
       return await response.json();
     } catch (error) {
@@ -58,7 +58,7 @@ export const auth_participants = {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return await response.json();
     } catch (error) {
@@ -71,7 +71,7 @@ export const auth_participants = {
 
   // API untuk edit participant dari event
   event_participate_edit: async (
-    data: EventPartisipantEdit
+    data: EventPartisipantEdit,
   ): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
@@ -84,7 +84,7 @@ export const auth_participants = {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(data),
-        }
+        },
       );
       return await response.json();
     } catch (error) {
@@ -111,7 +111,7 @@ export const auth_participants = {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(data),
-        }
+        },
       );
       return await response.json();
     } catch (error) {
@@ -125,7 +125,7 @@ export const auth_participants = {
   // API untuk mendapatkan informasi partisipasi event
   event_participate_info: async (
     eventId: number,
-    email?: string
+    email?: string,
   ): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
@@ -142,7 +142,7 @@ export const auth_participants = {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return await response.json();
     } catch (error) {
@@ -155,7 +155,7 @@ export const auth_participants = {
 
   // API untuk mengatur kehadiran partisipan
   event_participate_absence: async (
-    data: EventPartisipantAbsence
+    data: EventPartisipantAbsence,
   ): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
@@ -168,7 +168,7 @@ export const auth_participants = {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(data),
-        }
+        },
       );
       return await response.json();
     } catch (error) {
@@ -191,7 +191,7 @@ export const auth_participants = {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return await response.json();
     } catch (error) {
@@ -204,7 +204,7 @@ export const auth_participants = {
 
   // API untuk mendapatkan partisipasi event berdasarkan user
   event_participate_by_user: async (
-    userEmail: string
+    userEmail: string,
   ): Promise<BaseResponse> => {
     try {
       const token = localStorage.getItem("token");
