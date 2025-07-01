@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/icons";
-import { Search } from "@/components/search";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -172,11 +171,6 @@ export const Navbar = () => {
       </NavbarContent>
 
       <NavbarContent className="items-center gap-4" justify="end">
-        {isLoggedIn && isDashboardPage && (
-          <NavbarItem className="hidden lg:flex">
-            <Search />
-          </NavbarItem>
-        )}
         <ThemeSwitch className="hidden lg:block" />
         <Dropdown placement="bottom-end">
           <DropdownTrigger>
@@ -201,7 +195,7 @@ export const Navbar = () => {
       </NavbarContent>
 
       <NavbarMenu>
-        {isLoggedIn && isDashboardPage && <Search />}
+        {/* {isLoggedIn && isDashboardPage && <Search />} */}
         <div className="mx-4 mt-2 flex flex-col gap-2">
           <ThemeSwitch />
 

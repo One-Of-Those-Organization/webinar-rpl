@@ -278,7 +278,6 @@ export default function ProfilPage() {
       {
         toastId: "change-password-not-implemented",
       },
-      // Implement API here later ... (WIP)
     );
     navigate("/change-password/:" + email);
   };

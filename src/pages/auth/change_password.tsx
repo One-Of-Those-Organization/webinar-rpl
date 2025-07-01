@@ -90,7 +90,7 @@ export default function ChangePassword() {
         old_password: oldPass,
         password: newPass,
       });
-      console.log("Change Password Response:", response);
+
       if (response.success) {
         toast.success("Password changed successfully!", {
           toastId: "change-password-success",

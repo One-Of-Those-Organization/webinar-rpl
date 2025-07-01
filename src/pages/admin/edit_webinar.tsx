@@ -97,7 +97,6 @@ export default function EditWebinarPage() {
 
   const todayDate = getTodayDate();
 
-  // Use effect to load webinar data when component mounts
   useEffect(() => {
     const loadData = async () => {
       if (!id) {
@@ -109,7 +108,6 @@ export default function EditWebinarPage() {
       try {
         setIsLoading(true);
 
-        // Get Webinar Data
         const result = await auth_webinar.get_webinar_by_id(parseInt(id));
         if (!result.success) {
           toast.error("Failed to load webinar data");
@@ -123,12 +121,9 @@ export default function EditWebinarPage() {
         setPreviewImage(
           webinar.img || "https://heroui.com/images/hero-card-complete.jpeg",
         );
-
-        // Load Existing Committee Members and Webinar Count
         await loadExistingCommittee(parseInt(id));
         await get_webinar_count(parseInt(id));
 
-        // Load Material info
         const matRes = await auth_material.get_material(parseInt(id));
         let mat_parse = "";
         let mat_id: number | null = null;
@@ -139,7 +134,6 @@ export default function EditWebinarPage() {
         setMaterialInfo(mat_parse);
         setMaterialId(mat_id);
 
-        // Set initial form data
         setEditForm({
           name: webinar.name || "",
           description: webinar.desc || "",
@@ -165,16 +159,16 @@ export default function EditWebinarPage() {
     };
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate]);
 
-  // Load users when entering edit mode
   useEffect(() => {
     if (isEditMode && panitiaData.length === 0) {
       handleFetchUser();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode]);
 
-  // Load existing committee members for webinar
   const loadExistingCommittee = async (eventId: any) => {
     try {
       setIsLoadingCommittee(true);
@@ -202,7 +196,6 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Handle form input changes
   const handleInputChange = (field: string, value: string | number) => {
     setEditForm((prev) => ({
       ...prev,
@@ -210,7 +203,6 @@ export default function EditWebinarPage() {
     }));
   };
 
-  // Handle time field changes
   const handleTimeChange = (type: "start" | "end", value: string) => {
     if (type === "start") {
       setEditForm((prev) => ({ ...prev, timeStart: value }));
@@ -219,14 +211,12 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Handle webinar image upload
   const handleWebinarImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (3MB max)
     const maxSizeInBytes = 3 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       setError("Image size must be less than 3MB");
@@ -237,7 +227,6 @@ export default function EditWebinarPage() {
       return;
     }
 
-    // Validate file type
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       setError("Only JPG, JPEG, PNG, and WebP images are allowed");
@@ -291,7 +280,6 @@ export default function EditWebinarPage() {
     reader.readAsDataURL(file);
   };
 
-  // Fetch all users for committee selection
   const handleFetchUser = async () => {
     try {
       setIsLoadingUsers(true);
@@ -315,7 +303,6 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Register user as committee member
   const registEventParticipant = async (udata: UserData, eid: number) => {
     try {
       const requestData = {
@@ -343,7 +330,6 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Change user role with confirmation
   const handleChangeRole = async (userEmail: string, newRole: string) => {
     if (!webinarData?.id) return;
 
@@ -376,7 +362,6 @@ export default function EditWebinarPage() {
         },
       });
     } else {
-      // Direct call for other role changes
       try {
         const response = await auth_participants.event_participate_edit({
           event_id: webinarData.id,
@@ -397,7 +382,6 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Remove participant with confirmation
   const handleRemoveParticipant = async (userEmail: string) => {
     if (!webinarData?.id) return;
 
@@ -429,23 +413,19 @@ export default function EditWebinarPage() {
     });
   };
 
-  // Check if user is already a committee member
   const isUserAlreadyCommittee = (userEmail: string) => {
     return existingCommittee.some(
       (member) => member.User.UserEmail === userEmail,
     );
   };
 
-  // Get new committee members that need registration
   const getNewCommitteeMembers = () => {
     return editForm.panitia.filter((email) => !isUserAlreadyCommittee(email));
   };
 
-  // Save all webinar changes
   const handleSaveEdit = async () => {
     if (!webinarData) return;
 
-    // Validate required fields
     if (
       !editForm.name ||
       !editForm.speaker ||
@@ -474,7 +454,6 @@ export default function EditWebinarPage() {
     const endDate = new Date(fullEndDateTime);
     const today = new Date();
 
-    // Validasi tanggal tidak boleh sebelum hari ini
     if (startDate <= today) {
       setError("Start date cannot be before today");
       toast.info("Start date cannot be before today", {
@@ -496,16 +475,8 @@ export default function EditWebinarPage() {
     try {
       setIsEditing(true);
 
-      // Register new committee members first
       const newCommitteeMembers = getNewCommitteeMembers();
       if (newCommitteeMembers.length > 0) {
-        // toast.info(
-        //   `Registering ${newCommitteeMembers.length} new committee members...`,
-        //   {
-        //     toastId: "registeringCommittee",
-        //   }
-        // );
-
         let successCount = 0;
         let failCount = 0;
 
@@ -537,7 +508,6 @@ export default function EditWebinarPage() {
           }
         }
 
-        // Show registration results
         if (successCount > 0) {
           toast.success(
             `${successCount} new committee members registered successfully!`,
@@ -549,7 +519,6 @@ export default function EditWebinarPage() {
         }
       }
 
-      // Update webinar data
       const editData = {
         id: webinarData.id || 0,
         name: editForm.name,
@@ -565,7 +534,6 @@ export default function EditWebinarPage() {
         cert_template_id: editForm.certId,
       };
 
-      // Check if webinar data has changed
       const hasWebinarChanges = !(
         editData.name == webinarData.name &&
         editData.speaker == webinarData.speaker &&
@@ -596,7 +564,6 @@ export default function EditWebinarPage() {
             toastId: "update-webinar",
           });
 
-          // Update local webinar data
           const updatedWebinar = new WebinarEdit({
             ...webinarData,
             name: editForm.name,
@@ -638,7 +605,6 @@ export default function EditWebinarPage() {
         }
       }
 
-      // Exit edit mode
       setIsEditMode(false);
       setError("");
 
@@ -652,11 +618,9 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Cancel editing and revert changes
   const handleCancelEdit = () => {
     if (!webinarData) return;
 
-    // Reset form to original data
     setEditForm({
       name: webinarData.name || "",
       description: webinarData.desc || "",
@@ -713,12 +677,10 @@ export default function EditWebinarPage() {
     });
   };
 
-  // Toggle edit mode
   const handleToggleEditMode = () => {
     setIsEditMode(!isEditMode);
   };
 
-  // Handle certificate click
   const handleCertificateClick = async () => {
     const token = localStorage.getItem("token");
     await auth_cert.create_cert(parseInt(id || "0"));
@@ -727,7 +689,6 @@ export default function EditWebinarPage() {
     window.open(link, "_blank", "noopener,noreferrer");
   };
 
-  // Get participant count for webinar
   const get_webinar_count = async (eventId: number) => {
     const response = await auth_participants.event_participate_count(eventId);
     try {
@@ -745,7 +706,6 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Loading skeleton
   if (isLoading) {
     return (
       <DefaultLayout>
@@ -771,7 +731,6 @@ export default function EditWebinarPage() {
     );
   }
 
-  // No data found
   if (!webinarData) {
     return (
       <DefaultLayout>
@@ -817,38 +776,41 @@ export default function EditWebinarPage() {
             />
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-row gap-2 px-4 py-4 justify-center">
+          {/* Action buttons responsive */}
+          <div className="flex flex-col gap-2 py-4 w-full max-w-md sm:flex-row sm:gap-2 sm:justify-center">
             {!isEditMode ? (
               <>
                 <Link
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
-                    variant: "solid",
-                    size: "lg",
-                  })}
+                  className={
+                    buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: "solid",
+                      size: "lg",
+                    }) + " w-full sm:w-auto"
+                  }
                   to={"/list-partisipant/" + id}
                 >
                   View Participants
                 </Link>
-
                 <Button
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
-                    variant: "solid",
-                    size: "lg",
-                  })}
+                  className={
+                    buttonStyles({
+                      color: "secondary",
+                      radius: "full",
+                      variant: "solid",
+                      size: "lg",
+                    }) + " w-full sm:w-auto"
+                  }
                   onClick={handleCertificateClick}
                 >
                   Certificate
                 </Button>
-
                 <Button
                   color="secondary"
                   radius="full"
                   size="lg"
+                  className="w-full sm:w-auto"
                   onPress={handleToggleEditMode}
                 >
                   Edit Webinar
@@ -860,6 +822,7 @@ export default function EditWebinarPage() {
                   color="primary"
                   radius="full"
                   size="lg"
+                  className="w-full sm:w-auto"
                   onPress={handleSaveEdit}
                   isLoading={isEditing}
                   isDisabled={isEditing || isImageLoading}
@@ -871,6 +834,7 @@ export default function EditWebinarPage() {
                   variant="bordered"
                   radius="full"
                   size="lg"
+                  className="w-full sm:w-auto"
                   onPress={handleCancelEdit}
                   isDisabled={isEditing || isImageLoading}
                 >
@@ -885,12 +849,9 @@ export default function EditWebinarPage() {
         <div className="px-4 py-2">
           {!isEditMode ? (
             <>
-              {/* Webinar Name */}
               <h1 className="font-bold text-4xl">
                 {webinarData.name || "Webinar Series"}
               </h1>
-
-              {/* Webinar Speaker */}
               <div>
                 <div className="font-bold text-xl">
                   Speaker Name :{" "}
@@ -899,7 +860,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Webinar Start Date */}
                 <div className="font-bold text-xl">
                   Start Time :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -907,7 +867,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Webinar End Date */}
                 <div className="font-bold text-xl">
                   End Time :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -915,7 +874,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Webinar Precise Location */}
                 <div className="font-bold text-xl">
                   {webinarData.att === "online"
                     ? "Webinar Link"
@@ -937,7 +895,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Webinar Participants Count */}
                 <div className="font-bold text-xl">
                   Participants :{" "}
                   <span
@@ -954,7 +911,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Webinar Attendance Type */}
                 <div className="font-bold text-xl">
                   Attendance Type :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -966,22 +922,29 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Committee members display */}
+                {/* Committee Members Responsive List */}
                 <div className="font-bold text-xl">
                   Committee Members :{" "}
                   {isLoadingCommittee ? (
                     <span className="text-gray-500">Loading...</span>
                   ) : existingCommittee.length > 0 ? (
                     <div className="mt-2">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2">
                         {existingCommittee.map((member, index) => (
                           <Chip
                             key={index}
                             color="secondary"
                             variant="flat"
                             size="sm"
+                            className="truncate max-w-[220px] min-w-[180px]"
                           >
-                            {member.User.UserFullName} ({member.User.UserEmail})
+                            <span className="truncate">
+                              {member.User.UserFullName}
+                              <span className="text-xs font-normal">
+                                {" "}
+                                ({member.User.UserEmail})
+                              </span>
+                            </span>
                           </Chip>
                         ))}
                       </div>
@@ -991,7 +954,6 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
-                {/* Webinar material link display */}
                 <div className="font-bold text-xl">
                   Material Link :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -1010,7 +972,6 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Webinar Certificate */}
                 <div className="font-bold text-xl">
                   Certificate Template ID :{" "}
                   <span className="text-[#B6A3E8] font-bold">
@@ -1019,7 +980,6 @@ export default function EditWebinarPage() {
                 </div>
               </div>
 
-              {/* Webinar Description section */}
               <div>
                 <h2 className="font-bold text-xl">Description :</h2>
                 <p className="text-justify text-lg leading-relaxed">
@@ -1028,7 +988,6 @@ export default function EditWebinarPage() {
               </div>
             </>
           ) : (
-            /* Edit mode form */
             <Card>
               <CardBody className="space-y-4">
                 <h2 className="font-bold text-2xl mb-4">Edit Webinar</h2>
@@ -1037,7 +996,6 @@ export default function EditWebinarPage() {
                   <div className="text-red-500 text-sm mb-4">{error}</div>
                 )}
 
-                {/* Edit Webinar Name */}
                 <Input
                   color="secondary"
                   label="Webinar Name"
@@ -1047,7 +1005,6 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Edit Webinar Speaker Name */}
                 <Input
                   color="secondary"
                   label="Speaker Name"
@@ -1057,75 +1014,75 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Committee management section */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
                     Committee Members
                   </label>
 
-                  {/* Current committee display */}
                   {existingCommittee.length > 0 && (
                     <div className="p-3 bg-gray-50 rounded-lg">
                       <div className="text-sm font-medium text-gray-700 mb-2">
                         Current Committee Members:
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {existingCommittee.map((member, index) => {
-                          return (
-                            <div
-                              key={`existing-${member.User.UserEmail}-${member.User.UserId || index}`}
-                              className="flex items-center gap-2"
+                      <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2">
+                        {existingCommittee.map((member, index) => (
+                          <div
+                            key={`existing-${member.User.UserEmail}-${member.User.UserId || index}`}
+                            className="flex items-center gap-2 min-w-[180px] max-w-[220px]"
+                          >
+                            <Chip
+                              color="success"
+                              variant="flat"
+                              size="sm"
+                              className="truncate w-full"
                             >
-                              <Chip color="success" variant="flat" size="sm">
-                                {member.User.UserFullName || "Unknown"}
-                                <span className="text-xs ml-1">
-                                  ({member.User.UserEmail || "No Email"})
-                                </span>
-                              </Chip>
-                              <Dropdown>
-                                <DropdownTrigger>
-                                  <Button
-                                    isIconOnly
-                                    radius="full"
-                                    size="sm"
-                                    variant="light"
-                                  >
-                                    <VerticalDotsIcon />
-                                  </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu>
-                                  <DropdownItem
-                                    key="normal"
-                                    onPress={() =>
-                                      handleChangeRole(
-                                        member.User.UserEmail,
-                                        "normal",
-                                      )
-                                    }
-                                  >
-                                    Change to Normal
-                                  </DropdownItem>
-                                  <DropdownItem
-                                    key="remove"
-                                    className="text-danger"
-                                    onPress={() =>
-                                      handleRemoveParticipant(
-                                        member.User.UserEmail,
-                                      )
-                                    }
-                                  >
-                                    Remove from Event
-                                  </DropdownItem>
-                                </DropdownMenu>
-                              </Dropdown>
-                            </div>
-                          );
-                        })}
+                              {member.User.UserFullName}
+                              <span className="text-xs ml-1">
+                                ({member.User.UserEmail})
+                              </span>
+                            </Chip>
+                            <Dropdown>
+                              <DropdownTrigger>
+                                <Button
+                                  isIconOnly
+                                  radius="full"
+                                  size="sm"
+                                  variant="light"
+                                >
+                                  <VerticalDotsIcon />
+                                </Button>
+                              </DropdownTrigger>
+                              <DropdownMenu>
+                                <DropdownItem
+                                  key="normal"
+                                  onPress={() =>
+                                    handleChangeRole(
+                                      member.User.UserEmail,
+                                      "normal",
+                                    )
+                                  }
+                                >
+                                  Change to Normal
+                                </DropdownItem>
+                                <DropdownItem
+                                  key="remove"
+                                  className="text-danger"
+                                  onPress={() =>
+                                    handleRemoveParticipant(
+                                      member.User.UserEmail,
+                                    )
+                                  }
+                                >
+                                  Remove from Event
+                                </DropdownItem>
+                              </DropdownMenu>
+                            </Dropdown>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Committee selection dropdown */}
                   <Select
                     color="secondary"
                     label="Select Committee Members"
@@ -1168,8 +1125,6 @@ export default function EditWebinarPage() {
                       </SelectItem>
                     ))}
                   </Select>
-
-                  {/* Selection info */}
                   {editForm.panitia.length > 0 && (
                     <div className="text-sm text-gray-600">
                       Selected: {editForm.panitia.length} member(s)
@@ -1183,7 +1138,6 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
-                {/* Edit Webinar Start Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -1197,7 +1151,6 @@ export default function EditWebinarPage() {
                     isRequired
                   />
 
-                  {/* Edit Webinar Start Time */}
                   <Input
                     color="secondary"
                     label="Start Time"
@@ -1208,7 +1161,6 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
-                {/* Edit Webinar End Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     color="secondary"
@@ -1221,7 +1173,6 @@ export default function EditWebinarPage() {
                     }
                     isRequired
                   />
-                  {/* Edit Webinar End Time */}
                   <Input
                     color="secondary"
                     label="End Time"
@@ -1232,7 +1183,6 @@ export default function EditWebinarPage() {
                   />
                 </div>
 
-                {/* Edit Webinar Attendance Type */}
                 <Select
                   color="secondary"
                   label="Attendance Type"
@@ -1252,7 +1202,6 @@ export default function EditWebinarPage() {
                   <SelectItem key="offline">Offline</SelectItem>
                 </Select>
 
-                {/* Edit Webinar Precise Location */}
                 <Input
                   color="secondary"
                   label={
@@ -1265,7 +1214,6 @@ export default function EditWebinarPage() {
                   onChange={(e) => handleInputChange("link", e.target.value)}
                 />
 
-                {/* Edit Webinar Poster */}
                 <Input
                   color="secondary"
                   label="Webinar Image"
@@ -1276,7 +1224,6 @@ export default function EditWebinarPage() {
                   description="Maximum file size: 3MB. Supported formats: JPG, PNG, WebP"
                 />
 
-                {/* Edit Webinar Maximum Participants */}
                 <Input
                   color="secondary"
                   label="Maximum Participants"
@@ -1293,7 +1240,6 @@ export default function EditWebinarPage() {
                   isRequired
                 />
 
-                {/* Edit Webinar Certificate */}
                 <Input
                   color="secondary"
                   label="Certificate Template ID"
@@ -1312,7 +1258,6 @@ export default function EditWebinarPage() {
                   }}
                 />
 
-                {/* Edit Webinar Material */}
                 <div className="relative w-full">
                   <Input
                     color="secondary"
@@ -1322,7 +1267,7 @@ export default function EditWebinarPage() {
                     onChange={(e) =>
                       handleInputChange("materialLink", e.target.value)
                     }
-                    className="w-full pr-12" // beri padding kanan untuk icon
+                    className="w-full pr-12"
                   />
                   {materialId && (
                     <button
@@ -1338,7 +1283,6 @@ export default function EditWebinarPage() {
                   )}
                 </div>
 
-                {/* Edit Webinar Description */}
                 <Textarea
                   color="secondary"
                   label="Description"
@@ -1355,7 +1299,6 @@ export default function EditWebinarPage() {
           )}
         </div>
 
-        {/* Confirmation modal */}
         {showConfirmModal.isOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">

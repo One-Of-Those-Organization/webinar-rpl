@@ -23,13 +23,13 @@ export default function DashboardPage() {
   // Pagination states for Live
   const [livePage, setLivePage] = useState(1);
   const [liveRowsPerPage, setLiveRowsPerPage] = useState(
-    ROWS_PER_PAGE_OPTIONS[0]
+    ROWS_PER_PAGE_OPTIONS[0],
   );
 
   // Pagination states for Upcoming
   const [upcomingPage, setUpcomingPage] = useState(1);
   const [upcomingRowsPerPage, setUpcomingRowsPerPage] = useState(
-    ROWS_PER_PAGE_OPTIONS[0]
+    ROWS_PER_PAGE_OPTIONS[0],
   );
 
   // Load webinar data on component mount
@@ -41,7 +41,7 @@ export default function DashboardPage() {
 
         if (result.success) {
           const WebinarData = result.data.map((item: any) =>
-            Webinar.fromApiResponse(item)
+            Webinar.fromApiResponse(item),
           );
           setWebinarList(WebinarData);
         } else {
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       (webinar) =>
         (webinar.name || "").toLowerCase().includes(query) ||
         (webinar.speaker || "").toLowerCase().includes(query) ||
-        (webinar.description || "").toLowerCase().includes(query)
+        (webinar.description || "").toLowerCase().includes(query),
     );
   }, [searchValue, liveWebinars]);
 
@@ -111,14 +111,14 @@ export default function DashboardPage() {
       (webinar) =>
         (webinar.name || "").toLowerCase().includes(query) ||
         (webinar.speaker || "").toLowerCase().includes(query) ||
-        (webinar.description || "").toLowerCase().includes(query)
+        (webinar.description || "").toLowerCase().includes(query),
     );
   }, [searchValue, upcomingWebinars]);
 
   // Pagination for Live
   const totalLivePages = Math.max(
     1,
-    Math.ceil(filteredLiveWebinars.length / liveRowsPerPage)
+    Math.ceil(filteredLiveWebinars.length / liveRowsPerPage),
   );
   const paginatedLiveWebinars = useMemo(() => {
     const start = (livePage - 1) * liveRowsPerPage;
@@ -128,7 +128,7 @@ export default function DashboardPage() {
   // Pagination for Upcoming
   const totalUpcomingPages = Math.max(
     1,
-    Math.ceil(filteredUpcomingWebinars.length / upcomingRowsPerPage)
+    Math.ceil(filteredUpcomingWebinars.length / upcomingRowsPerPage),
   );
   const paginatedUpcomingWebinars = useMemo(() => {
     const start = (upcomingPage - 1) * upcomingRowsPerPage;
@@ -265,7 +265,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <DefaultLayout>
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 w-full flex justify-center md:justify-end">
           <input
             type="text"
             className="border px-3 py-2 rounded w-full max-w-xs"
@@ -275,6 +275,7 @@ export default function DashboardPage() {
             disabled={isLoading}
           />
         </div>
+
         <div className="space-y-8">
           {/* Live Webinars Skeleton */}
           <section className="mb-8">
