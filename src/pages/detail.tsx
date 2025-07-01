@@ -406,6 +406,64 @@ export default function DetailPage() {
     }
   };
 
+  const handleAbsence = async () => {
+    if (!webinar) return;
+
+    if (!isRegistered && isWebinarFinished()) {
+      toast.info("Webinar has finished, registration is closed.", {
+        toastId: "registration-closed",
+      });
+      return;
+    }
+    if (!isRegistered) {
+      toast.info("You must register first", {
+        toastId: "registration-info",
+      });
+      return;
+    }
+    if (hasAttended) {
+      toast.info("You have already marked your attendance.", {
+        toastId: "already-attended",
+      });
+      return;
+    }
+    if (isWebinarFinished()) {
+      toast.info("The webinar has finished, you cannot mark attendance.", {
+        toastId: "webinar-finished",
+      });
+      return;
+    }
+    if (!isWebinarLive()) {
+      toast.info("The webinar is not live, you cannot mark attendance.", {
+        toastId: "absence-info",
+      });
+      return;
+    }
+
+    try {
+      const resp = await auth_participants.event_participate_info(webinar.id);
+      if (!resp.success || !resp.data || !resp.data.EventPCode) {
+        toast.error("Failed to get your participant code. Please try again.");
+        return;
+      }
+      const eventPCode = resp.data.EventPCode;
+      const response = await auth_participants.event_participate_absence({
+        id: webinar.id,
+        code: eventPCode,
+      });
+      if (response.success) {
+        setHasAttended(true);
+        toast.success("Attendance marked successfully!", {
+          toastId: "attendance-success",
+        });
+      } else {
+        toast.error(response.message || "Failed to mark attendance");
+      }
+    } catch (error) {
+      toast.error("An error occurred while marking attendance");
+    }
+  };
+
   const handleQRScan = () => {
     if (!isWebinarLive()) {
       toast.info("The webinar is not live, you cannot scan QR code.", {
@@ -820,17 +878,34 @@ export default function DetailPage() {
                   )
                 )}
                 {!isCommittee ? (
-                  <Button
-                    color={hasAttended ? "success" : "secondary"}
-                    radius="full"
-                    variant={isWebinarLive() ? "solid" : "bordered"}
-                    size="lg"
-                    isLoading={false}
-                    isDisabled={hasAttended}
-                    onClick={handleGenerateQRAbsence}
-                  >
-                    {hasAttended ? "✓ Attended" : "Check-in"}
-                  </Button>
+                  webinar?.att === "online" ? (
+                    <Button
+                      className={buttonStyles({
+                        color: "secondary",
+                        radius: "full",
+                        variant:
+                          !isWebinarLive() || hasAttended
+                            ? "solid"
+                            : "bordered",
+                        size: "lg",
+                      })}
+                      onClick={handleAbsence}
+                    >
+                      Absence
+                    </Button>
+                  ) : (
+                    <Button
+                      color={hasAttended ? "success" : "secondary"}
+                      radius="full"
+                      variant="solid"
+                      size="lg"
+                      isLoading={false}
+                      isDisabled={hasAttended}
+                      onClick={handleGenerateQRAbsence}
+                    >
+                      {hasAttended ? "✓ Attended" : "Check-in"}
+                    </Button>
+                  )
                 ) : (
                   <>
                     <Button
@@ -1024,7 +1099,7 @@ export default function DetailPage() {
                     </span>
                   </div>
                   <div className="font-bold text-xl">
-                    {webinar?.att === "online" ? "Venue" : "Lokasi"}:{" "}
+                    {webinar?.att === "online" ? "Venue " : "Lokasi "}:{" "}
                     <span className="text-[#B6A3E8] font-bold">
                       {webinar?.link ? (
                         <a
@@ -1033,7 +1108,7 @@ export default function DetailPage() {
                           rel="noopener noreferrer"
                           className="text-[#B6A3E8] font-bold hover:underline"
                         >
-                          {webinar.link}
+                          Webinar Link
                         </a>
                       ) : webinar?.att === "offline" ? (
                         webinar?.att || "Offline Event"
@@ -1044,7 +1119,7 @@ export default function DetailPage() {
                   </div>
                   {!isLoading && webinar?.speaker && (
                     <div className="font-bold text-xl">
-                      Speaker:{" "}
+                      Speaker :{" "}
                       <span className="text-[#B6A3E8] font-bold">
                         {webinar.speaker}
                       </span>
@@ -1052,14 +1127,14 @@ export default function DetailPage() {
                   )}
                   {!isLoading && webinar?.max && webinar.max > 0 && (
                     <div className="font-bold text-xl">
-                      Capacity:{" "}
+                      Capacity :{" "}
                       <span className="text-[#B6A3E8] font-bold">
                         {webinar.max} participants
                       </span>
                     </div>
                   )}
                   <div>
-                    <h1 className="font-bold text-xl">Description:</h1>
+                    <h1 className="font-bold text-xl">Description :</h1>
                     <p className="text-justify text-lg">
                       {isLoading ? (
                         <Spinner size="sm" />

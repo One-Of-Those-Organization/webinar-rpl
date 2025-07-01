@@ -82,7 +82,7 @@ export default function UserManagementTable() {
   const [userToDelete, setUserToDelete] = useState<Users | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [visibleColumns, setVisibleColumns] = useState<Selection>(
-    new Set(VISIBLE_COLUMNS)
+    new Set(VISIBLE_COLUMNS),
   );
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [currentPage, setCurrentPage] = useState(1);
@@ -127,7 +127,6 @@ export default function UserManagementTable() {
     fetchUsersData();
   }, []);
 
-  // Reset page when rows per page changes
   useEffect(() => {
     setCurrentPage(1);
   }, [rowsPerPage]);
@@ -135,17 +134,18 @@ export default function UserManagementTable() {
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return TABLE_COLUMNS;
     return TABLE_COLUMNS.filter((column) =>
-      Array.from(visibleColumns).includes(column.uid)
+      Array.from(visibleColumns).includes(column.uid),
     );
   }, [visibleColumns]);
 
   const filteredUsers = useMemo(() => {
     if (!searchValue) return users;
-    return users.filter((user) =>
-      user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchValue.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchValue.toLowerCase()) ||
-      user.instansi.toLowerCase().includes(searchValue.toLowerCase())
+    return users.filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchValue.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchValue.toLowerCase()) ||
+        user.instansi.toLowerCase().includes(searchValue.toLowerCase()),
     );
   }, [users, searchValue]);
 
@@ -181,21 +181,18 @@ export default function UserManagementTable() {
 
       if (response.success) {
         toast.success("User deleted successfully");
-
-        // Update local state
         const updatedUsers = users.filter(
-          (user) => user.id !== userToDelete.id
+          (user) => user.id !== userToDelete.id,
         );
         setUsers(updatedUsers);
 
-        // Handle pagination after deletion
         const newFilteredUsers = updatedUsers.filter((user) =>
           searchValue
             ? user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
               user.email.toLowerCase().includes(searchValue.toLowerCase()) ||
               user.instansi.toLowerCase().includes(searchValue.toLowerCase()) ||
               user.role.toLowerCase().includes(searchValue.toLowerCase())
-            : true
+            : true,
         );
         const newTotalPages = Math.ceil(newFilteredUsers.length / rowsPerPage);
 
@@ -218,7 +215,7 @@ export default function UserManagementTable() {
     (e: ChangeEvent<HTMLSelectElement>) => {
       setRowsPerPage(Number(e.target.value));
     },
-    []
+    [],
   );
 
   const handleSearchChange = useCallback((value?: string) => {
@@ -231,7 +228,7 @@ export default function UserManagementTable() {
       setUserToDelete(user);
       openDeleteModal();
     },
-    [openDeleteModal]
+    [openDeleteModal],
   );
 
   const renderUserCell = useCallback(
@@ -295,13 +292,13 @@ export default function UserManagementTable() {
           return cellValue ? String(cellValue) : "-";
       }
     },
-    [isDeleting, handleOpenDeleteModal]
+    [isDeleting, handleOpenDeleteModal],
   );
 
   const topContent = useMemo(
     () => (
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between gap-3 items-end">
+      <div className="flex flex-col gap-4 w-full">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end w-full">
           <Input
             isClearable
             classNames={{
@@ -318,7 +315,7 @@ export default function UserManagementTable() {
             isDisabled={isLoading}
           />
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 w-full sm:w-auto">
             <Dropdown>
               <DropdownTrigger className="hidden sm:flex">
                 <Button
@@ -346,9 +343,9 @@ export default function UserManagementTable() {
               </DropdownMenu>
             </Dropdown>
 
-            <Link to="/admin/user/add">
+            <Link to="/admin/user/add" className="w-full sm:w-auto">
               <Button
-                className="bg-foreground text-background"
+                className="bg-foreground text-background w-full sm:w-auto"
                 endContent={<PlusIcon />}
                 size="sm"
                 isDisabled={isLoading}
@@ -359,7 +356,7 @@ export default function UserManagementTable() {
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center w-full">
           <span className="text-default-400 text-small">
             Total {isLoading ? "..." : users.length} users
           </span>
@@ -388,7 +385,7 @@ export default function UserManagementTable() {
       users.length,
       rowsPerPage,
       isLoading,
-    ]
+    ],
   );
 
   const bottomContent = useMemo(
@@ -406,7 +403,7 @@ export default function UserManagementTable() {
         />
       </div>
     ),
-    [currentPage, totalPages, isLoading]
+    [currentPage, totalPages, isLoading],
   );
 
   // ===== LOADING STATE =====
@@ -420,39 +417,42 @@ export default function UserManagementTable() {
 
   return (
     <>
-      <Table
-        isCompact
-        removeWrapper
-        aria-label="User management table"
-        bottomContent={bottomContent}
-        bottomContentPlacement="outside"
-        sortDescriptor={sortDescriptor}
-        topContent={topContent}
-        topContentPlacement="outside"
-        onSortChange={setSortDescriptor}
-      >
-        <TableHeader columns={headerColumns}>
-          {(column) => (
-            <TableColumn
-              key={column.uid}
-              align={column.uid === "actions" ? "center" : "start"}
-              allowsSorting={column.sortable}
-            >
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
+      {/* Only show horizontal scroll on small screens (max-width: 1023px) */}
+      <div className="overflow-x-auto lg:overflow-x-visible">
+        <Table
+          isCompact
+          removeWrapper
+          aria-label="User management table"
+          bottomContent={bottomContent}
+          bottomContentPlacement="outside"
+          sortDescriptor={sortDescriptor}
+          topContent={topContent}
+          topContentPlacement="outside"
+          onSortChange={setSortDescriptor}
+        >
+          <TableHeader columns={headerColumns}>
+            {(column) => (
+              <TableColumn
+                key={column.uid}
+                align={column.uid === "actions" ? "center" : "start"}
+                allowsSorting={column.sortable}
+              >
+                {column.name}
+              </TableColumn>
+            )}
+          </TableHeader>
 
-        <TableBody emptyContent="No users found" items={sortedUsers}>
-          {(user) => (
-            <TableRow key={user.id}>
-              {(columnKey) => (
-                <TableCell>{renderUserCell(user, columnKey)}</TableCell>
-              )}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          <TableBody emptyContent="No users found" items={sortedUsers}>
+            {(user) => (
+              <TableRow key={user.id}>
+                {(columnKey) => (
+                  <TableCell>{renderUserCell(user, columnKey)}</TableCell>
+                )}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal}>
         <ModalContent>
