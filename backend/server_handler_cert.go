@@ -458,6 +458,14 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
         res := backend.db.Preload("User").Preload("Event").Where(&table.EventParticipant{EventPCode: base64Param, EventPCome: true}).First(&evPart)
 
         if res.Error != nil {
+            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Failed to get the cert for that code",
+                    "error_code": 4,
+                    "data": nil,
+                })
+            }
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to fetch event participant for this code, %v", res.Error),
