@@ -31,6 +31,12 @@ import { FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import { QRScanner } from "@/components/QRScanner";
 import { API_URL } from "@/api/endpoint";
+import {
+  extractDate,
+  extractTime,
+  formatDateDisplay,
+  combineDateAndTime,
+} from "@/components/webinar_gaeroh";
 
 // Fungsi untuk mendapatkan tanggal hari ini dalam format YYYY-MM-DD
 const getTodayDate = (): string => {
@@ -65,7 +71,7 @@ export default function EditWebinarPage() {
   // Image upload states
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string>(
-    "https://heroui.com/images/hero-card-complete.jpeg"
+    "https://heroui.com/images/hero-card-complete.jpeg",
   );
 
   // Error state
@@ -115,7 +121,7 @@ export default function EditWebinarPage() {
       try {
         setIsLoading(true);
 
-        // 1. Get webinar data
+        // Get Webinar Data
         const result = await auth_webinar.get_webinar_by_id(parseInt(id));
         if (!result.success) {
           toast.error("Failed to load webinar data");
@@ -127,7 +133,7 @@ export default function EditWebinarPage() {
         setWebinarData(webinar);
 
         setPreviewImage(
-          webinar.img || "https://heroui.com/images/hero-card-complete.jpeg"
+          webinar.img || "https://heroui.com/images/hero-card-complete.jpeg",
         );
 
         // Load Existing Committee Members and Webinar Count
@@ -189,12 +195,12 @@ export default function EditWebinarPage() {
 
       if (response.success) {
         const committeeMembers = response.data.filter(
-          (participant: any) => participant.EventPRole === "committee"
+          (participant: any) => participant.EventPRole === "committee",
         );
         setExistingCommittee(committeeMembers);
 
         const existingEmails = committeeMembers.map(
-          (member: any) => member.User.UserEmail
+          (member: any) => member.User.UserEmail,
         );
         setEditForm((prev) => ({
           ...prev,
@@ -202,55 +208,9 @@ export default function EditWebinarPage() {
         }));
       }
     } catch (error) {
-      console.error("Failed to load existing committee:", error);
+      toast.error("Failed to load committee members");
     } finally {
       setIsLoadingCommittee(false);
-    }
-  };
-
-  // Extract date from datetime string
-  const extractDate = (dateTimeStr: string): string => {
-    if (!dateTimeStr) return "";
-    try {
-      const date = new Date(dateTimeStr);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    } catch (e) {
-      return "";
-    }
-  };
-
-  // Extract time from datetime string
-  const extractTime = (dateTimeStr: string): string => {
-    if (!dateTimeStr) return "";
-    try {
-      const date = new Date(dateTimeStr);
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      return `${hours}:${minutes}`;
-    } catch (e) {
-      return "";
-    }
-  };
-
-  // Format date for display in UI
-  const formatDateDisplay = (dateStr: string | undefined) => {
-    if (!dateStr) return "Date not available";
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      return dateStr;
     }
   };
 
@@ -271,14 +231,9 @@ export default function EditWebinarPage() {
     }
   };
 
-  // Combine date and time into ISO string
-  const combineDateAndTime = (date: string, time: string): string => {
-    return new Date(`${date}T${time}:00`).toISOString();
-  };
-
   // Handle webinar image upload
   const handleWebinarImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -328,7 +283,7 @@ export default function EditWebinarPage() {
         } else {
           setPreviewImage(
             editForm.imageUrl ||
-              "https://heroui.com/images/hero-card-complete.jpeg"
+              "https://heroui.com/images/hero-card-complete.jpeg",
           );
           setError("Image upload failed. Please try again.");
           toast.error("Image upload failed. Please try again.");
@@ -336,7 +291,7 @@ export default function EditWebinarPage() {
       } catch (error) {
         setPreviewImage(
           editForm.imageUrl ||
-            "https://heroui.com/images/hero-card-complete.jpeg"
+            "https://heroui.com/images/hero-card-complete.jpeg",
         );
         setError("An error occurred while uploading the image.");
         toast.error("An error occurred while uploading the image.");
@@ -388,13 +343,13 @@ export default function EditWebinarPage() {
         return true;
       } else {
         toast.error(
-          `Failed to register user ${udata.UserFullName} (${udata.UserEmail}) as committee: ${response.message || "Unknown error"}`
+          `Failed to register user ${udata.UserFullName} (${udata.UserEmail}) as committee: ${response.message || "Unknown error"}`,
         );
         return false;
       }
     } catch (error) {
       toast.error(
-        `An error occurred while registering user ${udata.UserFullName} (${udata.UserEmail}) as committee`
+        `An error occurred while registering user ${udata.UserFullName} (${udata.UserEmail}) as committee`,
       );
       return false;
     }
@@ -489,7 +444,7 @@ export default function EditWebinarPage() {
   // Check if user is already a committee member
   const isUserAlreadyCommittee = (userEmail: string) => {
     return existingCommittee.some(
-      (member) => member.User.UserEmail === userEmail
+      (member) => member.User.UserEmail === userEmail,
     );
   };
 
@@ -521,11 +476,11 @@ export default function EditWebinarPage() {
 
     const fullStartDateTime = combineDateAndTime(
       editForm.dateStart,
-      editForm.timeStart
+      editForm.timeStart,
     );
     const fullEndDateTime = combineDateAndTime(
       editForm.dateEnd,
-      editForm.timeEnd
+      editForm.timeEnd,
     );
     const startDate = new Date(fullStartDateTime);
     const endDate = new Date(fullEndDateTime);
@@ -582,7 +537,7 @@ export default function EditWebinarPage() {
 
             const success = await registEventParticipant(
               userData,
-              webinarData.id
+              webinarData.id,
             );
             if (success) {
               successCount++;
@@ -597,7 +552,7 @@ export default function EditWebinarPage() {
         // Show registration results
         if (successCount > 0) {
           toast.success(
-            `${successCount} new committee members registered successfully!`
+            `${successCount} new committee members registered successfully!`,
           );
           await loadExistingCommittee(webinarData.id);
         }
@@ -732,7 +687,7 @@ export default function EditWebinarPage() {
     });
 
     setPreviewImage(
-      webinarData.img || "https://heroui.com/images/hero-card-complete.jpeg"
+      webinarData.img || "https://heroui.com/images/hero-card-complete.jpeg",
     );
     toast.info("Edit cancelled, changes reverted", { toastId: "cancelEdit" });
     setError("");
@@ -783,7 +738,7 @@ export default function EditWebinarPage() {
   // Handle certificate click
   const handleCertificateClick = async () => {
     const token = localStorage.getItem("token");
-    const _ = await auth_cert.create_cert(id);
+    const _ = await auth_cert.create_cert(parseInt(id || "0"));
     document.cookie = `jwt=${token}; path=/; Secure`;
     const link = `${API_URL}/api/c/cert-editor?event_id=${id}`;
     window.open(link, "_blank", "noopener,noreferrer");
@@ -795,7 +750,7 @@ export default function EditWebinarPage() {
     try {
       if (response.success) {
         setParticipantCount(
-          typeof response.data === "number" ? response.data : 0
+          typeof response.data === "number" ? response.data : 0,
         );
       } else {
         toast.error("Failed to fetch participant count");
@@ -1173,7 +1128,7 @@ export default function EditWebinarPage() {
                                     onPress={() =>
                                       handleChangeRole(
                                         member.User.UserEmail,
-                                        "normal"
+                                        "normal",
                                       )
                                     }
                                   >
@@ -1184,7 +1139,7 @@ export default function EditWebinarPage() {
                                     className="text-danger"
                                     onPress={() =>
                                       handleRemoveParticipant(
-                                        member.User.UserEmail
+                                        member.User.UserEmail,
                                       )
                                     }
                                   >
@@ -1270,6 +1225,7 @@ export default function EditWebinarPage() {
                     }
                     isRequired
                   />
+
                   {/* Edit Webinar Start Time */}
                   <Input
                     color="secondary"
@@ -1360,7 +1316,7 @@ export default function EditWebinarPage() {
                     const value = e.target.value;
                     handleInputChange(
                       "max",
-                      value === "" ? 0 : parseInt(value) || 0
+                      value === "" ? 0 : parseInt(value) || 0,
                     );
                   }}
                   isRequired
@@ -1380,7 +1336,7 @@ export default function EditWebinarPage() {
                     const value = e.target.value;
                     handleInputChange(
                       "certId",
-                      value === "" ? 1 : parseInt(value) || 1
+                      value === "" ? 1 : parseInt(value) || 1,
                     );
                   }}
                 />
