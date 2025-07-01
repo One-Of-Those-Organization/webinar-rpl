@@ -29,23 +29,14 @@ import { toast, ToastContainer } from "react-toastify";
 import { VerticalDotsIcon } from "@/components/icons";
 import { FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
-import { QRScanner } from "@/components/QRScanner";
 import { API_URL } from "@/api/endpoint";
 import {
   extractDate,
   extractTime,
   formatDateDisplay,
   combineDateAndTime,
+  getTodayDate,
 } from "@/components/webinar_gaeroh";
-
-// Fungsi untuk mendapatkan tanggal hari ini dalam format YYYY-MM-DD
-const getTodayDate = (): string => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 export default function EditWebinarPage() {
   const { id } = useParams<{ id: string }>();
@@ -76,9 +67,6 @@ export default function EditWebinarPage() {
 
   // Error state
   const [error, setError] = useState("");
-
-  // QR Scanner state
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   // Confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState({
@@ -730,15 +718,10 @@ export default function EditWebinarPage() {
     setIsEditMode(!isEditMode);
   };
 
-  // Handle QR scanner open
-  const handleQRScan = () => {
-    setIsQRScannerOpen(true);
-  };
-
   // Handle certificate click
   const handleCertificateClick = async () => {
     const token = localStorage.getItem("token");
-    const _ = await auth_cert.create_cert(parseInt(id || "0"));
+    await auth_cert.create_cert(parseInt(id || "0"));
     document.cookie = `jwt=${token}; path=/; Secure`;
     const link = `${API_URL}/api/c/cert-editor?event_id=${id}`;
     window.open(link, "_blank", "noopener,noreferrer");
@@ -838,26 +821,14 @@ export default function EditWebinarPage() {
           <div className="flex flex-row gap-2 px-4 py-4 justify-center">
             {!isEditMode ? (
               <>
-                <Button
-                  className={buttonStyles({
-                    color: "secondary",
-                    radius: "full",
-                    variant: "bordered",
-                    size: "lg",
-                  })}
-                  onClick={handleQRScan}
-                >
-                  Scan QR
-                </Button>
-
                 <Link
                   className={buttonStyles({
                     color: "secondary",
                     radius: "full",
-                    variant: "bordered",
+                    variant: "solid",
                     size: "lg",
                   })}
-                  to={"/"} // STILL DUMMY LINK
+                  to={"/list-partisipant/" + id}
                 >
                   View Participants
                 </Link>
@@ -866,7 +837,7 @@ export default function EditWebinarPage() {
                   className={buttonStyles({
                     color: "secondary",
                     radius: "full",
-                    variant: "bordered",
+                    variant: "solid",
                     size: "lg",
                   })}
                   onClick={handleCertificateClick}
@@ -1431,13 +1402,6 @@ export default function EditWebinarPage() {
           </div>
         )}
       </section>
-
-      {/* QR Scanner Modal */}
-      <QRScanner
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
-      />
-
       <ToastContainer />
     </DefaultLayout>
   );
