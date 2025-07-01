@@ -626,6 +626,103 @@ func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
     })
 }
 
+// POST : api/protected/event-participate-absence-bulk
+func appHandleEventParticipateAbsenceBulk(backend *Backend, route fiber.Router) {
+    route.Post("event-participate-absence-bulk", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        email := claims["email"].(string)
+        admin := claims["admin"].(float64)
+
+        var body struct {
+            EventID int `json:"event_id"`
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.User
+        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        if res.Error != nil {
+            if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Invalid user on JWT.",
+                    "error_code": 3,
+                    "data": nil,
+                })
+            }
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Something wrong happened on the backend, %v", res.Error),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        if admin != 1 {
+            var eventPart table.EventParticipant
+            res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&eventPart)
+            if res.Error != nil {
+                if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                    return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                        "success": false,
+                        "message": "Invalid event participant.",
+                        "error_code": 5,
+                        "data": nil,
+                    })
+                }
+                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                    "success": false,
+                    "message": fmt.Sprintf("Something wrong happened on the backend, %v", res.Error),
+                    "error_code": 6,
+                    "data": nil,
+                })
+            }
+            if eventPart.EventPRole != "committee" {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Invalid credentials for this API.",
+                    "error_code": 7,
+                    "data": nil,
+                })
+            }
+        }
+
+        res = backend.db.Model(&table.EventParticipant{}).Where("event_id = ? AND eventp_role = ?", body.EventID, "normal").Update("eventp_come", true)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to update the absence for this event, %v", res.Error),
+                "error_code": 8,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "OK",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
+
 // POST : api/protected/event-participate-absence
 func appHandleEventParticipateAbsence(backend *Backend, route fiber.Router) {
     route.Post("event-participate-absence", func (c *fiber.Ctx) error {
