@@ -76,7 +76,7 @@ func appHandleCleanupOTP(backend *Backend, route fiber.Router) {
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })

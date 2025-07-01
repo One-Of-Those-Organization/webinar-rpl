@@ -8,7 +8,6 @@ import (
 
     "gorm.io/gorm"
     "github.com/gofiber/fiber/v2"
-    "github.com/golang-jwt/jwt/v5"
 )
 
 // NOTE : if not supplied with `email` on the json it will presume to use
@@ -17,16 +16,15 @@ import (
 // POST : api/protected/event-participate-register
 func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
     route.Post("event-participate-register", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
-        claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
         email := claims["email"].(string)
 
@@ -45,7 +43,7 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
             CustomUserEmail *string `json:"email"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -179,16 +177,15 @@ func appHandleEventParticipateRegister(backend *Backend, route fiber.Router) {
 // GET : api/protected/event-participate-info-of
 func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
     route.Get("event-participate-info-of", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
-        claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
         admin := claims["admin"].(float64)
 
@@ -265,17 +262,16 @@ func appHandleEventParticipateInfoOf(backend *Backend, route fiber.Router) {
 // POST : api/protected/event-participate-del
 func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
     route.Post("event-participate-del", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
 
         var body struct {
@@ -283,7 +279,7 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
             UserEmail  string `json:"email"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -347,17 +343,16 @@ func appHandleEventParticipateDel(backend *Backend, route fiber.Router) {
 // POST : api/protected/event-participate-edit
 func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
     route.Post("event-participate-edit", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
         currentUserEmail := claims["email"].(string)
 
@@ -367,7 +362,7 @@ func appHandleEventParticipateEdit(backend *Backend, route fiber.Router) {
             UserEmail  *string `json:"email"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -509,7 +504,7 @@ func appHandleEventParticipateOfEvent(backend *Backend, route fiber.Router) {
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
@@ -575,7 +570,7 @@ func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })

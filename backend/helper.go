@@ -105,6 +105,9 @@ func GetJWT(c *fiber.Ctx) (jwt.MapClaims, error) {
     if user == nil {
         return nil, errors.New("JWT token not valid")
     }
+    if !user.Valid {
+        return nil, errors.New("JWT token expired")
+    }
     claims := user.Claims.(jwt.MapClaims)
     return claims, nil
 }

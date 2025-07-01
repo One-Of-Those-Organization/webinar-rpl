@@ -3,4 +3,5 @@ export to csv all the webinar data
 
 
 TODO:
-- Aksually make JWT expired (see user.Valid)
+- Add api to other useful function (PLANNED)
+- Add csv export on evpart (IDK)
