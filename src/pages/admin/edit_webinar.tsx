@@ -13,6 +13,12 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
 } from "@heroui/react";
 import { button as buttonStyles } from "@heroui/theme";
 import DefaultLayout from "@/layouts/default_admin";
@@ -23,11 +29,11 @@ import { auth_user } from "@/api/auth_user";
 import { auth_cert } from "@/api/auth_cert";
 import { auth_participants } from "@/api/auth_participants";
 import { auth_material } from "@/api/auth_material";
-import { UserData } from "@/api/interface";
+import { UserData, CertificateTemplate } from "@/api/interface";
 import { WebinarEdit } from "@/api/interface";
 import { toast, ToastContainer } from "react-toastify";
 import { VerticalDotsIcon } from "@/components/icons";
-import { FaExclamationTriangle, FaTrash } from "react-icons/fa";
+import { FaExclamationTriangle, FaTrash, FaCertificate, FaPlus, FaEdit, FaEye } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "@/api/endpoint";
 import {
@@ -47,6 +53,10 @@ export default function EditWebinarPage() {
   const [materialInfo, setMaterialInfo] = useState("");
   const [materialId, setMaterialId] = useState<number | null>(null);
   const [participantCount, setParticipantCount] = useState(0);
+
+  // Certificate states
+  const [certificateTemplate, setCertificateTemplate] = useState<CertificateTemplate | null>(null);
+  const [isCertificateLoading, setIsCertificateLoading] = useState(false);
 
   // User and committee states
   const [panitiaData, setPanitiaData] = useState<any[]>([]);
@@ -68,7 +78,7 @@ export default function EditWebinarPage() {
   // Error state
   const [error, setError] = useState("");
 
-  // Confirmation modal state
+  // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState({
     isOpen: false,
     title: "",
@@ -76,6 +86,9 @@ export default function EditWebinarPage() {
     onConfirm: () => {},
     type: "danger" as "danger" | "warning",
   });
+
+  // Certificate Modal
+  const { isOpen: isCertModalOpen, onOpen: onCertModalOpen, onClose: onCertModalClose } = useDisclosure();
 
   // Form data state
   const [editForm, setEditForm] = useState({
@@ -97,6 +110,25 @@ export default function EditWebinarPage() {
 
   const todayDate = getTodayDate();
 
+  // Load certificate template info
+  const loadCertificateTemplate = async (eventId: number) => {
+    try {
+      setIsCertificateLoading(true);
+      const result = await auth_cert.check_cert_exists(eventId);
+      
+      if (result.success && result.data) {
+        setCertificateTemplate(result.data);
+      } else {
+        setCertificateTemplate(null);
+      }
+    } catch (error) {
+      console.error("Failed to load certificate template:", error);
+      setCertificateTemplate(null);
+    } finally {
+      setIsCertificateLoading(false);
+    }
+  };
+
   // Use effect to load webinar data when component mounts
   useEffect(() => {
     const loadData = async () => {
@@ -105,12 +137,13 @@ export default function EditWebinarPage() {
         navigate("/admin/webinar");
         return;
       }
-
+      console.table(id);
       try {
         setIsLoading(true);
 
         // Get Webinar Data
         const result = await auth_webinar.get_webinar_by_id(parseInt(id));
+        console.table(result)
         if (!result.success) {
           toast.error("Failed to load webinar data");
           navigate("/admin/webinar");
@@ -119,10 +152,14 @@ export default function EditWebinarPage() {
 
         const webinar = WebinarEdit.fromApiResponse(result.data);
         setWebinarData(webinar);
+        console.table(webinar);
 
         setPreviewImage(
           webinar.img || "https://heroui.com/images/hero-card-complete.jpeg",
         );
+
+        // Load Certificate Template
+        await loadCertificateTemplate(parseInt(id));
 
         // Load Existing Committee Members and Webinar Count
         await loadExistingCommittee(parseInt(id));
@@ -173,6 +210,119 @@ export default function EditWebinarPage() {
       handleFetchUser();
     }
   }, [isEditMode]);
+
+// Update certificate handlers to use new protected API
+const handleCreateCertificate = async () => {
+  if (!id) {
+    toast.error("No event ID provided");
+    return;
+  }
+  
+  try {
+    setIsCertificateLoading(true);
+    
+    console.log("Creating certificate for event ID:", id);
+    
+    // Check if token exists first
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Authentication token not found. Please login again.");
+      return;
+    }
+    
+    // Try to create via API first, but proceed to editor regardless
+    const result = await auth_cert.create_cert(parseInt(id));
+    
+    if (result.success || result.error_code === 0) {
+      toast.success("Certificate template created successfully!");
+      await loadCertificateTemplate(parseInt(id));
+    } else {
+      console.log("API creation failed, proceeding to editor anyway:", result);
+      
+      if (result.error_code === 5 || result.error_code === 4) {
+        toast.warning("Event verification failed, but proceeding to certificate editor...");
+      } else if (result.error_code === 6 || result.error_code === 7) {
+        toast.warning("Permission issue detected, but proceeding to certificate editor...");
+      } else if (result.error_code === -1) {
+        toast.warning("Authentication issue detected, but proceeding to certificate editor...");
+      } else {
+        toast.warning("Backend creation failed, but proceeding to certificate editor...");
+      }
+    }
+    
+    onCertModalClose();
+    
+    // Navigate to frontend certificate editor
+    const editorUrl = auth_cert.get_cert_editor_url(parseInt(id));
+    navigate(editorUrl);
+    
+  } catch (error) {
+    console.error("Certificate creation error:", error);
+    toast.warning("Network error, but proceeding to certificate editor...");
+    onCertModalClose();
+    
+    const editorUrl = auth_cert.get_cert_editor_url(parseInt(id));
+    navigate(editorUrl);
+  } finally {
+    setIsCertificateLoading(false);
+  }
+};
+
+const handleEditCertificate = () => {
+  if (!id) return;
+  
+  // Check if token exists first
+  const token = localStorage.getItem("token");
+  if (!token) {
+    toast.warning("Authentication token not found. Proceeding to editor in local mode...");
+  }
+  
+  // Navigate to frontend certificate editor
+  const editorUrl = auth_cert.get_cert_editor_url(parseInt(id));
+  navigate(editorUrl);
+  onCertModalClose();
+};
+
+const handleViewCertificate = () => {
+  if (!certificateTemplate) return;
+  
+  // Navigate to frontend certificate editor in view mode
+  const editorUrl = auth_cert.get_cert_editor_url(parseInt(id)) + "&mode=view";
+  navigate(editorUrl);
+  onCertModalClose();
+};
+
+
+  const handleDeleteCertificate = async () => {
+    if (!certificateTemplate) return;
+
+    setShowConfirmModal({
+      isOpen: true,
+      title: "Delete Certificate Template",
+      message: "Are you sure you want to delete this certificate template? This action cannot be undone.",
+      type: "danger",
+      onConfirm: async () => {
+        setShowConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        
+        try {
+          setIsCertificateLoading(true);
+          const result = await auth_cert.delete_cert_template(certificateTemplate.ID);
+          
+          if (result.success) {
+            toast.success("Certificate template deleted successfully!");
+            setCertificateTemplate(null);
+            onCertModalClose();
+          } else {
+            toast.error("Failed to delete certificate template");
+          }
+        } catch (error) {
+          toast.error("Error deleting certificate template");
+        } finally {
+          setIsCertificateLoading(false);
+        }
+      },
+    });
+  };
 
   // Load existing committee members for webinar
   const loadExistingCommittee = async (eventId: any) => {
@@ -499,13 +649,6 @@ export default function EditWebinarPage() {
       // Register new committee members first
       const newCommitteeMembers = getNewCommitteeMembers();
       if (newCommitteeMembers.length > 0) {
-        // toast.info(
-        //   `Registering ${newCommitteeMembers.length} new committee members...`,
-        //   {
-        //     toastId: "registeringCommittee",
-        //   }
-        // );
-
         let successCount = 0;
         let failCount = 0;
 
@@ -718,15 +861,6 @@ export default function EditWebinarPage() {
     setIsEditMode(!isEditMode);
   };
 
-  // Handle certificate click
-  const handleCertificateClick = async () => {
-    const token = localStorage.getItem("token");
-    await auth_cert.create_cert(parseInt(id || "0"));
-    document.cookie = `jwt=${token}; path=/; Secure`;
-    const link = `${API_URL}/api/c/cert-editor?event_id=${id}`;
-    window.open(link, "_blank", "noopener,noreferrer");
-  };
-
   // Get participant count for webinar
   const get_webinar_count = async (eventId: number) => {
     const response = await auth_participants.event_participate_count(eventId);
@@ -840,8 +974,10 @@ export default function EditWebinarPage() {
                     variant: "solid",
                     size: "lg",
                   })}
-                  onClick={handleCertificateClick}
+                  onClick={onCertModalOpen}
+                  isLoading={isCertificateLoading}
                 >
+                  <FaCertificate className="mr-2" />
                   Certificate
                 </Button>
 
@@ -1010,11 +1146,22 @@ export default function EditWebinarPage() {
                   </span>
                 </div>
 
-                {/* Webinar Certificate */}
+                {/* Certificate Template Status */}
                 <div className="font-bold text-xl">
-                  Certificate Template ID :{" "}
+                  Certificate Template :{" "}
                   <span className="text-[#B6A3E8] font-bold">
-                    {webinarData.cert_template_id || "0"}
+                    {isCertificateLoading ? (
+                      "Loading..."
+                    ) : certificateTemplate ? (
+                      <div className="inline-flex items-center gap-2">
+                        <span className="text-green-600">✓ Available</span>
+                        <Chip color="success" size="sm" variant="flat">
+                          ID: {certificateTemplate.ID}
+                        </Chip>
+                      </div>
+                    ) : (
+                      <span className="text-orange-600">Not Created</span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -1355,7 +1502,171 @@ export default function EditWebinarPage() {
           )}
         </div>
 
-        {/* Confirmation modal */}
+        {/* Certificate Modal */}
+        <Modal
+          isOpen={isCertModalOpen}
+          onClose={onCertModalClose}
+          size="2xl"
+          backdrop="blur"
+        >
+          <ModalContent>
+            <ModalHeader className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <FaCertificate className="text-2xl text-primary" />
+                <h3 className="text-xl font-bold">Certificate Management</h3>
+              </div>
+              <p className="text-sm text-gray-600">
+                Event: {webinarData?.name} (ID: {id})
+              </p>
+            </ModalHeader>
+            <ModalBody>
+              <div className="space-y-4">
+                {/* Certificate Status */}
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold mb-2">Current Status:</h4>
+                  {isCertificateLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span>Loading certificate information...</span>
+                    </div>
+                  ) : certificateTemplate ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-600 font-semibold">✓ Certificate template exists</span>
+                      <Chip color="success" size="sm" variant="flat">
+                        Template ID: {certificateTemplate.ID}
+                      </Chip>
+                    </div>
+                  ) : (
+                    <span className="text-orange-600 font-semibold">⚠ No certificate template found</span>
+                  )}
+                </div>
+
+                {/* Certificate Actions */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold">Available Actions:</h4>
+                  
+                  {/* Create Certificate */}
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer" isPressable={!certificateTemplate && !isCertificateLoading}>
+                    <CardBody>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <FaPlus className="text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="font-semibold">Create Certificate Template</h5>
+                          <p className="text-sm text-gray-600">
+                            {certificateTemplate ? 
+                              "Certificate template already exists" : 
+                              "Create a new certificate template for this webinar"
+                            }
+                          </p>
+                        </div>
+                        <Button
+                          color="success"
+                          size="sm"
+                          onClick={handleCreateCertificate}
+                          isDisabled={!!certificateTemplate || isCertificateLoading}
+                          isLoading={isCertificateLoading}
+                        >
+                          {certificateTemplate ? "Created" : "Create"}
+                        </Button>
+                      </div>
+                    </CardBody>
+                  </Card>
+
+                  {/* Edit Certificate */}
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer" isPressable={!!certificateTemplate && !isCertificateLoading}>
+                    <CardBody>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <FaEdit className="text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="font-semibold">Edit Certificate Template</h5>
+                          <p className="text-sm text-gray-600">
+                            {certificateTemplate ? 
+                              "Modify the existing certificate template design" : 
+                              "Create a template first before editing"
+                            }
+                          </p>
+                        </div>
+                        <Button
+                          color="primary"
+                          size="sm"
+                          onClick={handleEditCertificate}
+                          isDisabled={!certificateTemplate || isCertificateLoading}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    </CardBody>
+                  </Card>
+
+                  {/* View Certificate */}
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer" isPressable={!!certificateTemplate && !isCertificateLoading}>
+                    <CardBody>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                          <FaEye className="text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="font-semibold">View Certificate Template</h5>
+                          <p className="text-sm text-gray-600">
+                            {certificateTemplate ? 
+                              "Preview how the certificate will look" : 
+                              "Create a template first before viewing"
+                            }
+                          </p>
+                        </div>
+                        <Button
+                          color="secondary"
+                          size="sm"
+                          onClick={handleViewCertificate}
+                          isDisabled={!certificateTemplate || isCertificateLoading}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </div>
+
+                {/* Delete Certificate Template */}
+                {certificateTemplate && (
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h5 className="font-semibold text-red-600">Danger Zone</h5>
+                        <p className="text-sm text-gray-600">Delete the certificate template permanently</p>
+                      </div>
+                      <Button
+                        color="danger"
+                        size="sm"
+                        variant="bordered"
+                        onClick={handleDeleteCertificate}
+                        isDisabled={isCertificateLoading}
+                      >
+                        Delete Template
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button 
+                color="default" 
+                variant="light" 
+                onPress={onCertModalClose}
+                isDisabled={isCertificateLoading}
+              >
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+                {/* Confirmation modal */}
         {showConfirmModal.isOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
