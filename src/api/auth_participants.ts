@@ -10,7 +10,7 @@
 // 6. Set Participant Absence ✅
 // 7. Get Participant Count by Event ✅
 // 8. Get Event Participation by User ✅
-// 9. Absence Participant from Event (Online) ❌ (WIP)
+// 9. Absence Participant from Event (Online) ✅
 
 import { API_URL } from "@/api/endpoint";
 import {
