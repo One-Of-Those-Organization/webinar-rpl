@@ -15,7 +15,7 @@ import {
   Card,
   CardBody,
   Image,
-  Divider
+  Divider,
 } from "@heroui/react";
 import Upload from "@/components/upload";
 
@@ -26,9 +26,8 @@ const users = [
     email: "john@example.com",
     nim: "123456789",
     registered: true,
-    selected: false
+    selected: false,
   },
-
 ];
 
 export default function CreateSertifikatAdminPage() {
@@ -44,19 +43,20 @@ export default function CreateSertifikatAdminPage() {
   };
 
   const toggleUserSelection = (userId: number) => {
-    setUserList(prevUsers =>
-      prevUsers.map(user =>
-        user.id === userId ? { ...user, selected: !user.selected } : user
-      )
+    setUserList((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === userId ? { ...user, selected: !user.selected } : user,
+      ),
     );
-    setSelectedCount(prev => 
-      userList.find(u => u.id === userId)?.selected ? prev - 1 : prev + 1
+    setSelectedCount((prev) =>
+      userList.find((u) => u.id === userId)?.selected ? prev - 1 : prev + 1,
     );
   };
 
-  const filteredItems = userList.filter(user =>
-    user.name.toLowerCase().includes(filterValue.toLowerCase()) ||
-    user.nim.toLowerCase().includes(filterValue.toLowerCase())
+  const filteredItems = userList.filter(
+    (user) =>
+      user.name.toLowerCase().includes(filterValue.toLowerCase()) ||
+      user.nim.toLowerCase().includes(filterValue.toLowerCase()),
   );
 
   const generateCertificates = () => {
@@ -68,9 +68,8 @@ export default function CreateSertifikatAdminPage() {
       alert("Please select at least one user");
       return;
     }
-    
-    const selectedUsers = userList.filter(user => user.selected);
-    console.log("Generating certificates for:", selectedUsers);
+
+    const selectedUsers = userList.filter((user) => user.selected);
     alert(`Generating ${selectedCount} certificates...`);
   };
 
@@ -84,15 +83,16 @@ export default function CreateSertifikatAdminPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-4">
             <CardBody className="flex flex-col gap-4">
-              <h2 className="text-lg font-semibold">Upload Template Sertifikat</h2>
-              <Upload 
-                accept="image/*,.pdf" 
-                onFileUpload={handleFileUpload}
-              />
-              
+              <h2 className="text-lg font-semibold">
+                Upload Template Sertifikat
+              </h2>
+              <Upload accept="image/*,.pdf" onFileUpload={handleFileUpload} />
+
               {previewUrl && (
                 <div className="mt-4">
-                  <h3 className="text-md font-medium mb-2">Preview Template:</h3>
+                  <h3 className="text-md font-medium mb-2">
+                    Preview Template:
+                  </h3>
                   <Image
                     alt="Template preview"
                     className="w-full h-auto max-h-60 object-contain border rounded"
@@ -107,11 +107,14 @@ export default function CreateSertifikatAdminPage() {
             <CardBody className="flex flex-col gap-4">
               <h2 className="text-lg font-semibold">Ringkasan</h2>
               <div className="space-y-2">
-                <p>Template: {templateFile ? templateFile.name : "Belum diupload"}</p>
+                <p>
+                  Template:{" "}
+                  {templateFile ? templateFile.name : "Belum diupload"}
+                </p>
                 <p>Peserta terpilih: {selectedCount}</p>
                 <Divider />
-                <Button 
-                  color="primary" 
+                <Button
+                  color="primary"
                   fullWidth
                   onClick={generateCertificates}
                   isDisabled={!templateFile || selectedCount === 0}
@@ -144,10 +147,10 @@ export default function CreateSertifikatAdminPage() {
                 <TableColumn>STATUS</TableColumn>
               </TableHeader>
               <TableBody>
-                {filteredItems.map(user => (
+                {filteredItems.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
-                      <Checkbox 
+                      <Checkbox
                         isSelected={user.selected}
                         onChange={() => toggleUserSelection(user.id)}
                         isDisabled={!user.registered}
@@ -156,7 +159,9 @@ export default function CreateSertifikatAdminPage() {
                     <TableCell>
                       <div className="flex flex-col">
                         <p className="font-bold text-small">{user.name}</p>
-                        <p className="text-tiny text-default-500">{user.email}</p>
+                        <p className="text-tiny text-default-500">
+                          {user.email}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell>{user.nim}</TableCell>

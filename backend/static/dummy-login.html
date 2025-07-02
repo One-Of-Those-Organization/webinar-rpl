@@ -1,37 +1,30 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Test Login</title>
-</head>
-<body>
+  </head>
+  <body>
     <form id="login-form">
-        <input type="email" name="email" placeholder="Email"><br>
-        <input type="password" name="pass" placeholder="Password"><br>
-        <input type="submit">
+      <input type="email" name="email" placeholder="Email" /><br />
+      <input type="password" name="pass" placeholder="Password" /><br />
+      <input type="submit" />
     </form>
 
     <script>
-    document.getElementById('login-form').addEventListener('submit', async function (e) {
-        e.preventDefault();
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
 
-        const email = e.target.email.value;
-        const pass = e.target.pass.value;
+          const email = e.target.email.value;
+          const pass = e.target.pass.value;
 
-        const res = await fetch('http://localhost:3000/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, pass })
+          const res = await fetch("http://localhost:3000/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, pass }),
+          });
         });
-
-        const data = await res.json();
-        console.log(data);
-
-        if (data.success) {
-            // Redirect or load cert-editor page
-            console.log("success")
-        }
-    });
     </script>
-</body>
+  </body>
 </html>
-

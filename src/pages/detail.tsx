@@ -390,6 +390,7 @@ export default function DetailPage() {
     }
   };
 
+  // Handle materials click
   const handleMaterialsClick = () => {
     if (!isRegistered && isWebinarFinished()) {
       toast.info("Webinar has finished, registration is closed.", {
@@ -406,6 +407,7 @@ export default function DetailPage() {
     }
   };
 
+  // Handle absence (check-in) logic
   const handleAbsence = async () => {
     if (!webinar) return;
 
@@ -414,43 +416,38 @@ export default function DetailPage() {
         toastId: "registration-closed",
       });
       return;
-    }
-    if (!isRegistered) {
+    } else if (!isRegistered) {
       toast.info("You must register first", {
         toastId: "registration-info",
       });
       return;
-    }
-    if (hasAttended) {
+    } else if (isRegistered) {
+      toast.info("You have already registered for this webinar.", {
+        toastId: "already-registered",
+      });
+    } else if (hasAttended) {
       toast.info("You have already marked your attendance.", {
         toastId: "already-attended",
       });
       return;
-    }
-    if (isWebinarFinished()) {
+    } else if (isWebinarFinished()) {
       toast.info("The webinar has finished, you cannot mark attendance.", {
         toastId: "webinar-finished",
       });
       return;
-    }
-    if (!isWebinarLive()) {
+    } else if (!isWebinarLive()) {
       toast.info("The webinar is not live, you cannot mark attendance.", {
         toastId: "absence-info",
       });
       return;
+    } else {
+      toast.error("You cannot mark attendance for this webinar.", {
+        toastId: "absence-error",
+      });
     }
 
     try {
-      const resp = await auth_participants.event_participate_info(webinar.id);
-      if (!resp.success || !resp.data || !resp.data.EventPCode) {
-        toast.error("Failed to get your participant code. Please try again.");
-        return;
-      }
-      const eventPCode = resp.data.EventPCode;
-      const response = await auth_participants.event_participate_absence({
-        id: webinar.id,
-        code: eventPCode,
-      });
+      const response = await auth_participants.automatic_absence(webinar.id);
       if (response.success) {
         setHasAttended(true);
         toast.success("Attendance marked successfully!", {
@@ -746,10 +743,7 @@ export default function DetailPage() {
         max: editForm.max,
         att: editForm.att,
       };
-      console.log("Updated Webinar that sended :", editData);
       const response = await auth_webinar.edit_webinar(editData);
-      console.log("Updated Webinar :", response);
-
       if (response.success) {
         toast.success("Webinar updated successfully!", {
           toastId: "update-webinar",
