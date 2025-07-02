@@ -6,23 +6,21 @@ import (
     "webrpl/table"
 
     "github.com/gofiber/fiber/v2"
-    "github.com/golang-jwt/jwt/v5"
 )
 
 // POST : api/protected/material-register
 func appHandleMaterialNew(backend *Backend, route fiber.Router) {
     route.Post("material-register", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
 
         if isAdmin != 1 {
@@ -38,7 +36,7 @@ func appHandleMaterialNew(backend *Backend, route fiber.Router) {
             EventAttach  string `json:"event_attach"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -86,17 +84,16 @@ func appHandleMaterialNew(backend *Backend, route fiber.Router) {
 // GET : api/protected/material-info-of
 func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
     route.Get("material-info-of", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
 
         if email == "" {
@@ -119,7 +116,8 @@ func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
-        infoOfInt, err := strconv.Atoi(infoOf)
+
+        infoOfInt, err = strconv.Atoi(infoOf)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -152,17 +150,16 @@ func appHandleMaterialInfoOf(backend *Backend, route fiber.Router) {
 // POST : api/protected/material-del
 func appHandleMaterialDel(backend *Backend, route fiber.Router) {
     route.Post("material-del", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
         if isAdmin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -177,7 +174,7 @@ func appHandleMaterialDel(backend *Backend, route fiber.Router) {
             EventMatId int `json:"id"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -209,17 +206,16 @@ func appHandleMaterialDel(backend *Backend, route fiber.Router) {
 // POST : api/protected/material-edit
 func appHandleMaterialEdit(backend *Backend, route fiber.Router) {
     route.Post("material-edit", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
         if isAdmin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -236,7 +232,7 @@ func appHandleMaterialEdit(backend *Backend, route fiber.Router) {
             EventAttach  *string `json:"event_attach"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,

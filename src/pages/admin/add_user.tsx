@@ -126,62 +126,43 @@ export default function AddUserPage() {
     setLoading(true);
 
     try {
-      // Handle client-side validation errors
-      let clientOnlyError = null;
-
       switch (true) {
         case name.length <= 0:
-          clientOnlyError = {
-            message: "Please enter the name",
-            type: "info",
-          };
-          break;
+          toast.info("Please enter the name", { toastId: "add-user-info" });
+          return;
 
         case email.length <= 0:
-          clientOnlyError = {
-            message: "Please enter the email",
-            type: "info",
-          };
-          break;
+          toast.info("Please enter the email", { toastId: "add-user-info" });
+          return;
 
         case !emailRegex.test(email):
-          clientOnlyError = {
-            message: "Please enter a valid email address",
-            type: "warn",
-          };
-          break;
+          toast.warn("Please enter a valid email address", {
+            toastId: "add-user-warn",
+          });
+          return;
 
         case instance.length <= 0:
-          clientOnlyError = {
-            message: "Please enter the instance",
-            type: "info",
-          };
-          break;
+          toast.info("Please enter the instance", { toastId: "add-user-info" });
+          return;
 
         case password.length <= 0:
-          clientOnlyError = {
-            message: "Please enter the password",
-            type: "info",
-          };
-          break;
+          toast.info("Please enter the password", { toastId: "add-user-info" });
+          return;
 
         case !passwordRegex.test(password):
-          clientOnlyError = {
-            message:
-              "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
-            type: "warn",
-          };
-          break;
-      }
+          toast.warn(
+            "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+            {
+              toastId: "add-user-warn",
+            },
+          );
+          return;
 
-      if (clientOnlyError) {
-        if (clientOnlyError.type === "warn") {
-          toast.warn(clientOnlyError.message);
-        } else {
-          toast.info(clientOnlyError.message);
-        }
-        setLoading(false);
-        return;
+        default:
+          toast.success("Form is valid, submitting...", {
+            toastId: "add-user-success",
+          });
+          break;
       }
 
       // Prepare data untuk API call
@@ -191,7 +172,7 @@ export default function AddUserPage() {
         instance: instance,
         pass: password,
         picture: profile,
-        user_role: userRole, // 1 for Admin, 0 for Regular User
+        user_role: userRole,
       };
 
       const result = await auth_user.register_admin(registerData);
@@ -200,7 +181,7 @@ export default function AddUserPage() {
       if (result.success) {
         toast.success(
           result.message ||
-            `${userRole === 1 ? "Admin" : "Regular"} user added successfully!`
+            `${userRole === 1 ? "Admin" : "Regular"} user added successfully!`,
         );
 
         // Reset form fields
@@ -227,30 +208,38 @@ export default function AddUserPage() {
       // Handle server-side validation errors
       switch (result.error_code) {
         case 2:
-          toast.warn("All field must be filled");
+          toast.warn("All field must be filled", { toastId: "add-user-warn" });
           break;
 
         case 3:
-          toast.warn("Invalid Email.");
+          toast.warn("Invalid Email."), { toastId: "add-user-warn" };
           break;
 
         case 5:
-          toast.warn("User with that email already registered.");
+          toast.warn("User with that email already registered.", {
+            toastId: "add-user-warn",
+          });
           break;
 
         case 401:
-          toast.error("Session expired. Please login again.");
+          toast.error("Session expired. Please login again.", {
+            toastId: "add-user-warn",
+          });
           setTimeout(() => {
             window.location.href = "/login";
           }, 2000);
           break;
 
         default:
-          toast.error(result.message || "Failed to add user");
+          toast.error(result.message || "Failed to add user", {
+            toastId: "add-user-error",
+          });
           break;
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error("An unexpected error occurred", {
+        toastId: "add-user-error",
+      });
     } finally {
       setLoading(false);
     }
@@ -406,7 +395,7 @@ export default function AddUserPage() {
               </Dropdown>
             </div>
 
-            <div className="flex justify-center lg:justify-start gap-4 pt-4 w-full">
+            <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-2 sm:gap-4 pt-4 w-full">
               <Button
                 className={buttonStyles({
                   color: "secondary",
@@ -429,7 +418,7 @@ export default function AddUserPage() {
                   size: "sm",
                 })}
                 onClick={handleSubmit}
-                disabled={loading || !isFormFilled}
+                disabled={loading}
                 isLoading={loading}
                 type="submit"
               >

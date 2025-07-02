@@ -12,24 +12,22 @@ import (
 	"webrpl/table"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 // POST : api/protected/event-register
 func appHandleEventNew(backend *Backend, route fiber.Router) {
     route.Post("event-register", func (c *fiber.Ctx) error {
 
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
 
         if isAdmin != 1 {
@@ -53,7 +51,7 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
             Max           int       `json:"max"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -138,17 +136,16 @@ func appHandleEventNew(backend *Backend, route fiber.Router) {
 // GET : api/protected/event-info-all
 func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
     route.Get("event-info-all", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
         if email == "" {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -202,17 +199,16 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
 // GET : api/protected/event-info-of
 func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
     route.Get("event-info-of", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
         if email == "" {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -258,16 +254,15 @@ func appHandleEventInfoOf(backend *Backend, route fiber.Router) {
 // POST : api/protected/event-del
 func appHandleEventDel(backend *Backend, route fiber.Router) {
     route.Post("event-del", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
-        claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
         if admin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -281,7 +276,7 @@ func appHandleEventDel(backend *Backend, route fiber.Router) {
         var body struct {
             EventId int `json:"id"`
         }
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -311,17 +306,16 @@ func appHandleEventDel(backend *Backend, route fiber.Router) {
 // POST : api/protected/event-edit
 func appHandleEventEdit(backend *Backend, route fiber.Router) {
 	route.Post("event-edit", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
 		email := claims["email"].(string)
 
@@ -340,7 +334,7 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
             CertTemplate  *int       `json:"cert_template_id"`
         }
 
-		err := c.BodyParser(&body)
+		err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -485,17 +479,16 @@ func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
             Data    string `json:"data"`
         }
 
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
 
         if admin != 1 {
@@ -507,7 +500,7 @@ func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
             })
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -589,17 +582,16 @@ func appHandleEventUploadImage(backend *Backend, route fiber.Router) {
 // GET : api/protected/event-count
 func appHandleEventCount(backend *Backend, route fiber.Router) {
     route.Get("event-count", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
         if email == "" {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

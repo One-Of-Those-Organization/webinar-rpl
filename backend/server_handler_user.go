@@ -203,19 +203,24 @@ func appHandleLogin(backend *Backend, route fiber.Router) {
 // GET : api/protected/user-info-of
 func appHandleUserInfoOf(backend *Backend, route fiber.Router) {
     route.Get("user-info-of", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user != nil {
-            claims := user.Claims.(jwt.MapClaims)
-            admin := claims["admin"].(float64)
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid JWT token.",
+                "error_code": 5,
+                "data": nil,
+            })
+        }
 
-            if admin != 1 {
-                return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                    "success": false,
-                    "message": "Invalid credentials to access this api.",
-                    "error_code": 1,
-                    "data": nil,
-                })
-            }
+        admin := claims["admin"].(float64)
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to access this api.",
+                "error_code": 1,
+                "data": nil,
+            })
         }
 
         queriedEmail := c.Query("email")
@@ -260,16 +265,15 @@ func appHandleUserInfoOf(backend *Backend, route fiber.Router) {
 func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
     route.Post("/user-edit-admin", func (c *fiber.Ctx) error {
 
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
-        claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
         if admin != 1 {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -288,7 +292,7 @@ func appHandleUserEditAdmin(backend *Backend, route fiber.Router){
             Password *string `json:"password"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -368,8 +372,8 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
             UserID int `json:"id"`
         }
 
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to claim JWT Token.",
@@ -378,7 +382,7 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
             })
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -388,9 +392,7 @@ func appHandleUserDelAdmin(backend *Backend, route fiber.Router){
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
-
         if admin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
                 "success": false,
@@ -555,44 +557,43 @@ func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
             limit = 10000
         }
 
-        user := c.Locals("user").(*jwt.Token)
-        if user != nil {
-            claims := user.Claims.(jwt.MapClaims)
-            admin := claims["admin"].(float64)
-
-            if admin != 1 {
-                return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                    "success": false,
-                    "message": "Invalid credentials to acces this api.",
-                    "error_code": 1,
-                    "data": nil,
-                })
-            }
-
-            var userData []table.User
-
-            res := backend.db.Offset(offset).Limit(limit).Find(&userData)
-            if res.Error != nil {
-                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                    "success": false,
-                    "message": "Failed to fetch user data from db.",
-                    "error_code": 2,
-                    "data": nil,
-                })
-            }
-
-            return c.Status(fiber.StatusOK).JSON(fiber.Map{
-                "success": true,
-                "message": "Accept the data.",
-                "error_code": 0,
-                "data": userData,
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid JWT Token.",
+                "error_code": 3,
+                "data": nil,
             })
         }
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "success": false,
-            "message": "Failed to claim the JWT Token.",
-            "error_code": 3,
-            "data": nil,
+        admin := claims["admin"].(float64)
+
+        if admin != 1 {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to acces this api.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        var userData []table.User
+
+        res := backend.db.Offset(offset).Limit(limit).Find(&userData)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch user data from db.",
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Accept the data.",
+            "error_code": 0,
+            "data": userData,
         })
     })
 }
@@ -601,37 +602,34 @@ func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
 func appHandleUserInfo(backend *Backend, route fiber.Router) {
     route.Get("user-info", func (c *fiber.Ctx) error {
 
-        user := c.Locals("user").(*jwt.Token)
-        if user != nil {
-            claims := user.Claims.(jwt.MapClaims)
-            email := claims["email"].(string)
-
-            var userData table.User
-
-            res := backend.db.Where("user_email = ?", email).First(&userData)
-            if res.Error != nil {
-                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                    "success": false,
-                    "message": "Failed to fetch user data from db.",
-                    "error_code": 1,
-                    "data": nil,
-                })
-            }
-
-            return c.Status(fiber.StatusOK).JSON(fiber.Map{
-                "success": true,
-                "message": "Success",
-                "error_code": 0,
-                "data": userData,
-            })
-        } else {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 2,
                 "data": nil,
             })
         }
+        email := claims["email"].(string)
+
+        var userData table.User
+        res := backend.db.Where("user_email = ?", email).First(&userData)
+        if res.Error != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to fetch user data from db.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Success",
+            "error_code": 0,
+            "data": userData,
+        })
     })
 }
 
@@ -642,8 +640,8 @@ func appHandleUserUploadImage(backend *Backend, route fiber.Router) {
             Data string `json:"data"`
         }
 
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to claim JWT Token.",
@@ -651,10 +649,9 @@ func appHandleUserUploadImage(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
-        claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -877,8 +874,8 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
 func appHandleUserCount(backend *Backend, route fiber.Router) {
     route.Get("/user-count", func (c *fiber.Ctx) error {
 
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to claim JWT Token.",
@@ -886,7 +883,6 @@ func appHandleUserCount(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
-        claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
 
         if admin != 1 {
@@ -919,8 +915,8 @@ func appHandleUserCount(backend *Backend, route fiber.Router) {
 // POST : api/protected/register-admin
 func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
     route.Post("register-admin", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to claim JWT Token.",
@@ -928,7 +924,6 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
-        claims := user.Claims.(jwt.MapClaims)
         admin := claims["admin"].(float64)
 
         if admin != 1 {
@@ -948,7 +943,7 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
             UserRole *int   `json:"user_role"`
         }
 
-        err:= c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -1043,7 +1038,7 @@ func appHandleRegisterAdmin(backend *Backend, route fiber.Router) {
 // NOTE: Call this to logout (eg. delete the cookie)
 // POST : api/c/logout
 // POST : api/protected/logout
-func appHandleUserLogOut(backend *Backend, route fiber.Router) {
+func appHandleUserLogOut(_ *Backend, route fiber.Router) {
     route.Post("logout", func (c *fiber.Ctx) error {
         _, err := GetJWT(c)
         if err != nil {

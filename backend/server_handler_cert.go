@@ -1,16 +1,19 @@
 package main
 
 import (
-    "os"
-    "strings"
-    "strconv"
-    "fmt"
-    "encoding/base64"
-    "time"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 
-    "webrpl/table"
+	"webrpl/table"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 // IMPORTANT -- DEPRECATED SHOULD NO BE USED. --
@@ -21,7 +24,7 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
         if user == nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
@@ -92,17 +95,16 @@ func appHandleCertTempNew(backend *Backend, route fiber.Router) {
 // GET : api/protected/cert-info-of
 func appHandleCertTempInfoOf(backend *Backend, route fiber.Router) {
 	route.Get("cert-info-of", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         email := claims["email"].(string)
 
         if email == "" {
@@ -158,17 +160,16 @@ func appHandleCertTempInfoOf(backend *Backend, route fiber.Router) {
 // POST : api/protected/cert-del
 func appHandleCertDel(backend *Backend, route fiber.Router) {
     route.Post("cert-del", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
         if isAdmin != 1 {
             return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -183,7 +184,7 @@ func appHandleCertDel(backend *Backend, route fiber.Router) {
             CertTempID int `json:"id"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -215,17 +216,16 @@ func appHandleCertDel(backend *Backend, route fiber.Router) {
 // POST : api/protected/cert-edit
 func appHandleCertEdit(backend *Backend, route fiber.Router) {
     route.Post("cert-edit", func (c *fiber.Ctx) error {
-        user := c.Locals("user").(*jwt.Token)
-        if user == nil {
+        claims, err := GetJWT(c)
+        if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claim JWT Token.",
+                "message": "Invalid JWT Token.",
                 "error_code": 1,
                 "data": nil,
             })
         }
 
-        claims := user.Claims.(jwt.MapClaims)
         isAdmin := claims["admin"].(float64)
 
         if isAdmin != 1 {
@@ -242,7 +242,7 @@ func appHandleCertEdit(backend *Backend, route fiber.Router) {
             NewPath    string `json:"cert_path"`
         }
 
-        err := c.BodyParser(&body)
+        err = c.BodyParser(&body)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
                 "success": false,
@@ -302,7 +302,7 @@ func appHandleCertUploadTemplate(backend *Backend, route fiber.Router) {
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
-				"message": "Failed to claim JWT Token.",
+				"message": "Invalid JWT Token.",
 				"error_code": 1,
 				"data": nil,
 			})
@@ -455,6 +455,14 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
         res := backend.db.Preload("User").Preload("Event").Where(&table.EventParticipant{EventPCode: base64Param, EventPCome: true}).First(&evPart)
 
         if res.Error != nil {
+            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Failed to get the cert for that code",
+                    "error_code": 4,
+                    "data": nil,
+                })
+            }
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to fetch event participant for this code, %v", res.Error),
@@ -509,7 +517,7 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
@@ -553,23 +561,33 @@ func appHandleCertNewDumb(backend *Backend, route fiber.Router) {
         }
 
         var currentEvPart table.EventParticipant
-        res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEvPart)
-        if res.Error != nil {
-            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-                "success": false,
-                "message": fmt.Sprintf("Failed to fetch event from db, %v", res.Error),
-                "error_code": 5,
-                "data": nil,
-            })
-        }
-
-        if currentEvPart.EventPRole != "committee" && admin != 1 {
-            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "success": false,
-                "message": "Invalid credentials for this function",
-                "error_code": 6,
-                "data": nil,
-            })
+        if admin != 1 {
+            res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEvPart)
+            if res.Error != nil {
+                if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                    return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                        "success": false,
+                        "message": "User is not registered on event participant.",
+                        "error_code": 8,
+                        "data": nil,
+                    })
+                } else {
+                    return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                        "success": false,
+                        "message": fmt.Sprintf("There is a problem with the db, %v", res.Error),
+                        "error_code": 5,
+                        "data": nil,
+                    })
+                }
+            }
+            if currentEvPart.EventPRole != "committee" {
+                return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Invalid credentials for this function",
+                    "error_code": 6,
+                    "data": nil,
+                })
+            }
         }
 
         // straight up set the the cert path to nonexistance index.html
@@ -610,7 +628,7 @@ func appHandleCertEditor(backend *Backend, route fiber.Router) {
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
@@ -674,7 +692,7 @@ func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
@@ -723,7 +741,7 @@ func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", err),
+                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", res.Error),
                 "error_code": 10,
                 "data": nil,
             })
@@ -823,7 +841,7 @@ func appHandleCertEditorUploadHtml(backend *Backend, route fiber.Router) {
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": "Failed to claims JWT token.",
+                "message": "Invalid JWT token.",
                 "error_code": 1,
                 "data": nil,
             })
@@ -846,7 +864,7 @@ func appHandleCertEditorUploadHtml(backend *Backend, route fiber.Router) {
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to get the user with that email from the db, %v", err),
+                "message": fmt.Sprintf("Failed to get the user with that email from the db, %v", res.Error),
                 "error_code": 9,
                 "data": nil,
             })
@@ -872,7 +890,7 @@ func appHandleCertEditorUploadHtml(backend *Backend, route fiber.Router) {
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
-                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", err),
+                "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", res.Error),
                 "error_code": 10,
                 "data": nil,
             })
