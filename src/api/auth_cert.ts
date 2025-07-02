@@ -52,50 +52,50 @@ export const auth_cert = {
     }
   },
 
-  // Check if certificate template exists for event
-  check_cert_exists: async (eventID: number): Promise<BaseResponse> => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return {
-          message: "No authentication token found",
-          success: false,
-          error_code: -1,
-        };
-      }
+  // // Check if certificate template exists for event
+  // check_cert_exists: async (eventID: number): Promise<BaseResponse> => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) {
+  //       return {
+  //         message: "No authentication token found",
+  //         success: false,
+  //         error_code: -1,
+  //       };
+  //     }
 
-      console.log("Checking certificate for event ID:", eventID);
+  //     console.log("Checking certificate for event ID:", eventID);
 
-      const response = await fetch(`${API_URL}/api/protected/cert-info-of?id=${eventID}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  //     const response = await fetch(`${API_URL}/api/protected/cert-info-of?id=${eventID}`, {
+  //       method: "GET",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
 
-      const result = await response.json();
-      console.log("Certificate check response:", result);
+  //     const result = await response.json();
+  //     console.log("Certificate check response:", result);
 
-      if (!result.success && result.error_code === 5) {
-        return {
-          success: false,
-          message: "No certificate template found",
-          error_code: 0,
-          data: null,
-        };
-      }
+  //     if (!result.success && result.error_code === 5) {
+  //       return {
+  //         success: false,
+  //         message: "No certificate template found",
+  //         error_code: 0,
+  //         data: null,
+  //       };
+  //     }
 
-      return result;
-    } catch (error) {
-      console.error("Certificate check error:", error);
-      return {
-        message: "Failed to connect to server",
-        success: false,
-        error_code: -2,
-      };
-    }
-  },
+  //     return result;
+  //   } catch (error) {
+  //     console.error("Certificate check error:", error);
+  //     return {
+  //       message: "Failed to connect to server",
+  //       success: false,
+  //       error_code: -2,
+  //     };
+  //   }
+  // },
 
   // FIXED: Upload background image with enhanced error handling
   uploadBackgroundImage: async (data: { data: string; event_id: string }): Promise<BaseResponse> => {
@@ -334,5 +334,148 @@ export const auth_cert = {
         data: { hasPermission: false }
       };
     }
+  },
+  getCertificateTemplateContent: async (eventId: number): Promise<BaseResponse> => {
+    try {
+      const templateUrl = `${window.location.origin}/static/sertifikat/${eventId}/index.html`;
+      const response = await fetch(templateUrl);
+      
+      if (response.ok) {
+        const content = await response.text();
+        return {
+          success: true,
+          message: "Template content loaded successfully",
+          error_code: 0,
+          data: { content }
+        };
+      } else {
+        return {
+          success: false,
+          message: "Template file not found",
+          error_code: 404,
+          data: null
+        };
+      }
+    } catch (error) {
+      console.error("Failed to load template content:", error);
+      return {
+        success: false,
+        message: "Failed to load template content",
+        error_code: -1,
+        data: null
+      };
+    }
+  },
+
+  // NEW: Check if background image exists
+  checkBackgroundImageExists: async (eventId: number): Promise<BaseResponse> => {
+    try {
+      const imageUrl = `${window.location.origin}/static/sertifikat/${eventId}/bg.png`;
+      const response = await fetch(imageUrl, { method: 'HEAD' });
+      
+      return {
+        success: response.ok,
+        message: response.ok ? "Background image exists" : "Background image not found",
+        error_code: response.ok ? 0 : 404,
+        data: { exists: response.ok, url: imageUrl }
+      };
+    } catch (error) {
+      console.error("Failed to check background image:", error);
+      return {
+        success: false,
+        message: "Failed to check background image",
+        error_code: -1,
+        data: { exists: false, url: null }
+      };
+    }
+  },
+
+  // NEW: Get certificate template viewer URL
+  get_cert_template_viewer_url: (eventId: number): string => {
+    return `/admin/sertifikat/view/${eventId}`;
+  },
+
+  // TAMBAHKAN method baru untuk mengecek file secara langsung
+checkCertificateFileExists: async (eventId: number): Promise<BaseResponse> => {
+  try {
+    // Cek file HTML template
+    const templateUrl = `${window.location.origin}/static/sertifikat/${eventId}/index.html`;
+    const templateResponse = await fetch(templateUrl, { method: 'HEAD' });
+    
+    // Cek file background image
+    const bgUrl = `${window.location.origin}/static/sertifikat/${eventId}/bg.png`;
+    const bgResponse = await fetch(bgUrl, { method: 'HEAD' });
+    
+    const templateExists = templateResponse.ok;
+    const bgExists = bgResponse.ok;
+    
+    if (templateExists || bgExists) {
+      return {
+        success: true,
+        message: "Certificate files found",
+        error_code: 0,
+        data: {
+          ID: eventId,
+          EventId: eventId,
+          CertTemplate: `static/sertifikat/${eventId}/index.html`,
+          templateExists,
+          bgExists,
+          templateUrl,
+          bgUrl
+        }
+      };
+    } else {
+      return {
+        success: false,
+        message: "No certificate files found",
+        error_code: 404,
+        data: null
+      };
+    }
+  } catch (error) {
+    console.error("Failed to check certificate files:", error);
+    return {
+      success: false,
+      message: "Failed to check certificate files",
+      error_code: -1,
+      data: null
+    };
   }
+},
+
+// PERBAIKI method check_cert_exists yang ada
+check_cert_exists: async (eventID: number): Promise<BaseResponse> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // Jika tidak ada token, langsung cek file
+      return auth_cert.checkCertificateFileExists(eventID);
+    }
+
+    console.log("Checking certificate for event ID:", eventID);
+
+    const response = await fetch(`${API_URL}/api/protected/cert-info-of?id=${eventID}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    console.log("Certificate check response:", result);
+
+    if (!result.success) {
+      // Jika API gagal, fallback ke file check
+      console.log("API check failed, falling back to file check...");
+      return auth_cert.checkCertificateFileExists(eventID);
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Certificate check error:", error);
+    // Jika ada error, fallback ke file check
+    return auth_cert.checkCertificateFileExists(eventID);
+  }
+},
 }

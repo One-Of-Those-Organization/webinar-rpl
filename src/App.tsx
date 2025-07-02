@@ -27,6 +27,7 @@ import CreateWebinar from "@/pages/admin/add_webinar";
 import EditWebinarPage from "@/pages/admin/edit_webinar";
 import SertifikatAdminPage from "@/pages/admin/serfitikat";
 import SertifikatEditor from "@/pages/admin/sertifikat_editor";
+import SertifikatView from "@/pages/admin/sertifikat_view";
 import CreateSertifikatAdminPage from "@/pages/admin/add_sertifikat";
 import EditAdminPage from "@/pages/admin/edit_user";
 import AddUserPage from "@/pages/admin/add_user";
@@ -234,6 +235,16 @@ export default function App() {
         element={
           <AdminOnlyRoute requireAdmin={true}>
             <SertifikatEditor />
+          </AdminOnlyRoute>
+        }
+      />
+
+      {/* NEW: Certificate Template Viewer */}
+      <Route
+        path="/admin/sertifikat/view/:eventId"
+        element={
+          <AdminOnlyRoute requireAdmin={true}>
+            <SertifikatView />
           </AdminOnlyRoute>
         }
       />

@@ -111,23 +111,72 @@ export default function EditWebinarPage() {
   const todayDate = getTodayDate();
 
   // Load certificate template info
-  const loadCertificateTemplate = async (eventId: number) => {
-    try {
-      setIsCertificateLoading(true);
-      const result = await auth_cert.check_cert_exists(eventId);
-      
-      if (result.success && result.data) {
-        setCertificateTemplate(result.data);
-      } else {
-        setCertificateTemplate(null);
-      }
-    } catch (error) {
-      console.error("Failed to load certificate template:", error);
-      setCertificateTemplate(null);
-    } finally {
-      setIsCertificateLoading(false);
+// PERBAIKI fungsi loadCertificateTemplate
+const loadCertificateTemplate = async (eventId: number) => {
+  try {
+    setIsCertificateLoading(true);
+    
+    // METODE 1: Cek via API database terlebih dahulu
+    const apiResult = await auth_cert.check_cert_exists(eventId);
+    
+    if (apiResult.success && apiResult.data) {
+      setCertificateTemplate(apiResult.data);
+      return;
     }
-  };
+    
+    // METODE 2: Jika API gagal, cek langsung file HTML-nya
+    console.log("API check failed, checking file directly...");
+    
+    const templateUrl = `${window.location.origin}/static/sertifikat/${eventId}/index.html`;
+    
+    try {
+      const response = await fetch(templateUrl, { method: 'HEAD' });
+      
+      if (response.ok) {
+        // File exists, buat mock certificate template
+        const mockTemplate = {
+          ID: eventId, // Gunakan event ID sebagai fallback
+          EventId: eventId,
+          CertTemplate: `static/sertifikat/${eventId}/index.html`
+        };
+        setCertificateTemplate(mockTemplate);
+        console.log("Certificate template found via file check:", mockTemplate);
+        return;
+      }
+    } catch (fileError) {
+      console.log("File check also failed:", fileError);
+    }
+    
+    // METODE 3: Cek apakah ada folder dengan file bg.png
+    try {
+      const bgUrl = `${window.location.origin}/static/sertifikat/${eventId}/bg.png`;
+      const bgResponse = await fetch(bgUrl, { method: 'HEAD' });
+      
+      if (bgResponse.ok) {
+        // Ada file bg.png, kemungkinan template ada tapi database tidak sync
+        const mockTemplate = {
+          ID: eventId,
+          EventId: eventId,
+          CertTemplate: `static/sertifikat/${eventId}/index.html`
+        };
+        setCertificateTemplate(mockTemplate);
+        console.log("Certificate template detected via bg.png:", mockTemplate);
+        return;
+      }
+    } catch (bgError) {
+      console.log("Background image check failed:", bgError);
+    }
+    
+    // Jika semua gagal, set null
+    setCertificateTemplate(null);
+    
+  } catch (error) {
+    console.error("Failed to load certificate template:", error);
+    setCertificateTemplate(null);
+  } finally {
+    setIsCertificateLoading(false);
+  }
+};
 
   // Use effect to load webinar data when component mounts
   useEffect(() => {
@@ -284,11 +333,10 @@ const handleEditCertificate = () => {
 };
 
 const handleViewCertificate = () => {
-  if (!certificateTemplate) return;
+  if (!id) return;
   
-  // Navigate to frontend certificate editor in view mode
-  const editorUrl = auth_cert.get_cert_editor_url(parseInt(id)) + "&mode=view";
-  navigate(editorUrl);
+  // Navigate to certificate template viewer
+  navigate(`/admin/sertifikat/view/${id}`);
   onCertModalClose();
 };
 
@@ -1546,36 +1594,33 @@ const handleViewCertificate = () => {
                   <h4 className="font-semibold">Available Actions:</h4>
                   
                   {/* Create Certificate */}
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer" isPressable={!certificateTemplate && !isCertificateLoading}>
-                    <CardBody>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <FaPlus className="text-green-600" />
+                  {!certificateTemplate && (
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                      <CardBody>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <FaPlus className="text-green-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="font-semibold">Create Certificate Template</h5>
+                            <p className="text-sm text-gray-600">
+                              Create a new certificate template for this webinar
+                            </p>
+                          </div>
+                          <Button
+                            color="success"
+                            size="sm"
+                            onClick={handleCreateCertificate}
+                            isLoading={isCertificateLoading}
+                          >
+                            Create
+                          </Button>
                         </div>
-                        <div className="flex-1">
-                          <h5 className="font-semibold">Create Certificate Template</h5>
-                          <p className="text-sm text-gray-600">
-                            {certificateTemplate ? 
-                              "Certificate template already exists" : 
-                              "Create a new certificate template for this webinar"
-                            }
-                          </p>
-                        </div>
-                        <Button
-                          color="success"
-                          size="sm"
-                          onClick={handleCreateCertificate}
-                          isDisabled={!!certificateTemplate || isCertificateLoading}
-                          isLoading={isCertificateLoading}
-                        >
-                          {certificateTemplate ? "Created" : "Create"}
-                        </Button>
-                      </div>
-                    </CardBody>
-                  </Card>
-
+                      </CardBody>
+                    </Card>
+                  )}
                   {/* Edit Certificate */}
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer" isPressable={!!certificateTemplate && !isCertificateLoading}>
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardBody>
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-100 rounded-lg">
@@ -1586,7 +1631,7 @@ const handleViewCertificate = () => {
                           <p className="text-sm text-gray-600">
                             {certificateTemplate ? 
                               "Modify the existing certificate template design" : 
-                              "Create a template first before editing"
+                              "Will create template if not exists"
                             }
                           </p>
                         </div>
@@ -1594,41 +1639,42 @@ const handleViewCertificate = () => {
                           color="primary"
                           size="sm"
                           onClick={handleEditCertificate}
-                          isDisabled={!certificateTemplate || isCertificateLoading}
+                          isDisabled={isCertificateLoading}
                         >
-                          Edit
+                          {certificateTemplate ? "Edit" : "Create & Edit"}
                         </Button>
                       </div>
                     </CardBody>
                   </Card>
 
                   {/* View Certificate */}
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer" isPressable={!!certificateTemplate && !isCertificateLoading}>
-                    <CardBody>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <FaEye className="text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h5 className="font-semibold">View Certificate Template</h5>
-                          <p className="text-sm text-gray-600">
-                            {certificateTemplate ? 
-                              "Preview how the certificate will look" : 
-                              "Create a template first before viewing"
-                            }
-                          </p>
-                        </div>
-                        <Button
-                          color="secondary"
-                          size="sm"
-                          onClick={handleViewCertificate}
-                          isDisabled={!certificateTemplate || isCertificateLoading}
-                        >
-                          View
-                        </Button>
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardBody>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <FaEye className="text-purple-600" />
                       </div>
-                    </CardBody>
-                  </Card>
+                      <div className="flex-1">
+                        <h5 className="font-semibold">View Certificate Template</h5>
+                        <p className="text-sm text-gray-600">
+                          {certificateTemplate ? 
+                            "Preview the certificate template with sample data" : 
+                            "Will check for existing files"
+                          }
+                        </p>
+                      </div>
+                      <Button
+                        color="secondary"
+                        size="sm"
+                        onClick={handleViewCertificate}
+                        isDisabled={isCertificateLoading}
+                        startContent={<FaEye />}
+                      >
+                        {certificateTemplate ? "View Template" : "Check & View"}
+                      </Button>
+                    </div>
+                  </CardBody>
+                </Card>
                 </div>
 
                 {/* Delete Certificate Template */}

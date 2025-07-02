@@ -24,6 +24,8 @@ import { toast, ToastContainer } from "react-toastify";
 import { Rnd } from "react-rnd";
 import { auth_cert } from "@/api/auth_cert";
 import { auth_webinar } from "@/api/auth_webinar";
+import { API_URL } from "@/api/endpoint";
+
 
 // Types (keeping existing types)
 interface TextElement {
@@ -145,25 +147,21 @@ export default function CertificateEditor() {
 
   // UPDATED: Helper function to construct proper image URL for sertifikat structure
   const constructImageUrl = useCallback((filename: string) => {
-  if (filename.startsWith('http://') || filename.startsWith('https://')) {
-    return filename;
-  }
-  
-  if (filename.startsWith('data:')) {
-    return filename;
-  }
-  
-  const baseUrl = window.location.origin;
-  
-  // Handle new path structure: static/sertifikat/event_id/filename
-  if (filename.includes('static/sertifikat/')) {
-    return `${baseUrl}/${filename}`;
-  }
-  
-  // Legacy path handling
-  const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
-  return `${baseUrl}/static/sertifikat/${eventId}/${cleanFilename}`;
-}, [eventId]);
+    if (filename.startsWith('http://') || filename.startsWith('https://')) {
+      return filename;
+    }
+    if (filename.startsWith('data:')) {
+      return filename;
+    }
+    // New: Use static/${eventId}/filename
+    const baseUrl = API_URL;
+    const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
+    // If already contains static/{eventId}, just use it
+    if (cleanFilename.startsWith(`static/${eventId}/`)) {
+      return `${baseUrl}/${cleanFilename}`;
+    }
+    return `${baseUrl}/static/${eventId}/${cleanFilename}`;
+  }, [eventId]);
 
 
   // Calculate responsive scale based on container size
@@ -534,20 +532,15 @@ export default function CertificateEditor() {
       `;
     }).join('');
 
-    // UPDATED: Ensure background image URL points to sertifikat structure
+    // NEW: Ensure background image URL points to static/{eventId}/bg.png
     let backgroundImageUrl = '';
     if (templateSettings.backgroundImage) {
       if (templateSettings.backgroundImage.startsWith('data:')) {
         backgroundImageUrl = templateSettings.backgroundImage;
+      } else if (templateSettings.backgroundImage.includes(`/static/${eventId}/`)) {
+        backgroundImageUrl = templateSettings.backgroundImage;
       } else {
-        // Ensure the URL points to the correct sertifikat structure
-        if (templateSettings.backgroundImage.includes('static/sertifikat/')) {
-          backgroundImageUrl = templateSettings.backgroundImage.replace('/static/', '');
-        } else if (templateSettings.backgroundImage.includes('sertifikat/')) {
-          backgroundImageUrl = templateSettings.backgroundImage;
-        } else {
-          backgroundImageUrl = `sertifikat/${eventId}/bg.png`;
-        }
+        backgroundImageUrl = `${API_URL}/static/${eventId}/bg.png`;
       }
     }
 
@@ -587,7 +580,7 @@ export default function CertificateEditor() {
     `;
   }, [elements, templateSettings, eventId]);
 
-  // ENHANCED: Save template with better error handling and logging
+  // ENHANCED: Save template with correct path
   const saveTemplate = useCallback(async () => {
     if (!eventId) {
       toast.error("No event ID provided");
@@ -614,7 +607,7 @@ export default function CertificateEditor() {
       const htmlBase64 = btoa(unescape(encodeURIComponent(htmlContent)));
       
       console.log("Saving template to server...");
-      console.log("Template will be saved to: static/sertifikat/" + eventId + "/index.html");
+      console.log("Template will be saved to: static/" + eventId + "/index.html");
       
       const result = await auth_cert.uploadHTMLTemplate({
         data: `data:text/html;base64,${htmlBase64}`,
@@ -623,7 +616,7 @@ export default function CertificateEditor() {
 
       if (result.success) {
         toast.success("Certificate template saved to server successfully!");
-        toast.success(`Template saved to: ${result.data?.filename || 'static/sertifikat/' + eventId + '/index.html'}`);
+        toast.success(`Template saved to: ${result.data?.filename || 'static/' + eventId + '/index.html'}`);
         setTimeout(() => {
           navigate('/admin/webinar');
         }, 3000);
@@ -677,6 +670,7 @@ export default function CertificateEditor() {
       toast.error("Failed to download template");
     }
   }, [elements, eventId, generateHTMLTemplate]);
+
 
   const selectedElementData = selectedElement ? elements.find(el => el.id === selectedElement) : null;
 
@@ -766,7 +760,7 @@ export default function CertificateEditor() {
                       isDisabled={elements.length === 0 || !userPermissions.canEdit}
                     >
                       {!userPermissions.canEdit ? "No Save Permission" : 
-                       (useLocalMode || forceLocalMode) ? "Save (Will Auto-Download)" : "Save to static/sertifikat/" + eventId}
+                       (useLocalMode || forceLocalMode) ? "Save (Will Auto-Download)" : "Save Template"}
                     </Button>
                   </>
                 )}
@@ -1399,7 +1393,7 @@ export default function CertificateEditor() {
               </div>
               <div className="flex justify-center p-4">
                 <div
-                  className="border border-gray-300 shadow-lg bg-white"
+                  className="border border-gray-300 shadow-lg bg-white aspect-[16/9]"
                   style={{
                     width: templateSettings.width,
                     height: templateSettings.height,
@@ -1409,7 +1403,7 @@ export default function CertificateEditor() {
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
                     position: 'relative',
-                    transform: `scale(${Math.min(800 / templateSettings.width, 600 / templateSettings.height)})`,
+                    transform: `scale(${Math.min(900 / templateSettings.width, 700 / templateSettings.height)})`,
                     transformOrigin: 'top center'
                   }}
                 >
