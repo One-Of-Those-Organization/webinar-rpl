@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	l "log"
+	"os"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
@@ -10,6 +12,18 @@ import (
 func main() {
     ip := "0.0.0.0"
     port := 3000
+
+    ip_env   := os.Getenv("WRPL_IP")
+    port_env := os.Getenv("WRPL_PORT")
+    if len(ip_env) > 0 {
+        ip = ip_env
+    }
+    if len(port_env) > 0 {
+        convert, err := strconv.Atoi(port_env)
+        if err == nil {
+            port = convert
+        }
+    }
 
     add := fmt.Sprintf("%s:%d", ip, port)
 
