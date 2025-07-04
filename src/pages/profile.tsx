@@ -82,7 +82,9 @@ export default function ProfilPage() {
           name: user_data_object.UserFullName,
           email: user_data_object.UserEmail,
           instance: user_data_object.UserInstance,
-          profile: user_data_object.UserPicture || "/logo_if.png",
+          profile:
+            user_data_object.UserPicture ||
+            "https://i.pravatar.cc/150?u=a042581f4e29026704d",
           createdAt: user_data_object.UserCreatedAt,
         };
 
@@ -267,7 +269,10 @@ export default function ProfilPage() {
       return;
     }
 
-    setUserData((prev) => ({ ...prev, profile: "/logo_if.png" }));
+    setUserData((prev) => ({
+      ...prev,
+      profile: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
+    }));
     toast.success("Profile picture will be removed when you save changes");
   };
 
@@ -341,8 +346,11 @@ export default function ProfilPage() {
             <Image
               className="rounded-full object-cover pointer-events-none"
               alt="Your Profile"
-              src={userData.profile || "/logo_if.png"}
-              fallbackSrc="/logo_if.png"
+              src={
+                userData.profile ||
+                "https://i.pravatar.cc/150?u=a042581f4e29026704d"
+              }
+              fallbackSrc="https://i.pravatar.cc/150?u=a042581f4e29026704d"
               width={200}
               height={200}
             />

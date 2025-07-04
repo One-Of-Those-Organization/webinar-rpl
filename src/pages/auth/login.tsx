@@ -72,11 +72,15 @@ export default function LoginPage() {
           toast.warn("All field must be filled");
           break;
         case 3:
-          setError("Invalid Email.");
+          setError("Invalid Email. Please make sure your email is correct.");
           toast.warn("Invalid Email.");
           break;
+        case 4:
+          setError("Email is not registered. Please register first.");
+          toast.warn("Email is not registered");
+          break;
         case 5:
-          setError("Password is Incorrect");
+          setError("Password is Incorrect. Use Forgot Password if needed.");
           toast.warn("Password is Incorrect");
           break;
         default:
@@ -85,13 +89,14 @@ export default function LoginPage() {
           break;
       }
     } catch (error) {
-      setError("An unexpected error occurred");
+      setError("An unexpected error occurred. Please try again later.");
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle forgot password
   const handleForgot = async (e: any) => {
     e.preventDefault();
     setLoading(true);
@@ -110,6 +115,7 @@ export default function LoginPage() {
     }
   };
 
+  // Handle OTP verification
   const handleOTP = (e: any) => {
     e.preventDefault();
     if (!otp) {
@@ -122,15 +128,16 @@ export default function LoginPage() {
     toast.info("OTP verified. Please enter your new password.");
   };
 
+  // Handle reset password
   const handleResetPassword = async (e: any) => {
     e.preventDefault();
 
     if (!isStrongPassword(newPass)) {
       setError(
-        "Password must be at least 8 characters, include uppercase, lowercase, and a number."
+        "Password must be at least 8 characters, include uppercase, lowercase, and a number.",
       );
       toast.warn(
-        "Password must be at least 8 characters, include uppercase, lowercase, and a number."
+        "Password must be at least 8 characters, include uppercase, lowercase, and a number.",
       );
       return;
     }

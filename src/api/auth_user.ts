@@ -1,6 +1,6 @@
 // API User Usage List :
 
-// 8/9 Completed ✅
+// 11/11 Completed ✅
 
 // 1. Register Admin ✅
 // 2. Delete User (Admin Only) ✅
@@ -149,7 +149,7 @@ export const auth_user = {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ data: data.data }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -217,7 +217,7 @@ export const auth_user = {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       return await response.json();
@@ -270,7 +270,7 @@ export const auth_user = {
 
   // API User Reset Password
   user_reset_password: async (
-    data: UserResetPassword
+    data: UserResetPassword,
   ): Promise<BaseResponse> => {
     try {
       const response = await fetch(`${API_URL}/api/user-reset-pass`, {

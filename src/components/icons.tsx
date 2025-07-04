@@ -272,7 +272,7 @@ export const SearchIcon = (props: IconSvgProps) => (
 );
 
 export const EyeSlashFilledIcon = (
-  props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>
+  props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>,
 ) => {
   return (
     <svg
@@ -310,7 +310,7 @@ export const EyeSlashFilledIcon = (
 };
 
 export const EyeFilledIcon = (
-  props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>
+  props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>,
 ) => {
   return (
     <svg

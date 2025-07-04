@@ -45,7 +45,7 @@ export default function WebinarPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
 
   // State untuk delete confirmation
@@ -176,7 +176,7 @@ export default function WebinarPage() {
       setWebinarToDelete(webinar);
       openDeleteModal();
     },
-    [openDeleteModal]
+    [openDeleteModal],
   );
 
   // Function untuk close modal dan reset state
@@ -202,7 +202,7 @@ export default function WebinarPage() {
 
         // Update local state
         const updatedWebinars = webinarList.filter(
-          (webinar) => webinar.id !== webinarToDelete.id
+          (webinar) => webinar.id !== webinarToDelete.id,
         );
         setWebinarList(updatedWebinars);
 
@@ -216,10 +216,10 @@ export default function WebinarPage() {
               webinar.description
                 ?.toLowerCase()
                 .includes(searchValue.toLowerCase())
-            : true
+            : true,
         );
         const newTotalPages = Math.ceil(
-          newFilteredWebinars.length / rowsPerPage
+          newFilteredWebinars.length / rowsPerPage,
         );
 
         if (currentPage > newTotalPages && newTotalPages > 0) {
@@ -323,7 +323,7 @@ export default function WebinarPage() {
       webinarList.length,
       paginatedWebinars.length,
       isLoading,
-    ]
+    ],
   );
 
   // Bottom content - pagination
@@ -342,7 +342,7 @@ export default function WebinarPage() {
         />
       </div>
     ),
-    [currentPage, totalPages, isLoading]
+    [currentPage, totalPages, isLoading],
   );
 
   return (
@@ -499,23 +499,20 @@ export default function WebinarPage() {
           <ModalContent>
             <ModalHeader className="flex flex-col text-center gap-1">
               <div className="text-danger text-2xl">⚠️</div>
-              <h3 className="text-lg font-semibold">
-                Konfirmasi Hapus Webinar
-              </h3>
+              <h3 className="text-lg font-semibold">Confirm Delete Webinar</h3>
             </ModalHeader>
 
             <ModalBody className="text-center">
               <div className="p-4 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200/30">
                 <p className="mb-2">
-                  Apakah Anda yakin ingin menghapus webinar:
+                  Are you sure you want to delete the webinar:
                 </p>
                 <p className="font-bold text-lg text-danger">
                   "{webinarToDelete?.name}"
                 </p>
               </div>
               <p className="text-danger font-medium mt-4">
-                ⚠️ Tindakan ini tidak dapat dibatalkan dan akan menghapus semua
-                data terkait!
+                ⚠️ This action is irreversible and will delete all related data!
               </p>
             </ModalBody>
 
@@ -526,7 +523,7 @@ export default function WebinarPage() {
                 isDisabled={isDeleting}
                 className="min-w-24"
               >
-                Batal
+                Cancel
               </Button>
               <Button
                 color="danger"
@@ -536,7 +533,7 @@ export default function WebinarPage() {
                 className="min-w-24 font-semibold"
                 variant="solid"
               >
-                {isDeleting ? "Menghapus..." : "Hapus Sekarang"}
+                {isDeleting ? "Deleting..." : "Delete now"}
               </Button>
             </ModalFooter>
           </ModalContent>

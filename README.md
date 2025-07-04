@@ -14,7 +14,7 @@
 
 Before running this project, make sure you have the following installed:
 
-### Node.js and npm
+### Node.js and NPM
 1. **Download and Install Node.js:**
    - Go to [https://nodejs.org/](https://nodejs.org/)
    - Download the LTS (Long Term Support) version
@@ -27,6 +27,11 @@ Before running this project, make sure you have the following installed:
    npm --version
    ```
    Both commands should return version numbers if installed correctly.
+
+---
+
+### TypeScript + Vite (for Frontend)
+- Read the documentation [https://vite.dev/guide/](https://vite.dev/guide/)
 
 ### Go (for Backend)
 - Download and install Go from [https://golang.org/dl/](https://golang.org/dl/)
