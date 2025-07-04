@@ -492,13 +492,18 @@ func appHandleCertificateRoom(backend *Backend, route fiber.Router) {
             })
         }
 
-        // Presume that certemp is correct path that look
-        // something like this : {folder}/{file}.html
+        if _, err := os.Stat(fmt.Sprintf("./static/%s", cerTemp.CertTemplate)); os.IsNotExist(err) {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("The Certificate template file didnt exist, Please contact the committee or admin to add them. DEBUG PURPOSE: %s", fmt.Sprintf("./static/%s", cerTemp.CertTemplate)),
+                "error_code": 3,
+                "data": nil,
+            })
+        }
 
         // Strip the .html from the cerTemp
         stripped := strings.TrimSuffix(cerTemp.CertTemplate, ".html")
 
-        backend.engine.ClearCache()
 		return c.Render(stripped, fiber.Map{
 			"UniqueID": base64Param,
             "EventName": evPart.Event.EventName,
@@ -675,7 +680,6 @@ func appHandleCertEditor(backend *Backend, route fiber.Router) {
             })
         }
 
-        backend.engine.ClearCache()
         return c.Render("editor", fiber.Map{
             "APIPath": fmt.Sprintf("%s://%s", backend.mode, backend.address),
         })
@@ -820,6 +824,8 @@ func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
 			})
 		}
 
+        // NOTE: I think putting here is the best way.
+        backend.engine.ClearCache()
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "Image Uploaded successfully.",
@@ -959,6 +965,8 @@ func appHandleCertEditorUploadHtml(backend *Backend, route fiber.Router) {
 			})
 		}
 
+        // NOTE: I think putting here is the best way.
+        backend.engine.ClearCache()
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "HTML Uploaded successfully.",

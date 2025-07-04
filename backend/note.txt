@@ -3,5 +3,5 @@ export to csv all the webinar data
 
 
 TODO:
-- Add api to other useful function (PLANNED)
 - Add csv export on evpart (IDK)
+- Auto delete unused image and stuff? (IDK) (Maybe v2)
