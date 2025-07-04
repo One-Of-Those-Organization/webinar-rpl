@@ -249,110 +249,166 @@ if __name__ == "__main__":
 
     # -- START USER DEL ADMIN TEST -- #
 
+    uda_test1 = debug(
+        "protected/user-del-admin",
+        method="POST",
+        headers={
+            "Authorization": f"LMAO",
+        },
+        payload={
+            "lol": True,
+        },
+        desc="Test the edit user del admin api with invalid JWT token. Should return error_code 1.",
+    )
+    uda_test1.test(1)
+
+    uda_test2 = debug(
+        "protected/user-del-admin",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload={
+            "lol": True,
+        },
+        desc="Test the edit user del admin api with invalid payload. Should return error_code 2.",
+    )
+    uda_test2.test(2)
+
+    udat_test3 = debug(
+        "protected/user-del-admin",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload={
+            "id": 3, # delete user bombardino
+        },
+        desc="Test the edit user del admin api with valid payload. Should return error_code 0.",
+    )
+    uda_test2.test(0)
+
     # -- END USER DEL ADMIN TEST -- #
 
-    # admin_register_success = debug(
-    #     "protected/register-admin",
-    #     method="POST",
-    #     headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-    #     payload={
-    #         # Valid admin registration
-    #         "name": "Debugging",
-    #         "email": "debug@gmail.com",
-    #         "instance": "UKDC",
-    #         "pass": "debug123",
-    #     },
-    #     desc="Test the register by admin, it should return error_code 0."
-    # )
-    # admin_register_success.test(0)
+    # -- START USER EDIT TEST -- #
 
-    # admin_register_error = debug(
-    #     "protected/register-admin",
-    #     method="POST",
-    #     headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-    #     payload={
-    #         # Intentionally empty fields to test error handling
-    #         "name": "",
-    #         "email": "",
-    #         "instance": "",
-    #         "pass": "",
-    #     },
-    #     desc="Test the register by admin with empty fields, it should return error_code 4."
-    # )
-    # admin_register_error.test(1)
+    ue_test1 = debug(
+        "protected/user-edit",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}", # no need to be an admin
+        },
+        payload={
+            "name": "Ken Thompson"
+        },
+        desc="Test the edit user api with valid payload. Should return error_code 0.",
+    )
+    ue_test1.test(0)
 
-    # admin_delete_user_success = debug(
-    #     "protected/user-del-admin",
-    #     method="POST",
-    #     headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-    #     payload={
-    #         "id": 1 # Existing user ID
-    #     },
-    #     desc="Test the delete user by admin, it should return error_code 0."
-    # )
-    # admin_delete_user_success.test(0)
+    # -- END USER EDIT TEST -- #
 
-    # admin_delete_user_error = debug(
-    #     "protected/user-del-admin",
-    #     method="POST",
-    #     headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-    #     payload={
-    #         "id": 9999 # Non-existent user ID
-    #     },
-    #     desc="Test the delete user by admin with non-existent user ID, it should return error_code 4."
-    # )
-    # admin_delete_user_error.test(1)
+    # -- START USER INFO ALL TEST -- #
 
-    # admin_edit_user_success = debug(
-    #     "protected/user-edit-admin",
-    #     method="POST",
-    #     headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-    #     payload={
-    #         "name": "Updated Name",
-    #         "email": "bombardino@example.com", # Exist email
-    #         "instance": "UKDC",
-    #         "picture": "https://example.com/picture.jpg"
-    #     },
-    #     desc="Test update user by admin, should return error_code 0."
-    # )
-    # admin_edit_user_success.test(0)
+    uia_test1 = debug(
+        "protected/user-info-all",
+        method="GET",
+        headers={
+            "Authorization": f"Bearer {admin_token}", # no need to be an admin
+        },
+        desc="Test the user info all api with valid call. Should return error_code 0.",
+    )
+    uia_test1.test(0)
 
-    # admin_edit_user_error = debug(
-    #     "protected/user-edit-admin",
-    #     method="POST",
-    #     headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-    #     payload={
-    #         "name": "Updated Name",
-    #         "email": "debug@gmail.com", # Non-exist email
-    #         "instance": "UKDC",
-    #         "picture": "https://example.com/picture.jpg"
-    #     },
-    #     desc="Test update user by admin, should return error_code 0."
-    # )
-    # admin_edit_user_error.test(0)
+    uia_test2 = debug(
+        "protected/user-info-all?limit=100&offset=10",
+        method="GET",
+        headers={
+            "Authorization": f"Bearer {admin_token}", # no need to be an admin
+        },
+        desc="Test the user info all api with its valid query. Should return error_code 0.",
+    )
+    uia_test2.test(0)
 
-    # user_edit_success = debug(
-    #     "protected/user-edit",
-    #     method="POST",
-    #     payload={
-    #         "name": "Updated Name",
-    #         "email": "commrade@example.com", # Exist email
-    #         "instance": "Universitas Masa Depan Cerah",
-    #         "picture": "https://example.com/picture.jpg"
-    #     },
-    #     desc="Test update user by user, should return error_code 0."
-    # )
-    # user_edit_success.test(0)
-    #
-    # user_edit_error = debug(
-    #     "protected/user-edit",
-    #     method="POST",
-    #     payload={
-    #         "name": "Updated Name",
-    #         "email": "edwinalexander@gmail.com", # Non-exist email
-    #         "instance": "Universitas Masa Depan Cerah",
-    #         "picture": "https://example.com/picture.jpg"
-    #     },
-    #     desc="Test update user by user, should return error_code 0."
-    # )
-    # user_edit_error.test(0)
+    # -- END USER INFO ALL TEST -- #
+
+    # -- START USER INFO TEST -- #
+
+    ui_test1 = debug(
+        "protected/user-info",
+        method="GET",
+        headers={
+            "Authorization": f"Bearer {admin_token}", # no need to be an admin
+        },
+        desc="Test the user info api with valid call. Should return error_code 0.",
+    )
+    ui_test1.test(0)
+
+    # -- END USER INFO TEST -- #
+
+    # -- START USER COUNT TEST -- #
+
+    uc_test1 = debug(
+        "protected/user-count",
+        method="GET",
+        headers={
+            "Authorization": f"Bearer {admin_token}", # no need to be an admin
+        },
+        desc="Test the user count api with valid call (ADMIN only). Should return error_code 0.",
+    )
+    uc_test1.test(0)
+
+    # -- END USER COUNT TEST -- #
+
+    # -- START REGISTER ADMIN TEST -- #
+
+    ra_test1 = debug(
+        "protected/register-admin",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload={
+            "email": "example@example.com",
+            "name": "Example",
+            "pass": "xaempel",
+            "instance": "None",
+            "picture": ""
+        },
+        desc="Test the register admin api with valid payload. Should return error_code 0.",
+    )
+    ra_test1.test(0)
+
+    ra_test2 = debug(
+        "protected/register-admin",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload={
+            "name": "Example",
+            "pass": "xaempel",
+            "instance": "None",
+            "picture": ""
+        },
+        desc="Test the register admin api with invalid payload. Should return error_code 3.",
+    )
+    ra_test2.test(3)
+
+    ra_test3 = debug(
+        "protected/register-admin",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+        payload={
+            "email": "example.com",
+            "name": "Example",
+            "pass": "xaempel",
+            "instance": "None",
+            "picture": ""
+        },
+        desc="Test the register admin api with invalid email payload. Should return error_code 5.",
+    )
+    ra_test3.test(5)
+
+    # -- END REGISTER ADMIN TEST -- #
