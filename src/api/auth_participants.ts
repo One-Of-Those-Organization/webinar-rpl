@@ -1,6 +1,6 @@
 // API Participants Usage List :
 
-// 6/8 Completed ✅
+// 9/9 Completed ✅
 
 // 1. Participant Register ✅
 // 2. Get Participants by Event ✅
