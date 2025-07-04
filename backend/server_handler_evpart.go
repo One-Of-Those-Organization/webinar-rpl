@@ -615,7 +615,7 @@ func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "Check data.",
-            "error_code": 1,
+            "error_code": 0,
             "data": eventList,
         })
     })

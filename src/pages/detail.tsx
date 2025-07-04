@@ -886,10 +886,7 @@ export default function DetailPage() {
                       className={buttonStyles({
                         color: hasAttended ? "success" : "secondary",
                         radius: "full",
-                        variant:
-                          isWebinarLive() && isRegistered
-                            ? "solid"
-                            : "bordered",
+                        variant: isRegistered ? "solid" : "bordered",
                         size: "lg",
                       })}
                       onClick={handleAbsence}
