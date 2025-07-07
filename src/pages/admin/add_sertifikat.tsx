@@ -69,7 +69,7 @@ export default function CreateSertifikatAdminPage() {
       return;
     }
 
-    const selectedUsers = userList.filter((user) => user.selected);
+    userList.filter((user) => user.selected);
     alert(`Generating ${selectedCount} certificates...`);
   };
 

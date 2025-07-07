@@ -1,16 +1,17 @@
 import * as React from "react";
 import { IconSvgProps } from "@/types";
 
-export const Logo: React.FC<IconSvgProps> = ({
+export const Logo: React.FC<React.ImgHTMLAttributes<HTMLImageElement> & { size?: number }> = ({
   size = 36,
   height,
+  width,
   ...props
 }) => (
   <img
     src="/logo_if.png"
     alt="Logo"
-    width={size || height}
-    height={size || height}
+    width={width || size}
+    height={height || size}
     {...props}
   />
 );

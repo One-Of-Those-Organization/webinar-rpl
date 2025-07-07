@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+    "net/http"
 
 	"webrpl/table"
 
@@ -793,15 +794,15 @@ func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
 			})
 		}
 
-        // NOTE: WILL BE ENABLED IN THE FUTURE NEED TO CHANGE ON CERT UPLOAD TOO AFTER ALL
-		// if !strings.Contains(string(decoded), "image/png") {
-		// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-		// 		"success": false,
-		// 		"message": fmt.Sprintf("Invalid base64 data, %v", err),
-		// 		"error_code": 6,
-		// 		"data": nil,
-		// 	})
-		// }
+        contentType := http.DetectContentType(decoded)
+        if contentType != "image/png" {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid content type: %s", contentType),
+                "error_code": 6,
+                "data": nil,
+            })
+        }
 
 		certTempDir := fmt.Sprintf("%s/%s", certDir, body.EventID)
 		if err := os.MkdirAll(certTempDir, 0755); err != nil {
