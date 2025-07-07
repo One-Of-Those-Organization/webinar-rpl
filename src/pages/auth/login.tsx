@@ -106,7 +106,9 @@ export default function LoginPage() {
         toast.success("OTP has been sent to your email.");
         setPage("otp");
       } else {
-        toast.error(response.message || "Failed to send OTP.");
+        toast.error(response.message || "Failed to send OTP.", {
+          toastId: "otpError",
+        });
       }
     } catch (err) {
       toast.error("Failed to send OTP.");
