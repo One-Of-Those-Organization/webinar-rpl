@@ -54,7 +54,8 @@ func main() {
         l.Panic("ERR: There is a problem when making user 0 (SUPER ADMIN)")
     }
     appMakeRouteHandler(app)
-    if err := app.app.Listen(add); err != nil {
+    const hardcodeAddress = "0.0.0.0:3000"
+    if err := app.app.Listen(hardcodeAddress); err != nil {
         l.Fatal("ERR: Server failed to start: ", err)
     }
 }
