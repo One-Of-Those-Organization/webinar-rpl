@@ -176,7 +176,7 @@ func appHandleEventInfoAll(backend *Backend, route fiber.Router) {
         }
 
         var eventData []table.Event
-        res := backend.db.Offset(offset).Limit(limit).Find(&eventData)
+        res := backend.db.Offset(offset).Limit(limit).Order("event_dstart DESC").Order("event_name ASC").Find(&eventData)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,

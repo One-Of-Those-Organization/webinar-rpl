@@ -579,7 +579,7 @@ func appHandleUserInfoAll(backend *Backend, route fiber.Router) {
 
         var userData []table.User
 
-        res := backend.db.Offset(offset).Limit(limit).Find(&userData)
+        res := backend.db.Offset(offset).Limit(limit).Order("user_full_name ASC").Find(&userData)
         if res.Error != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
