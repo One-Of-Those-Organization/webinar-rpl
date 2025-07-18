@@ -211,7 +211,9 @@ export default function ProfilPage() {
     if (!isEditing || imageUploading) {
       toast.warning(
         "Please enter edit mode first to change your profile picture",
-      );
+      , {
+          toastId: "a"
+        });
       e.target.value = "";
       return;
     }
@@ -221,7 +223,9 @@ export default function ProfilPage() {
 
     const maxSizeInBytes = 3 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
-      toast.error("Image size must be less than 3MB");
+      toast.error("Image size must be less than 3MB", {
+          toastId: "a"
+        });
       e.target.value = "";
       return;
     }

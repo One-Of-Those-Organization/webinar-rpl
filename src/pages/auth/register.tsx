@@ -59,7 +59,9 @@ export default function RegisterPage() {
   const handleGenOTP = async () => {
     if (!canSendOtp) return;
     setOtpLoading(true);
-    toast.info("Sending OTP to your email...");
+    toast.info("Sending OTP to your email...", {
+          toastId: "a"
+        });
     setError("");
     try {
       const response = await auth_otp.send_otp(form.email);
@@ -68,11 +70,15 @@ export default function RegisterPage() {
         setOtpCooldown(30);
       } else {
         setError(response.message);
-        toast.error(response.message);
+        toast.error(response.message, {
+          toastId: "a"
+        });
       }
     } catch (error) {
       setError("Failed to send OTP. Please try again.");
-      toast.error("Failed to send OTP. Please try again.");
+      toast.error("Failed to send OTP. Please try again.", {
+          toastId: "a"
+        });
     }
     setOtpLoading(false);
   };
@@ -89,14 +95,18 @@ export default function RegisterPage() {
       !form.otp_code
     ) {
       setError("All required fields must be filled.");
-      toast.warn("All required fields must be filled.");
+      toast.warn("All required fields must be filled.", {
+          toastId: "a"
+        });
       setLoading(false);
       return;
     }
 
     if (form.pass !== confirmPass) {
       setError("Passwords do not match.");
-      toast.warn("Passwords do not match.");
+      toast.warn("Passwords do not match.", {
+          toastId: "a"
+        });
       setLoading(false);
       return;
     }
@@ -107,7 +117,9 @@ export default function RegisterPage() {
       );
       toast.warn(
         "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character."
-      );
+      , {
+          toastId: "a"
+        });
       setLoading(false);
       return;
     }
@@ -125,28 +137,40 @@ export default function RegisterPage() {
       switch (response.error_code) {
         case 2:
           setError("All field must be filled.");
-          toast.warn("All field must be filled");
+          toast.warn("All field must be filled", {
+          toastId: "a"
+        });
           break;
         case 3:
           setError("Invalid Email.");
-          toast.warn("Invalid Email.");
+          toast.warn("Invalid Email.", {
+          toastId: "a"
+        });
           break;
         case 5:
           setError("User with that email already registered.");
-          toast.warn("User with that email already registered.");
+          toast.warn("User with that email already registered.", {
+          toastId: "a"
+        });
           break;
         case 6:
           setError("Invalid or expired OTP.");
-          toast.warn("Invalid or expired OTP.");
+          toast.warn("Invalid or expired OTP.", {
+          toastId: "a"
+        });
           break;
         default:
           setError("Register Failed.");
-          toast.error("Register Failed");
+          toast.error("Register Failed", {
+          toastId: "a"
+        });
           break;
       }
     } catch (error) {
       setError("An unexpected error occurred");
-      toast.error("An unexpected error occurred");
+      toast.error("An unexpected error occurred", {
+          toastId: "a"
+        });
     } finally {
       setLoading(false);
     }
