@@ -145,7 +145,7 @@ export default function LoginPage() {
         case 4:
           toast.warn(
             "Email is not registered, make sure you remember your email.",
-          , {
+          {
           toastId: "c"
         });
           break;
@@ -189,7 +189,7 @@ export default function LoginPage() {
       );
       toast.warn(
         "Password must be at least 8 characters, include uppercase, lowercase, and a number.",
-      , {
+      {
           toastId: "a"
         });
       return;

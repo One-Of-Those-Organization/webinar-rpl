@@ -211,7 +211,7 @@ export default function ProfilPage() {
     if (!isEditing || imageUploading) {
       toast.warning(
         "Please enter edit mode first to change your profile picture",
-      , {
+      {
           toastId: "a"
         });
       e.target.value = "";
