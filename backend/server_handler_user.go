@@ -1058,3 +1058,33 @@ func appHandleUserLogOut(_ *Backend, route fiber.Router) {
         })
     })
 }
+
+// POST: api/user-registered
+func appHandleUserRegistered(backend *Backend, route fiber.Router) {
+    route.Get("user-registered", func (c *fiber.Ctx) error {
+	query := c.Query("email")
+
+	exist := true
+	var user table.User
+
+	res := backend.db.Where("user_email = ?", query).First(&user)
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			exist = false
+		} else {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("There is something wrong with the db, %v", res.Error),
+				"error_code": 1,
+				"data": nil,
+			})
+		} 
+	}
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "Check data.",
+            "error_code": 0,
+            "data": exist,
+        })
+    })
+}

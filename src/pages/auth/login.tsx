@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
@@ -26,6 +26,9 @@ export default function LoginPage() {
   // OTP page state
   const [otp, setOtp] = useState("");
 
+  // Get Current Status Email
+  const [isExist, setIsExist] = useState(false);
+
   // Reset password page states
   const [newPass, setNewPass] = useState("");
   const [confirmNewPass, setConfirmNewPass] = useState("");
@@ -52,6 +55,25 @@ export default function LoginPage() {
   const toggleNewPasswordVisibility = () => setIsNewPasswordVisible((v) => !v);
   const toggleConfirmNewPasswordVisibility = () =>
     setIsConfirmNewPasswordVisible((v) => !v);
+
+    useEffect(() => {
+      // Check if user email is exist or not
+      const checkEmailExistence = async () => {
+        if (!email) return;
+        try {
+          const response = await auth_user.user_register_status(email);
+          if (response.success) {
+            setIsExist(true);
+          }
+        } catch (error) {
+          setError("Hidup Jokowi");
+          toast.error("Hidup Jokowi", {
+            toastId: "hidupJokowi",
+          });
+        }
+      };
+      checkEmailExistence();
+    }, [email]);
 
   const handleLogin = async (e: any) => {
     e.preventDefault();
@@ -111,6 +133,14 @@ export default function LoginPage() {
   // Handle forgot password
   const handleForgot = async (e: any) => {
     e.preventDefault();
+
+    if (!isExist) {
+      setError("Email is not registered. Please register first.");
+      toast.warn("Email is not registered. Please register first.", {
+        toastId: "emailNotRegistered",
+      });
+      return;
+    }
 
     if (!forgotEmail) {
       setError("Email is required.");

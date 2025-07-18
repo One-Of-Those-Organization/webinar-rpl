@@ -13,6 +13,7 @@
 // 9. Get User Count (Admin Only) ✅
 // 10. Get Current User Info (User Only) ✅
 // 11. User Reset Password (User Only) ✅
+// 12. Get Current Status User Email ✅
 
 import { API_URL } from "@/api/endpoint";
 import {
@@ -288,4 +289,21 @@ export const auth_user = {
       };
     }
   },
-};
+
+  // API Get Current Status User
+  user_register_status: async (email: string): Promise<BaseResponse> => {
+    try {
+      const response = await fetch(`${API_URL}/api/user-registered?email=${encodeURIComponent(email)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",	
+        },
+      })
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
+      }} 
+  },
+}

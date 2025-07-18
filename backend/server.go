@@ -66,6 +66,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleLogin(backend, api)
     appHandleRegister(backend, api)
     appHandleUserResetPass(backend, api)
+    appHandleUserRegistered(backend, api)
 
     appHandleUserInfo(backend, protected)
     appHandleUserInfoAll(backend, protected)
