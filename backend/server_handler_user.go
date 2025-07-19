@@ -782,7 +782,7 @@ func appHandleRegister(backend *Backend, route fiber.Router) {
 
         var userData table.User
         res := backend.db.Where("user_email = ?", body.Email).First(&userData)
-        if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
+        if res.Error != nil && !errors.Is(res.Error, gorm.ErrRecordNotFound) {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": "Failed to fetch user data from db.",
