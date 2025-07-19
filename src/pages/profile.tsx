@@ -221,9 +221,9 @@ export default function ProfilPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSizeInBytes = 3 * 1024 * 1024;
+    const maxSizeInBytes = 1024 * 1024;
     if (file.size > maxSizeInBytes) {
-      toast.error("Image size must be less than 3MB", {
+      toast.warn("Image size must be less than 1MB", {
           toastId: "a"
         });
       e.target.value = "";
@@ -248,7 +248,7 @@ export default function ProfilPage() {
 
         if (response.success) {
           let serverPath = response.data?.filename || "";
-          serverPath = serverPath.replace(/^https?:\/\/[^/]+:3000/, API_URL);
+	 console.log("The server path is : ", serverPath)
           setUserData((prev) => ({ ...prev, profile: serverPath }));
           toast.success("Image uploaded! Remember to save your changes.");
         } else {
