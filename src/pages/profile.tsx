@@ -221,7 +221,7 @@ export default function ProfilPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSizeInBytes = 1024 * 1024;
+    const maxSizeInBytes = 3 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       toast.warn("Image size must be less than 1MB", {
         toastId: "a",
