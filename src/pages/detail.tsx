@@ -919,17 +919,20 @@ export default function DetailPage() {
                   )
                 ) : (
                   <>
-                    <Button
-                      className={buttonStyles({
-                        color: "secondary",
-                        radius: "full",
-                        variant: isWebinarLive() ? "solid" : "bordered",
-                        size: "lg",
-                      })}
-                      onClick={handleQRScan}
-                    >
-                      Scan QR
-                    </Button>
+                    {(webinar?.att === "offline" ||
+                      webinar?.att === "hybrid") && (
+                      <Button
+                        className={buttonStyles({
+                          color: "secondary",
+                          radius: "full",
+                          variant: isWebinarLive() ? "solid" : "bordered",
+                          size: "lg",
+                        })}
+                        onClick={handleQRScan}
+                      >
+                        Scan QR
+                      </Button>
+                    )}
                     <Button
                       className={buttonStyles({
                         color: "secondary",
