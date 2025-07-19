@@ -447,14 +447,26 @@ export default function DetailPage() {
     }
 
     try {
-      const response = await auth_participants.automatic_absence(webinar.id);
-      if (response.success) {
-        setHasAttended(true);
-        toast.success("Attendance marked successfully!", {
-          toastId: "attendance-success",
+      if (!isCommittee) {
+        const response = await auth_participants.absence_participant_online({
+          event_id: webinar.id,
         });
+        if (response.success) {
+          setHasAttended(true);
+          toast.success("Attendance marked successfully!", {
+            toastId: "attendance-success",
+          });
+        }
       } else {
-        toast.error(response.message || "Failed to mark attendance");
+        const response = await auth_participants.automatic_absence(webinar.id);
+        if (response.success) {
+          setHasAttended(true);
+          toast.success("Attendance marked successfully!", {
+            toastId: "attendance-success",
+          });
+        } else {
+          toast.error(response.message || "Failed to mark attendance");
+        }
       }
     } catch (error) {
       toast.error("An error occurred while marking attendance");

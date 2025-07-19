@@ -1,6 +1,6 @@
 // API Participants Usage List :
 
-// 9/9 Completed ✅
+// 10/10 Completed ✅
 
 // 1. Participant Register ✅
 // 2. Get Participants by Event ✅
@@ -10,7 +10,8 @@
 // 6. Set Participant Absence ✅
 // 7. Get Participant Count by Event ✅
 // 8. Get Event Participation by User ✅
-// 9. Absence Participant from Event (Online) ✅
+// 9. Absence Participant from Event (Online) for Committee ✅
+// 10. Absence Participant from Event (Online) ✅
 
 import { API_URL } from "@/api/endpoint";
 import {
@@ -241,6 +242,32 @@ export const auth_participants = {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ event_id: id }),
+        },
+      );
+      return await response.json();
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to connect to server",
+      };
+    }
+  },
+
+  // API untuk mengirim absen partisipan saat webinar online
+  absence_participant_online: async (data: {
+    event_id: number;
+  }): Promise<BaseResponse> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_URL}/api/protected/event-participate-absence-itself`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
         },
       );
       return await response.json();
