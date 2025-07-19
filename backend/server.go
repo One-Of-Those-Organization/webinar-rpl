@@ -123,6 +123,7 @@ func appMakeRouteHandler(backend *Backend) {
     appHandleEventParticipateAbsence(backend, protected)
     appHandleEventParticipateOfEventCount(backend, protected)
     appHandleEventParticipateAbsenceBulk(backend, protected)
+    appHandleEventParticipateAbsenceItself(backend, protected)
 
     // OTP STUFF
     appHandleGenOTP(backend, api)

@@ -1049,7 +1049,45 @@ func appHandleUserLogOut(_ *Backend, route fiber.Router) {
                 "data": nil,
             })
         }
-        c.ClearCookie("jwt")
+	c.ClearCookie("jwt")
+
+        c.Cookie(&fiber.Cookie{
+            Name:     "jwt",
+            Value:    "deleted",
+            HTTPOnly: true,
+            Secure:   false,
+            SameSite: "Lax",
+            Expires:  time.Now().Add(-3 * time.Hour),
+        })
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "successfully logged out.",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+    route.Get("logout", func (c *fiber.Ctx) error {
+        _, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "success": false,
+                "message": "Invalid credentials to access this api.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+	c.ClearCookie("jwt")
+
+        c.Cookie(&fiber.Cookie{
+            Name:     "jwt",
+            Value:    "deleted",
+            HTTPOnly: true,
+            Secure:   false,
+            SameSite: "Lax",
+            Expires:  time.Now().Add(-3 * time.Hour),
+        })
+
         return c.Status(fiber.StatusOK).JSON(fiber.Map{
             "success": true,
             "message": "successfully logged out.",

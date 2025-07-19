@@ -620,6 +620,84 @@ func appHandleEventParticipateOfUser(backend *Backend, route fiber.Router) {
         })
     })
 }
+// POST : api/protected/event-participate-absence-itself
+func appHandleEventParticipateAbsenceItself(backend *Backend, route fiber.Router) {
+    route.Post("event-participate-absence-itself", func (c *fiber.Ctx) error {
+        claims, err := GetJWT(c)
+        if err != nil {
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": "Failed to claims JWT token.",
+                "error_code": 1,
+                "data": nil,
+            })
+        }
+
+        email := claims["email"].(string)
+
+        var body struct {
+            EventID int `json:"event_id"`
+        }
+
+        err = c.BodyParser(&body)
+        if err != nil {
+            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Invalid body request, %v", err),
+                "error_code": 2,
+                "data": nil,
+            })
+        }
+
+        var currentUser table.User
+        res := backend.db.Where("user_email = ?", email).First(&currentUser)
+        if res.Error != nil {
+            if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "Invalid user on JWT.",
+                    "error_code": 3,
+                    "data": nil,
+                })
+            }
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Something wrong happened on the backend, %v", res.Error),
+                "error_code": 4,
+                "data": nil,
+            })
+        }
+
+        // Check if event is online
+        var event table.Event
+        res = backend.db.Where("id = ? AND event_att = ?", body.EventID, "online").First(&event)
+        if res.Error != nil {
+            if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+                return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+                    "success": false,
+                    "message": "The event is not online or the event itself is not exist.",
+                    "error_code": 5,
+                    "data": nil,
+                })
+            }
+            return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                "success": false,
+                "message": fmt.Sprintf("Failed to get event with that id, %v", res.Error),
+                "error_code": 6,
+                "data": nil,
+            })
+        }
+
+        res = backend.db.Model(&table.EventParticipant{}).Where("event_id = ? AND eventp_role = ? AND user_id = ?", body.EventID, "normal", currentUser.ID).Update("eventp_come", true)
+
+        return c.Status(fiber.StatusOK).JSON(fiber.Map{
+            "success": true,
+            "message": "OK",
+            "error_code": 0,
+            "data": nil,
+        })
+    })
+}
 
 // POST : api/protected/event-participate-absence-bulk
 func appHandleEventParticipateAbsenceBulk(backend *Backend, route fiber.Router) {

@@ -19,6 +19,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
+import { auth } from "@/api/auth";
 import { auth_user } from "@/api/auth_user";
 import { auth } from "@/api/auth";
 
@@ -110,14 +111,13 @@ export const NavbarAdmin = () => {
           Back to Dashboard
         </DropdownItem>
 
-        <DropdownItem
+      <DropdownItem
           key="logout"
           color="danger"
           onClick={() => handleLogout()}
         >
           Log Out
-        </DropdownItem>
-      </>
+        </DropdownItem></>
     );
   };
 

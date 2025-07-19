@@ -119,7 +119,7 @@ export const Navbar = () => {
           </DropdownItem>
         )}
 
-        <DropdownItem
+      <DropdownItem
           key="logout"
           color="danger"
           onClick={() => {
@@ -127,8 +127,7 @@ export const Navbar = () => {
           }}
         >
           Log Out
-        </DropdownItem>
-      </>
+        </DropdownItem></>
     );
   };
 
