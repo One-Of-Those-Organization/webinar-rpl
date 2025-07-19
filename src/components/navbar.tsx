@@ -68,6 +68,7 @@ export const Navbar = () => {
   const handleLogout = async () => {
     const response = await auth.logout();
     if (response.success) {
+      localStorage.clear();
       navigate("/", { state: { logoutSuccess: true } });
     }
   };
