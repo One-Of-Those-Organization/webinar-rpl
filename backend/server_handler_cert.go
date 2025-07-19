@@ -743,7 +743,7 @@ func appHandleCertEditorUploadImage(backend *Backend, route fiber.Router) {
 
         var currentEventPart table.EventParticipant
         res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEventPart)
-        if res.Error != nil {
+        if res.Error != nil && admin != 1 {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", res.Error),
@@ -894,7 +894,7 @@ func appHandleCertEditorUploadHtml(backend *Backend, route fiber.Router) {
 
         var currentEventPart table.EventParticipant
         res = backend.db.Where("user_id = ? AND event_id = ?", currentUser.ID, body.EventID).First(&currentEventPart)
-        if res.Error != nil {
+        if res.Error != nil && admin != 1 {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "success": false,
                 "message": fmt.Sprintf("Failed to get the event participant with that user and event from the db, %v", res.Error),

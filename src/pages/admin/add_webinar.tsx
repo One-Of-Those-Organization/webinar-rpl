@@ -6,7 +6,6 @@ import { useState } from "react";
 import { auth_webinar } from "@/api/auth_webinar";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { API_URL } from "@/api/endpoint";
 import {
   Dropdown,
   DropdownTrigger,

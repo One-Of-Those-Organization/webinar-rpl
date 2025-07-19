@@ -8,7 +8,6 @@ import { FaCamera, FaExclamationTriangle, FaSpinner } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
 import { auth_user } from "@/api/auth_user";
-import { API_URL } from "@/api/endpoint";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -221,9 +220,9 @@ export default function ProfilPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSizeInBytes = 1024 * 1024;
+    const maxSizeInBytes = 3 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
-      toast.warn("Image size must be less than 1MB", {
+      toast.warn("Image size must be less than 3MB", {
           toastId: "a"
         });
       e.target.value = "";

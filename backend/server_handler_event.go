@@ -416,7 +416,7 @@ func appHandleEventEdit(backend *Backend, route fiber.Router) {
 		}
         if body.CertTemplate != nil {
             var cert_temp table.CertTemplate
-            res := backend.db.Where("cert_id = ?", *body.CertTemplate).First(&cert_temp)
+            res := backend.db.Where("id = ?", *body.CertTemplate).First(&cert_temp)
             if res.Error != nil {
                 return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                     "success": false,

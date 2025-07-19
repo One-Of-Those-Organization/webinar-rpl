@@ -601,7 +601,8 @@
             const id = params.get("event_id");
             const token = getCookie("jwt");
             let a = await fetch(
-                "{{ .APIPath }}/api/protected/-cert-editor-upload-image",
+                // "{{ .APIPath }}/api/protected/-cert-editor-upload-image",
+                "{{ .APIPath }}/api/c/-cert-editor-upload-image",
                 {
                     method: "POST",
                     headers: {
@@ -626,7 +627,8 @@
             const id = params.get("event_id");
             const token = getCookie("jwt");
             let a = await fetch(
-                "{{ .APIPath }}/api/protected/-cert-editor-upload-html",
+                // "{{ .APIPath }}/api/protected/-cert-editor-upload-html",
+                "{{ .APIPath }}/api/c/-cert-editor-upload-html",
                 {
                     method: "POST",
                     headers: {
