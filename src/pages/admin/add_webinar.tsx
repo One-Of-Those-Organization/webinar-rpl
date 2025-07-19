@@ -6,7 +6,6 @@ import { useState } from "react";
 import { auth_webinar } from "@/api/auth_webinar";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { API_URL } from "@/api/endpoint";
 import {
   Dropdown,
   DropdownTrigger,
@@ -48,7 +47,7 @@ export default function CreateWebinar() {
     useState<string>("Online");
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string>(
-    "https://heroui.com/images/hero-card-complete.jpeg"
+    "https://heroui.com/images/hero-card-complete.jpeg",
   );
 
   // Get today's date for min attribute
@@ -176,7 +175,7 @@ export default function CreateWebinar() {
 
   // Function to handle webinar image upload
   const handleWebinarImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
