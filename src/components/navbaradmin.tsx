@@ -20,6 +20,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
 import { auth_user } from "@/api/auth_user";
+import { auth } from "@/api/auth";
 
 export const NavbarAdmin = () => {
   const navigate = useNavigate();
@@ -33,6 +34,13 @@ export const NavbarAdmin = () => {
   const isDashboardPage = location.pathname === "/admin";
   const isUserPage = location.pathname === "/admin/user";
   const isWebinarPage = location.pathname === "/admin/webinar";
+
+  const handleLogout = async () => {
+    const response = await auth.logout();
+    if (response.success) {
+      navigate("/", { state: { logoutSuccess: true } });
+    }
+  };
 
   const fetchUserData = async () => {
     try {
@@ -104,10 +112,7 @@ export const NavbarAdmin = () => {
         <DropdownItem
           key="logout"
           color="danger"
-          onClick={async () => {
-            localStorage.clear();
-            navigate("/login");
-          }}
+          onClick={() => handleLogout()}
         >
           Log Out
         </DropdownItem>

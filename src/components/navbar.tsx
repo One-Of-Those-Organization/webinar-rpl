@@ -4,6 +4,7 @@ import { ThemeSwitch } from "@/components/theme-switch";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
+import { auth } from "@/api/auth";
 import { auth_user } from "@/api/auth_user";
 import {
   Navbar as HeroUINavbar,
@@ -64,6 +65,13 @@ export const Navbar = () => {
     fetchUserData();
   }, []);
 
+  const handleLogout = async () => {
+    const response = await auth.logout();
+    if (response.success) {
+      navigate("/", { state: { logoutSuccess: true } });
+    }
+  };
+
   const renderDropdownItems = () => {
     if (loading) {
       return (
@@ -104,7 +112,7 @@ export const Navbar = () => {
         {!isAdmin && (
           <DropdownItem
             key="History Webinar"
-            onClick={() => navigate("/history/${email}")}
+            onClick={() => navigate(`/history/${email}`)}
           >
             History Webinar
           </DropdownItem>
@@ -113,10 +121,8 @@ export const Navbar = () => {
         <DropdownItem
           key="logout"
           color="danger"
-          onClick={async () => {
-            localStorage.clear();
-            document.cookie = `jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; Secure`;
-            navigate("/", { state: { logoutSuccess: true } });
+          onClick={() => {
+            handleLogout();
           }}
         >
           Log Out

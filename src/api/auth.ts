@@ -1,9 +1,10 @@
 // API Auth Usage List :
 
-// 2/2 Completed ✅
+// 3/3 Completed ✅
 
 // 1. Register User ✅
 // 2. Login User ✅
+// 3. Logout User ✅
 
 import { BaseResponse, RegisterData, LoginData } from "./interface.ts";
 import { API_URL } from "@/api/endpoint";
@@ -46,6 +47,22 @@ export const auth = {
         localStorage.setItem("token", result.token);
       }
       return result;
+    } catch (error) {
+      return {
+        message: "Failed to connect to server",
+        success: false,
+      };
+    }
+  },
+
+  // API Logout
+  logout: async (): Promise<BaseResponse> => {
+    try {
+      const response = await fetch(`${API_URL}/api/c/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+      return await response.json();
     } catch (error) {
       return {
         message: "Failed to connect to server",
