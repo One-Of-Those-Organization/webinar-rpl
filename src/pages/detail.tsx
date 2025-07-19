@@ -416,38 +416,34 @@ export default function DetailPage() {
         toastId: "registration-closed",
       });
       return;
-    } else if (!isRegistered) {
+    }
+    if (!isRegistered) {
       toast.info("You must register first", {
         toastId: "registration-info",
       });
       return;
-    } else if (isRegistered) {
-      toast.info("You have already registered for this webinar.", {
-        toastId: "already-registered",
-      });
-    } else if (hasAttended) {
+    }
+    if (hasAttended) {
       toast.info("You have already marked your attendance.", {
         toastId: "already-attended",
       });
       return;
-    } else if (isWebinarFinished()) {
+    }
+    if (isWebinarFinished()) {
       toast.info("The webinar has finished, you cannot mark attendance.", {
         toastId: "webinar-finished",
       });
       return;
-    } else if (!isWebinarLive()) {
+    }
+    if (!isWebinarLive()) {
       toast.info("The webinar is not live, you cannot mark attendance.", {
         toastId: "absence-info",
       });
       return;
-    } else {
-      toast.error("You cannot mark attendance for this webinar.", {
-        toastId: "absence-error",
-      });
     }
 
     try {
-      if (!isCommittee) {
+      if (!isCommittee && !hasAttended) {
         const response = await auth_participants.absence_participant_online({
           event_id: webinar.id,
         });
