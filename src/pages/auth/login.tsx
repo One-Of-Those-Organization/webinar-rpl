@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@heroui/input";
 import { button as buttonStyles } from "@heroui/theme";
@@ -56,25 +56,6 @@ export default function LoginPage() {
   const toggleConfirmNewPasswordVisibility = () =>
     setIsConfirmNewPasswordVisible((v) => !v);
 
-    useEffect(() => {
-      // Check if user email is exist or not
-      const checkEmailExistence = async () => {
-        if (!email) return;
-        try {
-          const response = await auth_user.user_register_status(email);
-          if (response.success) {
-            setIsExist(true);
-          }
-        } catch (error) {
-          setError("Hidup Jokowi");
-          toast.error("Hidup Jokowi", {
-            toastId: "hidupJokowi",
-          });
-        }
-      };
-      checkEmailExistence();
-    }, [email]);
-
   const handleLogin = async (e: any) => {
     e.preventDefault();
     setLoading(true);
@@ -123,7 +104,7 @@ export default function LoginPage() {
     } catch (error) {
       setError("An unexpected error occurred. Please try again later.");
       toast.error("An unexpected error occurred", {
-        toastId: "cpp"
+        toastId: "cpp",
       });
     } finally {
       setLoading(false);
@@ -142,21 +123,37 @@ export default function LoginPage() {
       return;
     }
 
-    if (!forgotEmail) {
-      setError("Email is required.");
-      toast.warn("Email is required.", {
-        toastId: "go"
-      });
+    setLoading(true);
+    try {
+      const response = await auth_user.user_register_status(forgotEmail);
+      if (response.success) {
+        setIsExist(true);
+        setError("");
+      } else {
+        setError("Email is not registered. Please register first.");
+        toast.warn("Email is not registered. Please register first.");
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError("Network error!");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (!forgotEmail) {
+      setError("Email is required.");
+      toast.warn("Email is required.", {
+        toastId: "go",
+      });
+      return;
+    }
 
     try {
       const response = await auth_otp.send_otp(forgotEmail);
       if (response.success) {
         toast.success("OTP has been sent to your email.", {
-          toastId: "c"
+          toastId: "c",
         });
         setPage("otp");
       }
@@ -164,31 +161,32 @@ export default function LoginPage() {
       switch (response.error_code) {
         case 2:
           toast.warn("Email is required.", {
-          toastId: "a"
-        });
+            toastId: "a",
+          });
           break;
         case 3:
           toast.warn("Invalid Email.", {
-          toastId: "b"
-        });
+            toastId: "b",
+          });
           break;
         case 4:
           toast.warn(
             "Email is not registered, make sure you remember your email.",
-          {
-          toastId: "c"
-        });
+            {
+              toastId: "c",
+            },
+          );
           break;
         default:
           toast.error("Failed to send OTP.", {
-          toastId: "h"
-        });
+            toastId: "h",
+          });
           break;
       }
     } catch (err) {
       toast.error("Failed to send OTP.", {
-          toastId: "g"
-        });
+        toastId: "g",
+      });
     } finally {
       setLoading(false);
     }
@@ -219,9 +217,10 @@ export default function LoginPage() {
       );
       toast.warn(
         "Password must be at least 8 characters, include uppercase, lowercase, and a number.",
-      {
-          toastId: "a"
-        });
+        {
+          toastId: "a",
+        },
+      );
       return;
     }
 
@@ -237,13 +236,13 @@ export default function LoginPage() {
         setPage("login");
       } else {
         toast.error(response.message || "Failed to reset password.", {
-          toastId: "a"
+          toastId: "a",
         });
       }
     } catch (err) {
       toast.error("Failed to reset password.", {
-          toastId: "i"
-        });
+        toastId: "i",
+      });
     } finally {
       setLoading(false);
     }

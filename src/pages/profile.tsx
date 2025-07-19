@@ -8,7 +8,6 @@ import { FaCamera, FaExclamationTriangle, FaSpinner } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { UserData } from "@/api/interface";
 import { auth_user } from "@/api/auth_user";
-import { API_URL } from "@/api/endpoint";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -211,9 +210,10 @@ export default function ProfilPage() {
     if (!isEditing || imageUploading) {
       toast.warning(
         "Please enter edit mode first to change your profile picture",
-      {
-          toastId: "a"
-        });
+        {
+          toastId: "a",
+        },
+      );
       e.target.value = "";
       return;
     }
@@ -224,8 +224,8 @@ export default function ProfilPage() {
     const maxSizeInBytes = 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       toast.warn("Image size must be less than 1MB", {
-          toastId: "a"
-        });
+        toastId: "a",
+      });
       e.target.value = "";
       return;
     }
@@ -248,7 +248,7 @@ export default function ProfilPage() {
 
         if (response.success) {
           let serverPath = response.data?.filename || "";
-	 console.log("The server path is : ", serverPath)
+          console.log("The server path is : ", serverPath);
           setUserData((prev) => ({ ...prev, profile: serverPath }));
           toast.success("Image uploaded! Remember to save your changes.");
         } else {
