@@ -93,13 +93,7 @@ export default function CreateWebinar() {
       return;
     }
 
-    if (endDate < today) {
-      setError("End date cannot be before today");
-      toast.error("End date cannot be before today");
-      return;
-    }
-
-    if (startDate >= endDate) {
+    if (startDate > endDate) {
       setError("End date must be after start date");
       toast.error("End date must be after start date");
       return;
@@ -119,6 +113,8 @@ export default function CreateWebinar() {
         max: webinarInput.max,
         desc: webinarInput.description,
       };
+
+      console.log("Data that sended to server : ", formattedWebinarData)
 
       // Call API to add webinar
       const response = await auth_webinar.add_webinar(formattedWebinarData);
@@ -180,8 +176,7 @@ export default function CreateWebinar() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validasi ukuran file (3MB = 3 * 1024 * 1024 bytes)
-    const maxSizeInBytes = 3 * 1024 * 1024;
+    const maxSizeInBytes = 10 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       setError("Image size must be less than 3MB");
       toast.info("Image size must be less than 3MB");
@@ -338,7 +333,7 @@ export default function CreateWebinar() {
                       onChange={(e) =>
                         setWebinarInput({
                           ...webinarInput,
-                          dstart: e.target.value,
+                          dstart: new Date(e.target.value).toISOString(),
                         })
                       }
                       required
@@ -368,7 +363,7 @@ export default function CreateWebinar() {
                       onChange={(e) =>
                         setWebinarInput({
                           ...webinarInput,
-                          dend: e.target.value,
+                          dend: new Date(e.target.value).toISOString(),
                         })
                       }
                       required

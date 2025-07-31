@@ -2,7 +2,7 @@
 
 import DefaultLayout from "@/layouts/default_admin";
 import CreateWebinar from "@/pages/admin/add_webinar";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Card,
   CardHeader,
@@ -59,7 +59,14 @@ export default function WebinarPage() {
     onClose: closeDeleteModal,
   } = useDisclosure();
 
+  // Tambahkan ref untuk mencegah double-fetch di React 18 StrictMode (development)
+  const hasFetched = useRef(false);
+
   useEffect(() => {
+    // Cek kalau sudah pernah fetch, langsung return (supaya tidak dua kali jalan di dev)
+    if (hasFetched.current) return;
+    hasFetched.current = true; // tandai sudah fetch
+
     async function loadWebinarData() {
       try {
         const result = await auth_webinar.get_all_webinar();
@@ -543,3 +550,4 @@ export default function WebinarPage() {
     </DefaultLayout>
   );
 }
+

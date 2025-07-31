@@ -602,7 +602,7 @@
             const token = getCookie("jwt");
             let a = await fetch(
                 // "{{ .APIPath }}/api/protected/-cert-editor-upload-image",
-                "{{ .APIPath }}/api/c/-cert-editor-upload-image",
+                "/api/c/-cert-editor-upload-image",
                 {
                     method: "POST",
                     headers: {
@@ -628,7 +628,7 @@
             const token = getCookie("jwt");
             let a = await fetch(
                 // "{{ .APIPath }}/api/protected/-cert-editor-upload-html",
-                "{{ .APIPath }}/api/c/-cert-editor-upload-html",
+                "/api/c/-cert-editor-upload-html",
                 {
                     method: "POST",
                     headers: {
