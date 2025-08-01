@@ -1,0 +1,18 @@
+[Unit]
+Description=Webinar RPL backend systemd service
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+WorkingDirectory=/srv/http/webinar-rpl/backend
+Environment=WRPL_SECRET=YOUR_PASSWORD
+Environment=WRPL_EMAIL=YOUR_GMAIL
+Environment=WRPL_EMAPPPASS="YOUR_GMAIL_PASSWORD"
+Environment=WRPL_IP="BACKEND_IP"
+Environment=WRPL_PORT=BACKEND_PORT
+ExecStart=/srv/http/webinar-rpl/backend/webrpl
+
+[Install]
+WantedBy=multi-user.target
