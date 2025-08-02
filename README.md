@@ -10,6 +10,23 @@
 
 ---
 
+## IMPORTANT NOTE
+
+- Example of systemd service and nginx config are located at `./deploy-example/`.
+- The cert editor will not work if the backend and frontend is not hosted on the same port and ip by default.
+- To make it accessible on seperate frontend and backend couple of changes is needed:
+    * Set all of this `HttpOnly` to `false`:
+    ```
+    backend/server_handler_user.go:187:            HTTPOnly: true,
+    backend/server_handler_user.go:1057:            HTTPOnly: true,
+    backend/server_handler_user.go:1085:            HTTPOnly: true,
+    ```
+    * Uncomment this line in `editor.html` that located at `backend/static-hidden` and comment the current active one which looks like this `"/api/c/API_HERE",`:
+    ```
+    backend/static-hidden/editor.html:605:                // "{{ .APIPath }}/api/protected/-cert-editor-upload-image",
+    backend/static-hidden/editor.html:633:                // "{{ .APIPath }}/api/protected/-cert-editor-upload-html",
+    ```
+
 ## Prerequisites
 
 Before running this project, make sure you have the following installed:
@@ -150,7 +167,3 @@ WRPL_SECRET=YOUR_SECRET_PASSWORD WRPL_EMAIL=GMAIL_APP WRPL_EMAPPPASS="GMAIL_APP_
 - The backend will be running at: [http://localhost:3000](http://localhost:3000)
 
 ---
-
-## NOTE
-
-- Example of systemd service and nginx config are located at `./deploy-example/`.

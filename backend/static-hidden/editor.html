@@ -601,7 +601,9 @@
             const id = params.get("event_id");
             const token = getCookie("jwt");
             let a = await fetch(
+                // Please use this if you runnit in diff port
                 // "{{ .APIPath }}/api/protected/-cert-editor-upload-image",
+                // Please use this if you runnit in the same port
                 "/api/c/-cert-editor-upload-image",
                 {
                     method: "POST",
@@ -627,7 +629,9 @@
             const id = params.get("event_id");
             const token = getCookie("jwt");
             let a = await fetch(
+                // Please use this if you runnit in diff port
                 // "{{ .APIPath }}/api/protected/-cert-editor-upload-html",
+                // Please use this if you runnit in the same port
                 "/api/c/-cert-editor-upload-html",
                 {
                     method: "POST",
