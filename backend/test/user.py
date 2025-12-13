@@ -8,407 +8,430 @@ if __name__ == "__main__":
     admin_token = utils.login("admin@wowadmin.com", "secret")
     # user_token  = utils.login("bombardino@example.com", "")
 
-    # -- START RESET PASS TEST -- #
+    # ===============================================================
+    #                      RESET PASSWORD TEST
+    # ===============================================================
 
-    # NOTE: Reset pass is not possible since it need OTP code.
-    # NOTE: Error 3 is not possible to test without database error.
-    # NOTE: Error 5 is not possible to test without getting and knowing the OTP.
-    # NOTE: Error 6 is impossible to get without getting hash error.
-    # NOTE: Error 7 is impossible to get without database error.
+    # NOTE: Reset pass is not possible since it needs OTP code.
+    # NOTE: Error 3 is not possible to test without DB error.
+    # NOTE: Error 5 is not possible without knowing OTP.
+    # NOTE: Error 6 is impossible without hash error.
+    # NOTE: Error 7 is impossible without database error.
 
-    rpass1 = debug(
-        "user-reset-pass",
-        method="POST",
-        payload={
-            "otp_code": "",
-            "email": "",
-            "pass": ""
-        },
-        desc="Test the reset password with invalid fields, it should return error_code 2.",
-    )
-    rpass1.test(2)
+    # rpass_ok = debug(
+    # "user-reset-pass",
+    # method="POST",
+    # payload={
+    #     "email": "maoumashu@gmail.com",
+    #     "pass": "NewSecurePass123.",
+    #     "otp_code": "VALID_OTP_HERE"
+    # },
+    # desc="Reset pass success → error_code 0.",
+    # )
+    # rpass_ok.test(0)
 
-    rpass2 = debug(
-        "user-reset-pass",
-        method="POST",
-        payload={
-            "email": "commrade@example.com",
-            "pass": "secure-password123",
-            "otp_code": "0000000"
-        },
-        desc="Test the register with invalid otp or user fields, it should return error_code 4.",
-    )
-    rpass2.test(4)
+    # rpass_err_2 = debug(
+    #     "user-reset-pass",
+    #     method="POST",
+    #     payload={
+    #         "otp_code": "",
+    #         "email": "",
+    #         "pass": ""
+    #     },
+    #     desc="Reset pass with empty fields → error_code 2.",
+    # )
+    # rpass_err_2.test(2)
 
-    # -- END RESET PASS TEST -- #
+    # rpass_err_3 = debug(
+    # "user-reset-pass",
+    # method="POST",
+    # payload={
+    #     "email": "this_email_not_exist@example.com",
+    #     "pass": "SecurePassword123.",
+    #     "otp_code": "1234"
+    # },
+    # desc="Reset pass with email not registered → error_code 3.",
+    # )
+    # rpass_err_3.test(3)
 
-    # -- START REGISTER TEST -- #
+    # rpass_err_4 = debug(
+    #     "user-reset-pass",
+    #     method="POST",
+    #     payload={
+    #         "email": "commrade@example.com",
+    #         "pass": "secure-password123",
+    #         "otp_code": "0000000"
+    #     },
+    #     desc="Reset pass with invalid OTP → error_code 4.",
+    # )
+    # rpass_err_4.test(4)
 
-    # NOTE: Register Not possible since it need OTP code.
-    # NOTE: Error 4 is impossible to get without database error.
-    # NOTE: Error 6 is impossible to get without getting hash error.
-    # NOTE: Error 8 is impossible to get without database error.
-    # NOTE: Error 9 is impossible to get without database error.
-    # NOTE: Error 11 is impossible to get without getting the otp code first.
+    # rpass_err_5 = debug(
+    # "user-reset-pass",
+    # method="POST",
+    # payload={
+    #     "email": "maoumashu@gmail.com",
+    #     "pass": "123",
+    #     "otp_code": "VALID_OTP_HERE"
+    # },
+    # desc="Reset pass with weak password → error_code 5.",
+    # )
+    # rpass_err_5.test(5)
 
-    register_error_2 = debug(
-        "register",
-        method="POST",
-        payload={
-            "name": "",
-            "email": "",
-            "instance": "",
-            "pass": "",
-            "otp_code": ""
-        },
-        desc="Test the register with empty fields, it should return error_code 2.",
-    )
-    register_error_2.test(2)
+    # ===============================================================
+    #                          REGISTER TEST
+    # ===============================================================
 
-    register_error_3 = debug(
-        "register",
-        method="POST",
-        payload={
-            "name": "A",
-            "email": "aaaaaaaaaaaa",
-            "instance": "Jobless",
-            "pass": "secure-password123",
-            "otp_code": "9090"
-        },
-        desc="Test the register with invalid email fields, it should return error_code 3.",
-    )
-    register_error_3.test(3)
+    # NOTE: Register not possible since OTP required.
+    # NOTE: Error 4 / 6 / 8 / 9 / 11 cannot be triggered without DB or hash errors.
+    
+    # # Test 0 → All valid → error_code 0
+    # register_ok = debug(
+    # "register",
+    # method="POST",
+    # payload={
+    #     "name": "Maou Mashu",
+    #     "email": "maoumashu@gmail.com",
+    #     "instance": "UKDC",
+    #     "pass": "SecurePassword123.",
+    #     "otp_code": "72N8"   # nanti kamu isi OTP asli
+    # },
+    # desc="Register success → error_code 0.",
+    # )
+    # register_ok.test(0)
 
-    register_error_5 = debug(
-        "register",
-        method="POST",
-        payload={
-            "name": "Goad",
-            "email": "commrade@example.com",
-            "instance": "Jobless",
-            "pass": "secure-password123",
-            "otp_code": "9090"
-        },
-        desc="Test the register with registered email, it should return error_code 5.",
-    )
-    register_error_5.test(5)
+    # # Test 1 → Empty fields → error_code 2
+    # register_err_1 = debug(
+    #     "register",
+    #     method="POST",
+    #     payload={
+    #         "name": "",
+    #         "email": "",
+    #         "instance": "",
+    #         "pass": "",
+    #         "otp_code": ""
+    #     },
+    #     desc="TC1: Register with empty fields → expect error_code 2.",
+    # )
+    # register_err_1.test(2)
 
-    register_error_10 = debug(
-        "register",
-        method="POST",
-        payload={
-            "name": "Wow",
-            "email": "newemail@email.com",
-            "instance": "Jobless",
-            "pass": "secure-password123",
-            "otp_code": "0000000"
-        },
-        desc="Test the register with invalid otp code, it should return error_code 10.",
-    )
-    register_error_10.test(10)
+    # # Test 2 → Invalid email format → error_code 3
+    # register_err_2 = debug(
+    #     "register",
+    #     method="POST",
+    #     payload={
+    #         "name": "A",
+    #         "email": "aaaaaaaaaaaa",
+    #         "instance": "Jobless",
+    #         "pass": "secure-password123",
+    #         "otp_code": "9090"
+    #     },
+    #     desc="TC2: Register with invalid email → expect error_code 3.",
+    # )
+    # register_err_2.test(3)
 
-    # -- END REGISTER TEST -- #
+    # # Test 3 → Email already exists → error_code 5
+    # register_err_3 = debug(
+    #     "register",
+    #     method="POST",
+    #     payload={
+    #         "name": "Goad",
+    #         "email": "maoumashu@gmail.com",
+    #         "instance": "Jobless",
+    #         "pass": "secure-password123",
+    #         "otp_code": "9090"
+    #     },
+    #     desc="TC3: Register with existing email → expect error_code 5.",
+    # )
+    # register_err_3.test(5)
 
-    # -- START LOGIN TEST -- #
+    # # Test 4 → Invalid OTP → error_code 10
+    # register_err_4 = debug(
+    #     "register",
+    #     method="POST",
+    #     payload={
+    #         "name": "Wow",
+    #         "email": "newemail@email.com",
+    #         "instance": "Jobless",
+    #         "pass": "secure-password123",
+    #         "otp_code": "0000000"
+    #     },
+    #     desc="TC4: Register with invalid OTP → expect error_code 10.",
+    # )
+    # register_err_4.test(10)
 
-    # NOTE: Error 4 is impossible to get without database error.
-    # NOTE: Error 6 is impossible to get without jwt gen error on backend.
+    # ===============================================================
+    #                            LOGIN TEST
+    # ===============================================================
 
-    login_success = debug(
-        "login",
-        method="POST",
-        payload={
-            "email": "commrade@example.com",
-            "pass": "secure-password123"
-        },
-        desc="Test the login with valid credentials, it should return error_code 0.",
-    )
-    login_success.test(0)
+    # # NOTE: Error 4 requires DB error.
+    # # NOTE: Error 6 requires backend JWT error.
 
-    ltest1= debug(
-        "login",
-        method="POST",
-        payload={
-            "email": "",
-            "pass": ""
-        },
-        desc="Test the login with empty email and password fields, it should return error_code 2.",
-    )
-    ltest1.test(2)
+    # login_ok_user = debug(
+    #     "login",
+    #     method="POST",
+    #     payload={
+    #         "email": "maoumashu@gmail.com",
+    #         "pass": "SecurePassword123."
+    #     },
+    #     desc="Login valid user → error_code 0.",
+    # )
+    # login_ok_user.test(0)
 
-    ltest2= debug(
-        "login",
-        method="POST",
-        payload={
-            "email": "aaaaaa",
-            "pass": "none"
-        },
-        desc="Test the login with invalid email field, it should return error_code 3.",
-    )
-    ltest2.test(3)
+    # login_ok_admin = debug(
+    #     "login",
+    #     method="POST",
+    #     payload={
+    #         "email": "admin@wowadmin.com",
+    #         "pass": "secret"
+    #     },
+    #     desc="Login valid admin → error_code 0.",
+    # )
+    # login_ok_admin.test(0)
 
-    ltest3= debug(
-        "login",
-        method="POST",
-        payload={
-            "email": "commrade@example.com",
-            "pass": "none"
-        },
-        desc="Test the login with invalid password field, it should return error_code 5.",
-    )
-    ltest3.test(5)
+    # login_err_2 = debug(
+    #     "login",
+    #     method="POST",
+    #     payload={ "email": "", "pass": "" },
+    #     desc="Login empty fields → error_code 2.",
+    # )
+    # login_err_2.test(2)
 
-    # -- END LOGIN TEST -- #
+    # login_err_3 = debug(
+    #     "login",
+    #     method="POST",
+    #     payload={ "email": "aaaaaa", "pass": "none" },
+    #     desc="Login invalid email → error_code 3.",
+    # )
+    # login_err_3.test(3)
 
-    # -- START USER INFO OF TEST -- #
+    # login_err_5 = debug(
+    #     "login",
+    #     method="POST",
+    #     payload={
+    #         "email": "maoumashu@gmail.com",
+    #         "pass": "none"
+    #     },
+    #     desc="Login wrong password → error_code 5.",
+    # )
+    # login_err_5.test(5)
 
-    # NOTE: Error 1 is not tested because it will 100% work.
-    # NOTE: Error 4 is not possible to test without database error.
+    # ===============================================================
+    #                       USER INFO OF TEST
+    # ===============================================================
 
-    iftest1 = debug(
-        "protected/user-info-of",
-        method="GET",
-        headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-        desc="Test the info of api with empty email field, it should return error_code 2.",
-    )
-    iftest1.test(2)
+    # NOTE: Error 1 always works.
+    # NOTE: Error 4 needs DB error.
 
-    iftest2 = debug(
-        "protected/user-info-of?email=notregsitered@woho.com",
-        method="GET",
-        headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-        desc="Test the info of api with not regsitered email field, it should return error_code 3.",
-    )
-    iftest2.test(3)
+    # info_of_err_2 = debug(
+    #     "protected/user-info-of",
+    #     method="GET",
+    #     headers={
+    #         "Authorization": f"Bearer {admin_token}",
+    #         "Content-Type": "application/json"
+    #     },
+    #     desc="User info-of empty email → error_code 2.",
+    # )
+    # info_of_err_2.test(2)
 
-    iftest3 = debug(
-        "protected/user-info-of?email=commrade@example.com",
-        method="GET",
-        headers={ "Authorization": f"Bearer {admin_token}", "Content-Type": "application/json" },
-        desc="Test the info of api with regsitered email, it should return error_code 0.",
-    )
-    iftest3.test(0)
+    # info_of_err_3 = debug(
+    #     "protected/user-info-of?email=notregsitered@woho.com",
+    #     method="GET",
+    #     headers={
+    #         "Authorization": f"Bearer {admin_token}",
+    #         "Content-Type": "application/json"
+    #     },
+    #     desc="User info-of unregistered email → error_code 3.",
+    # )
+    # info_of_err_3.test(3)
 
-    # -- END USER INFO OF TEST -- #
+    # info_of_ok = debug(
+    #     "protected/user-info-of?email=commrade@example.com",
+    #     method="GET",
+    #     headers={
+    #         "Authorization": f"Bearer {admin_token}",
+    #         "Content-Type": "application/json"
+    #     },
+    #     desc="User info-of valid email → error_code 0.",
+    # )
+    # info_of_ok.test(0)
 
-    # -- START USER EDIT ADMIN TEST -- #
+    # ===============================================================
+    #                     EDIT ADMIN USER TEST
+    # ===============================================================
 
-    euatest1 = debug(
-        "protected/edit-admin-user",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload={
-            "email": "commrade@example.com",
-            "instance": "Updated Instance",
-            "picture": "https://example.com/avatar.png",
-        },
-        desc="Test the edit admin user api with valid arguments, it should return error_code 0.",
-    )
-    euatest1.test(0)
+    # edit_admin_ok = debug(
+    #     "protected/edit-admin-user",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={
+    #         "email": "commrade@example.com",
+    #         "instance": "Updated Instance",
+    #         "picture": "https://example.com/avatar.png",
+    #     },
+    #     desc="Edit admin user valid → error_code 0.",
+    # )
+    # edit_admin_ok.test(0)
 
-    euatest2 = debug(
-        "protected/edit-admin-user",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload="not a json",
-        desc="Test the edit admin user api with invalid JSON body. Should return error_code 3.",
-    )
-    euatest2.test(3)
+    # edit_admin_err_3 = debug(
+    #     "protected/edit-admin-user",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload="not a json",
+    #     desc="Edit admin invalid JSON → error_code 3.",
+    # )
+    # edit_admin_err_3.test(3)
 
-    euatest3 = debug(
-        "protected/edit-admin-user",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload={
-            "name": "No Email",
-        },
-        desc="Test the edit admin user api with missing email field. Should return error_code 4.",
-    )
-    euatest3.test(4)
+    # edit_admin_err_4 = debug(
+    #     "protected/edit-admin-user",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={ "name": "No Email" },
+    #     desc="Edit admin missing email → error_code 4.",
+    # )
+    # edit_admin_err_4.test(4)
 
-    edit_admin_user_not_found = debug(
-        "protected/edit-admin-user",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload={
-            "email": "notfound@example.com",
-        },
-        desc="Test the edit admin user api with user not found or no changes made. Should return error_code 7.",
-    )
-    edit_admin_user_not_found.test(7)
+    # edit_admin_err_7 = debug(
+    #     "protected/edit-admin-user",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={ "email": "notfound@example.com" },
+    #     desc="Edit admin user not found → error_code 7.",
+    # )
+    # edit_admin_err_7.test(7)
 
-    # -- END USER EDIT ADMIN TEST -- #
+    # ===============================================================
+    #                     USER DELETE ADMIN TEST
+    # ===============================================================
 
-    # -- START USER DEL ADMIN TEST -- #
+    # del_admin_err_1 = debug(
+    #     "protected/user-del-admin",
+    #     method="POST",
+    #     headers={ "Authorization": "LMAO" },
+    #     payload={ "lol": True },
+    #     desc="Del admin with invalid JWT → error_code 1.",
+    # )
+    # del_admin_err_1.test(1)
 
-    uda_test1 = debug(
-        "protected/user-del-admin",
-        method="POST",
-        headers={
-            "Authorization": f"LMAO",
-        },
-        payload={
-            "lol": True,
-        },
-        desc="Test the edit user del admin api with invalid JWT token. Should return error_code 1.",
-    )
-    uda_test1.test(1)
+    # del_admin_err_2 = debug(
+    #     "protected/user-del-admin",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={ "lol": True },
+    #     desc="Del admin invalid payload → error_code 2.",
+    # )
+    # del_admin_err_2.test(2)
 
-    uda_test2 = debug(
-        "protected/user-del-admin",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload={
-            "lol": True,
-        },
-        desc="Test the edit user del admin api with invalid payload. Should return error_code 2.",
-    )
-    uda_test2.test(2)
+    # del_admin_ok = debug(
+    #     "protected/user-del-admin",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={ "id": 3 },  # delete user bombardino
+    #     desc="Del admin valid payload → error_code 0.",
+    # )
+    # del_admin_ok.test(0)
 
-    udat_test3 = debug(
-        "protected/user-del-admin",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload={
-            "id": 3, # delete user bombardino
-        },
-        desc="Test the edit user del admin api with valid payload. Should return error_code 0.",
-    )
-    uda_test2.test(0)
+    # ===============================================================
+    #                         USER EDIT TEST
+    # ===============================================================
 
-    # -- END USER DEL ADMIN TEST -- #
+    # user_edit_ok = debug(
+    #     "protected/user-edit",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={ "name": "Ken Thompson" },
+    #     desc="User edit valid payload → error_code 0.",
+    # )
+    # user_edit_ok.test(0)
 
-    # -- START USER EDIT TEST -- #
+    # ===============================================================
+    #                     USER INFO ALL TEST
+    # ===============================================================
 
-    ue_test1 = debug(
-        "protected/user-edit",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}", # no need to be an admin
-        },
-        payload={
-            "name": "Ken Thompson"
-        },
-        desc="Test the edit user api with valid payload. Should return error_code 0.",
-    )
-    ue_test1.test(0)
+    # info_all_ok = debug(
+    #     "protected/user-info-all",
+    #     method="GET",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     desc="User info-all valid call → error_code 0.",
+    # )
+    # info_all_ok.test(0)
 
-    # -- END USER EDIT TEST -- #
+    # info_all_query_ok = debug(
+    #     "protected/user-info-all?limit=100&offset=10",
+    #     method="GET",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     desc="User info-all valid query → error_code 0.",
+    # )
+    # info_all_query_ok.test(0)
 
-    # -- START USER INFO ALL TEST -- #
+    # ===============================================================
+    #                         USER INFO TEST
+    # ===============================================================
 
-    uia_test1 = debug(
-        "protected/user-info-all",
-        method="GET",
-        headers={
-            "Authorization": f"Bearer {admin_token}", # no need to be an admin
-        },
-        desc="Test the user info all api with valid call. Should return error_code 0.",
-    )
-    uia_test1.test(0)
+    # user_info_ok = debug(
+    #     "protected/user-info",
+    #     method="GET",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     desc="User info valid call → error_code 0.",
+    # )
+    # user_info_ok.test(0)
 
-    uia_test2 = debug(
-        "protected/user-info-all?limit=100&offset=10",
-        method="GET",
-        headers={
-            "Authorization": f"Bearer {admin_token}", # no need to be an admin
-        },
-        desc="Test the user info all api with its valid query. Should return error_code 0.",
-    )
-    uia_test2.test(0)
+    # ===============================================================
+    #                        USER COUNT TEST
+    # ===============================================================
 
-    # -- END USER INFO ALL TEST -- #
+    # user_count_ok = debug(
+    #     "protected/user-count",
+    #     method="GET",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     desc="User count valid call → error_code 0.",
+    # )
+    # user_count_ok.test(0)
 
-    # -- START USER INFO TEST -- #
+    # ===============================================================
+    #                    REGISTER ADMIN TEST
+    # ===============================================================
 
-    ui_test1 = debug(
-        "protected/user-info",
-        method="GET",
-        headers={
-            "Authorization": f"Bearer {admin_token}", # no need to be an admin
-        },
-        desc="Test the user info api with valid call. Should return error_code 0.",
-    )
-    ui_test1.test(0)
+    # reg_admin_ok = debug(
+    #     "protected/register-admin",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={
+    #         "email": "example@example.com",
+    #         "name": "Example",
+    #         "pass": "xaempel",
+    #         "instance": "None",
+    #         "picture": ""
+    #     },
+    #     desc="Register admin valid payload → error_code 0.",
+    # )
+    # reg_admin_ok.test(0)
 
-    # -- END USER INFO TEST -- #
+    # reg_admin_err_3 = debug(
+    #     "protected/register-admin",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={
+    #         "name": "Example",
+    #         "pass": "xaempel",
+    #         "instance": "None",
+    #         "picture": ""
+    #     },
+    #     desc="Register admin missing fields → error_code 3.",
+    # )
+    # reg_admin_err_3.test(3)
 
-    # -- START USER COUNT TEST -- #
-
-    uc_test1 = debug(
-        "protected/user-count",
-        method="GET",
-        headers={
-            "Authorization": f"Bearer {admin_token}", # no need to be an admin
-        },
-        desc="Test the user count api with valid call (ADMIN only). Should return error_code 0.",
-    )
-    uc_test1.test(0)
-
-    # -- END USER COUNT TEST -- #
-
-    # -- START REGISTER ADMIN TEST -- #
-
-    ra_test1 = debug(
-        "protected/register-admin",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload={
-            "email": "example@example.com",
-            "name": "Example",
-            "pass": "xaempel",
-            "instance": "None",
-            "picture": ""
-        },
-        desc="Test the register admin api with valid payload. Should return error_code 0.",
-    )
-    ra_test1.test(0)
-
-    ra_test2 = debug(
-        "protected/register-admin",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload={
-            "name": "Example",
-            "pass": "xaempel",
-            "instance": "None",
-            "picture": ""
-        },
-        desc="Test the register admin api with invalid payload. Should return error_code 3.",
-    )
-    ra_test2.test(3)
-
-    ra_test3 = debug(
-        "protected/register-admin",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {admin_token}",
-        },
-        payload={
-            "email": "example.com",
-            "name": "Example",
-            "pass": "xaempel",
-            "instance": "None",
-            "picture": ""
-        },
-        desc="Test the register admin api with invalid email payload. Should return error_code 5.",
-    )
-    ra_test3.test(5)
-
-    # -- END REGISTER ADMIN TEST -- #
+    # reg_admin_err_5 = debug(
+    #     "protected/register-admin",
+    #     method="POST",
+    #     headers={ "Authorization": f"Bearer {admin_token}" },
+    #     payload={
+    #         "email": "example.com",
+    #         "name": "Example",
+    #         "pass": "xaempel",
+    #         "instance": "None",
+    #         "picture": ""
+    #     },
+    #     desc="Register admin invalid email → error_code 5.",
+    # )
+    # reg_admin_err_5.test(5)
